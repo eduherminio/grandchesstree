@@ -1,18 +1,19 @@
 ﻿using System.Diagnostics;
-using GreatPerft;
-using Sapling.Engine.MoveGen;
+using System.Runtime.CompilerServices;
+using GrandChessTree.Client;
+using GrandChessTree.Client.Tables;
 
 Console.WriteLine("-----TheGreatChessTree-----");
 
 var board = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(AttackTables).TypeHandle);
+RuntimeHelpers.RunClassConstructor(typeof(AttackTables).TypeHandle);
 
 var boards = MoveGenerator.PerftRoot(ref board, 2, true);
 Console.WriteLine($"Split into {boards.Length} tasks");
 
 Summary totalSummery = default;
-var locker = new Object();
+var locker = new object();
 
 var sw = Stopwatch.StartNew();
 
@@ -33,4 +34,3 @@ var s = (float)ms / 1000;
 Console.WriteLine($"took {s}s");
 Console.WriteLine($"{(totalSummery.Nodes / s).FormatBigNumber()}nps");
 totalSummery.Print();
-

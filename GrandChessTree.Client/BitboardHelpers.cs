@@ -1,32 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 
+namespace GrandChessTree.Client;
+
 public static class BitboardHelpers
 {
-    public const ulong NotAFile = 0xFEFEFEFEFEFEFEFE; // All squares except column 'A'
-    public const ulong NotHFile = 0x7F7F7F7F7F7F7F7F; // All squares except column 'H'
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte PopLSB(this ref ulong b)
-    {
-        var i = (byte)Bmi1.X64.TrailingZeroCount(b);
-        b &= b - 1;
-
-        return i;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong PeekLSB(this ulong bitBoard)
-    {
-        return Bmi1.X64.TrailingZeroCount(bitBoard);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte PopCount(ulong bitBoard)
-    {
-        return (byte)Popcnt.X64.PopCount(bitBoard);
-    }
+    private const ulong NotAFile = 0xFEFEFEFEFEFEFEFE; // All squares except column 'A'
+    private const ulong NotHFile = 0x7F7F7F7F7F7F7F7F; // All squares except column 'H'
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong RankFileToBitboard(int rank, int file)

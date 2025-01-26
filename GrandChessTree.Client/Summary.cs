@@ -1,7 +1,4 @@
-﻿
-
-
-namespace GreatPerft;
+﻿namespace GrandChessTree.Client;
 
 public struct Summary
 {
@@ -55,6 +52,7 @@ public struct Summary
     {
         Checks++;
     }
+
     internal void AddMate()
     {
         CheckMates++;

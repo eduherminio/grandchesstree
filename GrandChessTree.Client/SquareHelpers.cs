@@ -1,5 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 
+namespace GrandChessTree.Client;
+
 public static class SquareHelpers
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,7 +28,7 @@ public static class SquareHelpers
     public static uint GetFileIndex(this uint square)
     {
         // File is the last 3 bits of the square index
-        return (square & 7); // Equivalent to square % 8
+        return square & 7; // Equivalent to square % 8
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -78,48 +80,48 @@ public static class SquareHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftUp(this int board)
     {
-        return (board + 8);
+        return board + 8;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftDown(this int board)
     {
-        return (board - 8);
+        return board - 8;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftLeft(this int board)
     {
-        return (board - 1);
+        return board - 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftRight(this int board)
     {
-        return (board + 1);
+        return board + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftUpRight(this int board)
     {
-        return (board + 9);
+        return board + 9;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftUpLeft(this int board)
     {
-        return (board + 7);
+        return board + 7;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftDownRight(this int board)
     {
-        return (board - 7);
+        return board - 7;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ShiftDownLeft(this int board)
     {
-        return (board - 9);
+        return board - 9;
     }
 }

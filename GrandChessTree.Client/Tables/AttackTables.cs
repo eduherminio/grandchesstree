@@ -1,9 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
-using GreatPerft;
 
-namespace Sapling.Engine.MoveGen;
+namespace GrandChessTree.Client.Tables;
+
 public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Position, ulong[] Moves)
 {
     public ulong GetMoves(ulong blockers)
@@ -11,18 +11,9 @@ public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Po
         return Moves[((MovementMask & blockers) * MagicNumber) >> Position];
     }
 }
+
 public static unsafe class AttackTables
 {
-    public static T* Allocate<T>(int count) where T : unmanaged
-    {
-        const nuint alignment = 64;
-        var size = (sizeof(T) * count);
-        var block = NativeMemory.AlignedAlloc((nuint)size, alignment);
-        NativeMemory.Clear(block, (nuint)size);
-
-        return (T*)block;
-    }
-
     public static readonly ulong* RookAttackMasks;
     public static readonly ulong[] RookAttackMasksAll = new ulong[64];
     public static readonly MagicBitBoard[] RookMagics = new MagicBitBoard[64];
@@ -45,19 +36,7 @@ public static unsafe class AttackTables
 
     public static readonly ulong* LineBitBoards;
     public static readonly ulong* LineBitBoardsInclusive;
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetFileIndex(this int square)
-    {
-        // File is the last 3 bits of the square index
-        return square & 7; // Equivalent to square % 8
-    }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetRankIndex(this int square)
-    {
-        // Rank is obtained by shifting right by 3 bits
-        return square >> 3; // Equivalent to square / 8
-    }
     static AttackTables()
     {
         PextAttacks = Allocate<ulong>(5248 + 102400);
@@ -105,9 +84,7 @@ public static unsafe class AttackTables
 
                 if (targetSquare is >= 0 and < 64 && Math.Abs(rank - targetRank) <= 2 &&
                     Math.Abs(file - targetFile) <= 2)
-                {
                     whitePawnAttacks |= 1UL << targetSquare;
-                }
             }
 
             foreach (var offset in BlackPawnOffsets)
@@ -118,9 +95,7 @@ public static unsafe class AttackTables
 
                 if (targetSquare is >= 0 and < 64 && Math.Abs(rank - targetRank) <= 2 &&
                     Math.Abs(file - targetFile) <= 2)
-                {
                     blackPawnAttacks |= 1UL << targetSquare;
-                }
             }
 
             foreach (var offset in KnightOffsets)
@@ -131,9 +106,7 @@ public static unsafe class AttackTables
 
                 if (targetSquare is >= 0 and < 64 && Math.Abs(rank - targetRank) <= 2 &&
                     Math.Abs(file - targetFile) <= 2)
-                {
                     knightAttacks |= 1UL << targetSquare;
-                }
             }
 
             foreach (var offset in KingOffsets)
@@ -144,9 +117,7 @@ public static unsafe class AttackTables
 
                 if (targetSquare is >= 0 and < 64 && Math.Abs(rank - targetRank) <= 1 &&
                     Math.Abs(file - targetFile) <= 1)
-                {
                     kingAttacks |= 1UL << targetSquare;
-                }
             }
 
             WhitePawnAttackTable[square] = whitePawnAttacks;
@@ -181,13 +152,35 @@ public static unsafe class AttackTables
         }
 
         for (var i = 0; i < 64; i++)
+        for (var j = 0; j < 64; j++)
         {
-            for (var j = 0; j < 64; j++)
-            {
-                CalculateLineBitBoard(i, j);
-                CalculateLineBitBoardInclusive(i, j);
-            }
+            CalculateLineBitBoard(i, j);
+            CalculateLineBitBoardInclusive(i, j);
         }
+    }
+
+    public static T* Allocate<T>(int count) where T : unmanaged
+    {
+        const nuint alignment = 64;
+        var size = sizeof(T) * count;
+        var block = NativeMemory.AlignedAlloc((nuint)size, alignment);
+        NativeMemory.Clear(block, (nuint)size);
+
+        return (T*)block;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetFileIndex(this int square)
+    {
+        // File is the last 3 bits of the square index
+        return square & 7; // Equivalent to square % 8
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetRankIndex(this int square)
+    {
+        // Rank is obtained by shifting right by 3 bits
+        return square >> 3; // Equivalent to square / 8
     }
 
     private static void CalculateLineBitBoardInclusive(int i, int j)
@@ -203,47 +196,41 @@ public static unsafe class AttackTables
             return;
         }
 
-        ulong bitboard = 0UL;
+        var bitboard = 0UL;
 
         // Same rank (horizontal line)
         if (rank1 == rank2)
         {
-            int minFile = Math.Min(file1, file2);
-            int maxFile = Math.Max(file1, file2);
-            for (int file = minFile; file <= maxFile; file++)
-            {
-                bitboard |= 1UL << (rank1 * 8 + file);
-            }
+            var minFile = Math.Min(file1, file2);
+            var maxFile = Math.Max(file1, file2);
+            for (var file = minFile; file <= maxFile; file++) bitboard |= 1UL << (rank1 * 8 + file);
         }
         // Same file (vertical line)
         else if (file1 == file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
-            {
-                bitboard |= 1UL << (rank * 8 + file1);
-            }
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++) bitboard |= 1UL << (rank * 8 + file1);
         }
         // Same diagonal (positive slope)
         else if (rank1 - file1 == rank2 - file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
             {
-                int file = rank - (rank1 - file1); // file along the same diagonal
+                var file = rank - (rank1 - file1); // file along the same diagonal
                 bitboard |= 1UL << (rank * 8 + file);
             }
         }
         // Same anti-diagonal (negative slope)
         else if (rank1 + file1 == rank2 + file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
             {
-                int file = (rank1 + file1) - rank; // file along the same anti-diagonal
+                var file = rank1 + file1 - rank; // file along the same anti-diagonal
                 bitboard |= 1UL << (rank * 8 + file);
             }
         }
@@ -262,51 +249,45 @@ public static unsafe class AttackTables
         // If i and j are the same, return a bitboard with just that square
         if (i == j)
         {
-            LineBitBoards[i*64 + j] = 1UL << i;
+            LineBitBoards[i * 64 + j] = 1UL << i;
             return;
         }
 
-        ulong bitboard = 0UL;
+        var bitboard = 0UL;
 
         // Same rank (horizontal line)
         if (rank1 == rank2)
         {
-            int minFile = Math.Min(file1, file2);
-            int maxFile = Math.Max(file1, file2);
-            for (int file = minFile; file <= maxFile; file++)
-            {
-                bitboard |= 1UL << (rank1 * 8 + file);
-            }
+            var minFile = Math.Min(file1, file2);
+            var maxFile = Math.Max(file1, file2);
+            for (var file = minFile; file <= maxFile; file++) bitboard |= 1UL << (rank1 * 8 + file);
         }
         // Same file (vertical line)
         else if (file1 == file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
-            {
-                bitboard |= 1UL << (rank * 8 + file1);
-            }
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++) bitboard |= 1UL << (rank * 8 + file1);
         }
         // Same diagonal (positive slope)
         else if (rank1 - file1 == rank2 - file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
             {
-                int file = rank - (rank1 - file1); // file along the same diagonal
+                var file = rank - (rank1 - file1); // file along the same diagonal
                 bitboard |= 1UL << (rank * 8 + file);
             }
         }
         // Same anti-diagonal (negative slope)
         else if (rank1 + file1 == rank2 + file2)
         {
-            int minRank = Math.Min(rank1, rank2);
-            int maxRank = Math.Max(rank1, rank2);
-            for (int rank = minRank; rank <= maxRank; rank++)
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
             {
-                int file = (rank1 + file1) - rank; // file along the same anti-diagonal
+                var file = rank1 + file1 - rank; // file along the same anti-diagonal
                 bitboard |= 1UL << (rank * 8 + file);
             }
         }
@@ -326,25 +307,17 @@ public static unsafe class AttackTables
 
         // Horizontal (rank) moves
         for (var f = file + 1; f < 7; f++) // Start from the next square and end before the edge
-        {
             attackMask |= 1UL << (rank * 8 + f);
-        }
 
         for (var f = file - 1; f > 0; f--) // Start from the previous square and end before the edge
-        {
             attackMask |= 1UL << (rank * 8 + f);
-        }
 
         // Vertical (file) moves
         for (var r = rank + 1; r < 7; r++) // Start from the next square and end before the edge
-        {
             attackMask |= 1UL << (r * 8 + file);
-        }
 
         for (var r = rank - 1; r > 0; r--) // Start from the previous square and end before the edge
-        {
             attackMask |= 1UL << (r * 8 + file);
-        }
 
         return attackMask;
     }
@@ -357,82 +330,59 @@ public static unsafe class AttackTables
         var file = square % 8;
 
         // Northeast direction (increasing rank and file)
-        for (int r = rank + 1, f = file + 1; r < 7 && f < 7; r++, f++)
-        {
-            attackMask |= 1UL << (r * 8 + f);
-        }
+        for (int r = rank + 1, f = file + 1; r < 7 && f < 7; r++, f++) attackMask |= 1UL << (r * 8 + f);
 
         // Northwest direction (increasing rank, decreasing file)
-        for (int r = rank + 1, f = file - 1; r < 7 && f > 0; r++, f--)
-        {
-            attackMask |= 1UL << (r * 8 + f);
-        }
+        for (int r = rank + 1, f = file - 1; r < 7 && f > 0; r++, f--) attackMask |= 1UL << (r * 8 + f);
 
         // Southeast direction (decreasing rank, increasing file)
-        for (int r = rank - 1, f = file + 1; r > 0 && f < 7; r--, f++)
-        {
-            attackMask |= 1UL << (r * 8 + f);
-        }
+        for (int r = rank - 1, f = file + 1; r > 0 && f < 7; r--, f++) attackMask |= 1UL << (r * 8 + f);
 
         // Southwest direction (decreasing rank and file)
-        for (int r = rank - 1, f = file - 1; r > 0 && f > 0; r--, f--)
-        {
-            attackMask |= 1UL << (r * 8 + f);
-        }
+        for (int r = rank - 1, f = file - 1; r > 0 && f > 0; r--, f--) attackMask |= 1UL << (r * 8 + f);
 
         return attackMask;
     }
+
     public static ulong RookAttackMaskAll(int square)
     {
-        int rank = square / 8;
-        int file = square % 8;
-        ulong mask = 0UL;
+        var rank = square / 8;
+        var file = square % 8;
+        var mask = 0UL;
 
         // Horizontal (rank) attack mask
-        for (int f = 0; f < 8; f++)
-        {
+        for (var f = 0; f < 8; f++)
             if (f != file) // Skip the square itself
-            {
                 mask |= 1UL << (rank * 8 + f);
-            }
-        }
 
         // Vertical (file) attack mask
-        for (int r = 0; r < 8; r++)
-        {
+        for (var r = 0; r < 8; r++)
             if (r != rank) // Skip the square itself
-            {
                 mask |= 1UL << (r * 8 + file);
-            }
-        }
 
         return mask;
     }
 
     public static ulong BishopAttackMaskAll(int square)
     {
-        int rank = square / 8;
-        int file = square % 8;
-        ulong mask = 0UL;
+        var rank = square / 8;
+        var file = square % 8;
+        var mask = 0UL;
 
         // Diagonal (positive slope, rank - file = constant)
-        for (int r = 0; r < 8; r++)
+        for (var r = 0; r < 8; r++)
         {
-            int f = file + (r - rank);
+            var f = file + (r - rank);
             if (f >= 0 && f < 8 && r != rank) // Valid file and skip the square itself
-            {
                 mask |= 1UL << (r * 8 + f);
-            }
         }
 
         // Anti-diagonal (negative slope, rank + file = constant)
-        for (int r = 0; r < 8; r++)
+        for (var r = 0; r < 8; r++)
         {
-            int f = file - (r - rank);
+            var f = file - (r - rank);
             if (f >= 0 && f < 8 && r != rank) // Valid file and skip the square itself
-            {
                 mask |= 1UL << (r * 8 + f);
-            }
         }
 
         return mask;
@@ -446,22 +396,16 @@ public static unsafe class AttackTables
 
         var index = 0;
         for (var i = 0; i < 64; i++)
-        {
             if (((movementMask >> i) & 1) == 1)
-            {
                 indices[index++] = i;
-            }
-        }
 
         var blockerBitBoards = new ulong[numPatterns];
 
         for (var patternIndex = 0; patternIndex < numPatterns; patternIndex++)
+        for (var bitIndex = 0; bitIndex < indicesCount; bitIndex++)
         {
-            for (var bitIndex = 0; bitIndex < indicesCount; bitIndex++)
-            {
-                var bit = (patternIndex >> bitIndex) & 1;
-                blockerBitBoards[patternIndex] |= (ulong)bit << indices[bitIndex];
-            }
+            var bit = (patternIndex >> bitIndex) & 1;
+            blockerBitBoards[patternIndex] |= (ulong)bit << indices[bitIndex];
         }
 
         return blockerBitBoards;
@@ -488,10 +432,7 @@ public static unsafe class AttackTables
         {
             currentPos <<= 8;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -505,10 +446,7 @@ public static unsafe class AttackTables
         {
             currentPos >>= 8;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -522,10 +460,7 @@ public static unsafe class AttackTables
         {
             currentPos >>= 1;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -539,10 +474,7 @@ public static unsafe class AttackTables
         {
             currentPos <<= 1;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -570,10 +502,7 @@ public static unsafe class AttackTables
         {
             currentPos <<= 9;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -588,10 +517,7 @@ public static unsafe class AttackTables
         {
             currentPos <<= 7;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -606,10 +532,7 @@ public static unsafe class AttackTables
         {
             currentPos >>= 7;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -624,10 +547,7 @@ public static unsafe class AttackTables
         {
             currentPos >>= 9;
             rayMoves |= currentPos;
-            if ((currentPos & blockers) != 0)
-            {
-                break;
-            }
+            if ((currentPos & blockers) != 0) break;
         }
 
         return rayMoves;
@@ -644,9 +564,7 @@ public static unsafe class AttackTables
         Span<ulong> legalMoves = stackalloc ulong[blockers.Length];
         var position = 1UL << square;
         for (var j = 0; j < blockers.Length; j++)
-        {
             legalMoves[j] = CalculateBishopLegalMoveBitBoard(position, blockers[j]);
-        }
 
         var relevantBits = (byte)Popcnt.X64.PopCount(movementMask);
         Span<ulong> usedAttacks = stackalloc ulong[1 << relevantBits];
@@ -679,10 +597,7 @@ public static unsafe class AttackTables
                 }
             }
 
-            if (isMagic)
-            {
-                break;
-            }
+            if (isMagic) break;
         }
 
         return new MagicBitBoard(magic, movementMask, indexBits, usedAttacks.ToArray());
@@ -698,10 +613,7 @@ public static unsafe class AttackTables
         // Calculate all possible legal moves for each blocker arrangement
         Span<ulong> legalMoves = stackalloc ulong[blockers.Length];
         var position = 1UL << square;
-        for (var j = 0; j < blockers.Length; j++)
-        {
-            legalMoves[j] = CalculateRookLegalMoveBitBoard(position, blockers[j]);
-        }
+        for (var j = 0; j < blockers.Length; j++) legalMoves[j] = CalculateRookLegalMoveBitBoard(position, blockers[j]);
 
         var relevantBits = (byte)Popcnt.X64.PopCount(movementMask);
         Span<ulong> usedAttacks = stackalloc ulong[1 << relevantBits];
@@ -734,10 +646,7 @@ public static unsafe class AttackTables
                 }
             }
 
-            if (isMagic)
-            {
-                break;
-            }
+            if (isMagic) break;
         }
 
         return new MagicBitBoard(magic, movementMask, indexBits, usedAttacks.ToArray());

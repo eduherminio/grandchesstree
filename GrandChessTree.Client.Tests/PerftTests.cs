@@ -1,6 +1,4 @@
-using GreatPerft;
-
-namespace Tests
+namespace GrandChessTree.Client.Tests
 {
     public class PerftTests
     {
