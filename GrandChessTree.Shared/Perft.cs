@@ -1,4 +1,7 @@
-﻿using System.Runtime.Intrinsics.X86;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using GrandChessTree.Client.Tables;
 
 namespace GrandChessTree.Client;
@@ -14,15 +17,71 @@ public static unsafe class Perft
     public const ulong WhiteQueenSideCastleRookPosition = 1UL;
     public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
 
-
-    public static void PerftRoot(ref Board board, ref Summary summary, int depth, bool whiteToMove)
+    public static unsafe uint CalculateTranspositionTableSize(int sizeInMb)
     {
+        var transpositionCount = (ulong)sizeInMb * 1024ul * 1024ul / (ulong)sizeof(Summary);
+        if (!BitOperations.IsPow2(transpositionCount))
+        {
+            transpositionCount = BitOperations.RoundUpToPowerOf2(transpositionCount) >> 1;
+        }
+
+        if (transpositionCount > int.MaxValue)
+        {
+            throw new ArgumentException("Transposition table too large");
+        }
+
+        return (uint)transpositionCount;
+    }
+
+    public static unsafe Summary* AllocateTranspositions(nuint items)
+    {
+        const nuint alignment = 64;
+
+        nuint bytes = ((nuint)sizeof(Summary) * (nuint)items);
+        void* block = NativeMemory.AlignedAlloc(bytes, alignment);
+        NativeMemory.Clear(block, bytes);
+
+        return (Summary*)block;
+    }
+
+    public static readonly Summary* SumTT;
+    public static readonly uint SumTTMask;
+    static Perft()
+    {
+        var transpositionSize = (int)Perft.CalculateTranspositionTableSize(1024);
+        SumTT = Perft.AllocateTranspositions((nuint)transpositionSize);
+        SumTTMask = (uint)transpositionSize - 1;
+    }
+
+    public static unsafe void ClearTable()
+    {
+        Unsafe.InitBlock(SumTT, 0, (uint)(sizeof(Summary) * (SumTTMask + 1)));
+
+    }
+
+    public static int dupecount = 0;
+    public static Summary PerftRoot(ref Board board, int depth, bool whiteToMove)
+    {
+        var ttEntry = *(SumTT + (board.Hash & SumTTMask));
+        if (ttEntry.FullHash == board.Hash && depth == ttEntry.Depth && ttEntry.Occupancy == (board.Occupancy))
+        {
+            dupecount++;
+            //return ttEntry;
+        }
+
+        Summary summary = default;
+        summary.FullHash = board.Hash;
+        summary.Depth = depth;
+        summary.Occupancy = board.Occupancy;
+
+
         if (whiteToMove)
         {
             if (depth == 0)
             {
                 summary.Nodes++;
-                return;
+                //*(SumTT + (board.Hash & SumTTMask)) = summary;
+                return summary;
             }
 
             board.Checkers = board.BlackCheckers();
@@ -36,8 +95,6 @@ public static unsafe class Perft
                 board.CaptureMask = board.Checkers;
                 board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
             }
-
-            var oldNodes = summary.Nodes;
 
             var positions = board.WhitePawn;
             while (positions != 0) PerftWhitePawn(ref board, ref summary, depth, positions.PopLSB());
@@ -56,15 +113,18 @@ public static unsafe class Perft
 
             positions = board.WhiteKing;
             while (positions != 0) PerftWhiteKing(ref board, ref summary, depth, positions.PopLSB());
+            *(SumTT + (board.Hash & SumTTMask)) = summary;
 
-            if (oldNodes == summary.Nodes) summary.CheckMates++;
+            return summary;
         }
         else
         {
             if (depth == 0)
             {
                 summary.Nodes++;
-                return;
+                //*(SumTT + (board.Hash & SumTTMask)) = summary;
+
+                return summary;
             }
             board.Checkers = board.WhiteCheckers();
             board.NumCheckers = ulong.PopCount(board.Checkers);
@@ -97,7 +157,8 @@ public static unsafe class Perft
             positions = board.BlackKing;
             while (positions != 0) PerftBlackKing(ref board, ref summary, depth, positions.PopLSB());
 
-            if (depth == 1 && oldNodes == summary.Nodes) summary.CheckMates++;
+            //*(SumTT + (board.Hash & SumTTMask)) = summary;
+            return summary;
         }
     }
 
@@ -150,14 +211,30 @@ public static unsafe class Perft
             return;
         }
 
+        var ptr = (SumTT + (board.Hash & SumTTMask));
+        var ttEntry = *ptr;
+        if (ttEntry.FullHash == board.Hash && depth == ttEntry.Depth && ttEntry.Occupancy == (board.Occupancy))
+        {
+            dupecount++;
+            summary.Accumulate(ttEntry);
+            return;
+        }
+
+        Summary sum2 = default;
+        sum2.FullHash = board.Hash;
+        sum2.Depth = depth;
+        sum2.Occupancy = board.Occupancy;
+
         board.AttackedSquares = board.WhiteKingDangerSquares();
 
         var positions = board.WhiteKing;
-        while (positions != 0) PerftWhiteKing(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhiteKing(ref board, ref sum2, depth, positions.PopLSB());
 
         if (board.NumCheckers > 1)
         {
             // Only a king move can evade double check
+            summary.Accumulate(sum2);
+            *ptr = sum2;
             return;
         }
 
@@ -171,21 +248,22 @@ public static unsafe class Perft
         }
 
         positions = board.WhitePawn;
-        while (positions != 0) PerftWhitePawn(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhitePawn(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.WhiteKnight;
-        while (positions != 0) PerftWhiteKnight(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhiteKnight(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.WhiteBishop;
-        while (positions != 0) PerftWhiteBishop(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhiteBishop(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.WhiteRook;
-        while (positions != 0) PerftWhiteRook(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhiteRook(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.WhiteQueen;
-        while (positions != 0) PerftWhiteQueen(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftWhiteQueen(ref board, ref sum2, depth, positions.PopLSB());
 
-
+        summary.Accumulate(sum2);
+        *ptr = sum2;
     }
 
     public static void PerftBlack(ref Board board, ref Summary summary, int depth, int prevDestination)
@@ -238,14 +316,30 @@ public static unsafe class Perft
             return;
         }
 
+        var ptr = (SumTT + (board.Hash & SumTTMask));
+        var ttEntry = *ptr;
+        if (ttEntry.FullHash == board.Hash && ttEntry.Occupancy == (board.Occupancy) && depth == ttEntry.Depth)
+        {
+            dupecount++;
+            summary.Accumulate(ttEntry);
+            return;
+        }
+
+        Summary sum2 = default;
+        sum2.FullHash = board.Hash;
+        sum2.Depth = depth;
+        sum2.Occupancy = board.Occupancy;
+
         board.AttackedSquares = board.BlackKingDangerSquares();
 
         var positions = board.BlackKing;
-        while (positions != 0) PerftBlackKing(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackKing(ref board, ref sum2, depth, positions.PopLSB());
 
         if (board.NumCheckers > 1)
         {
             // Only a king move can evade double check
+            summary.Accumulate(sum2);
+            *ptr = sum2;
             return;
         }
 
@@ -260,19 +354,22 @@ public static unsafe class Perft
         }
 
         positions = board.BlackPawn;
-        while (positions != 0) PerftBlackPawn(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackPawn(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.BlackKnight;
-        while (positions != 0) PerftBlackKnight(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackKnight(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.BlackBishop;
-        while (positions != 0) PerftBlackBishop(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackBishop(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.BlackRook;
-        while (positions != 0) PerftBlackRook(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackRook(ref board, ref sum2, depth, positions.PopLSB());
 
         positions = board.BlackQueen;
-        while (positions != 0) PerftBlackQueen(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) PerftBlackQueen(ref board, ref sum2, depth, positions.PopLSB());
+
+        summary.Accumulate(sum2);
+        *ptr = sum2;
     }
 
     public static void PerftWhitePawn(ref Board board, ref Summary summary, int depth, int index)

@@ -16,9 +16,7 @@ public static unsafe class MoveGenerator
 
     public static Board[] PerftRoot(ref Board board, int depth, bool whiteToMove)
     {
-        Summary summary = default;
-
-        Perft.PerftRoot(ref board, ref summary, depth, whiteToMove);
+        var summary = Perft.PerftRoot(ref board, depth, whiteToMove);
 
         var output = new Board[summary.Nodes];
         var boards = new Span<Board>(output);
@@ -63,6 +61,12 @@ public static unsafe class MoveGenerator
 
             positions = board.BlackKing;
             while (positions != 0) PerftBlackKing(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
+        }
+
+        var leafNodeWhiteToMove = depth % 2 == 0 ? whiteToMove : !whiteToMove;
+        for(int i = 0; i < boards.Length; i++)
+        {
+            output[i].Hash = Zobrist.CalculateZobristKey(ref output[i], leafNodeWhiteToMove);
         }
 
         return output;

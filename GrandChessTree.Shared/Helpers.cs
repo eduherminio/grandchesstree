@@ -30,7 +30,7 @@ public static class Helpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetPiece(this ref Board board, int square)
+    public static byte GetPiece(this ref Board board, int square)
     {
         if ((board.Occupancy & (1UL << square)) == 0) return 0;
 
