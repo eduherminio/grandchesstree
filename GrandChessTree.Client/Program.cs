@@ -21,7 +21,7 @@ Parallel.For(0, boards.Length, new ParallelOptions { MaxDegreeOfParallelism = En
 {
     Summary summary = default;
     var innerBoard = boards[i];
-    Perft.PerftRoot(ref innerBoard, ref summary, 7, true);
+    Perft.PerftRoot(ref innerBoard, ref summary, 5, true);
 
     lock (locker)
     {

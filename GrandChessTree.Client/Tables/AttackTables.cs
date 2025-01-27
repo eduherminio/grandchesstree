@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
@@ -35,6 +37,10 @@ public static unsafe class AttackTables
     private static readonly ulong* RookPextOffset;
 
     public static readonly ulong* LineBitBoards;
+    public static readonly ulong* LineBitBoardsStraight;
+    public static readonly ulong* LineBitBoardsDiagonal;
+    public static readonly ulong* LineBitBoardsStraightToEdge;
+    public static readonly ulong* LineBitBoardsDiagonalToEdge;
     public static readonly ulong* LineBitBoardsInclusive;
 
     static AttackTables()
@@ -49,6 +55,10 @@ public static unsafe class AttackTables
         RookAttackMasks = Allocate<ulong>(64);
         BishopAttackMasks = Allocate<ulong>(64);
         LineBitBoards = Allocate<ulong>(64 * 64);
+        LineBitBoardsStraight = Allocate<ulong>(64 * 64);
+        LineBitBoardsDiagonal = Allocate<ulong>(64 * 64);
+        LineBitBoardsStraightToEdge = Allocate<ulong>(64 * 64);
+        LineBitBoardsDiagonalToEdge = Allocate<ulong>(64 * 64);
         LineBitBoardsInclusive = Allocate<ulong>(64 * 64);
         var rand = Random.Shared;
         for (var i = 0; i < 64; i++)
@@ -156,6 +166,10 @@ public static unsafe class AttackTables
         {
             CalculateLineBitBoard(i, j);
             CalculateLineBitBoardInclusive(i, j);
+                CalculateLineBitBoardStraight(i, j);
+                CalculateLineBitBoardDiagonal(i, j); 
+                CalculateLineToEdgeBitBoardStraight(i, j);
+                CalculateLineToEdgeBitBoardDiagonal(i, j);
         }
     }
 
@@ -192,7 +206,7 @@ public static unsafe class AttackTables
         // If i and j are the same, return a bitboard with just that square
         if (i == j)
         {
-            LineBitBoards[i * 64 + j] = 1UL << i;
+            LineBitBoardsInclusive[i * 64 + j] = 1UL << i;
             return;
         }
 
@@ -298,6 +312,161 @@ public static unsafe class AttackTables
         LineBitBoards[i * 64 + j] = bitboard;
     }
 
+    private static void CalculateLineBitBoardStraight(int i, int j)
+    {
+        // Convert squares i and j to (rank, file) coordinates
+        int rank1 = i / 8, file1 = i % 8;
+        int rank2 = j / 8, file2 = j % 8;
+
+        var bitboard = 0UL;
+
+        // Same rank (horizontal line)
+        if (rank1 == rank2)
+        {
+            var minFile = Math.Min(file1, file2);
+            var maxFile = Math.Max(file1, file2);
+            for (var file = minFile; file <= maxFile; file++) bitboard |= 1UL << (rank1 * 8 + file);
+        }
+        // Same file (vertical line)
+        else if (file1 == file2)
+        {
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++) bitboard |= 1UL << (rank * 8 + file1);
+        }
+
+        bitboard &= ~(1UL << i);
+        bitboard &= ~(1UL << j);
+
+        LineBitBoardsStraight[i * 64 + j] = bitboard;
+    }
+
+    private static void CalculateLineBitBoardDiagonal(int i, int j)
+    {
+        // Convert squares i and j to (rank, file) coordinates
+        int rank1 = i / 8, file1 = i % 8;
+        int rank2 = j / 8, file2 = j % 8;
+
+        var bitboard = 0UL;
+
+
+        // Same diagonal (positive slope)
+        if (rank1 - file1 == rank2 - file2)
+        {
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
+            {
+                var file = rank - (rank1 - file1); // file along the same diagonal
+                bitboard |= 1UL << (rank * 8 + file);
+            }
+        }
+        // Same anti-diagonal (negative slope)
+        else if (rank1 + file1 == rank2 + file2)
+        {
+            var minRank = Math.Min(rank1, rank2);
+            var maxRank = Math.Max(rank1, rank2);
+            for (var rank = minRank; rank <= maxRank; rank++)
+            {
+                var file = rank1 + file1 - rank; // file along the same anti-diagonal
+                bitboard |= 1UL << (rank * 8 + file);
+            }
+        }
+
+        bitboard &= ~(1UL << i);
+        bitboard &= ~(1UL << j);
+
+        LineBitBoardsDiagonal[i * 64 + j] = bitboard;
+    }
+
+    private static void CalculateLineToEdgeBitBoardStraight(int i, int j)
+    {
+        // Convert squares i and j to (rank, file) coordinates
+        int rank1 = i / 8, file1 = i % 8;
+        int rank2 = j / 8, file2 = j % 8;
+
+        var bitboard = 0UL;
+
+        // Horizontal ray (same rank)
+        if (rank1 == rank2)
+        {
+            // Determine direction: left or right
+            if (file1 < file2)  // Rightward
+            {
+                for (var file = file1; file < 8; file++)
+                    bitboard |= 1UL << (rank1 * 8 + file);
+            }
+            else // Leftward
+            {
+                for (var file = file1; file >= 0; file--)
+                    bitboard |= 1UL << (rank1 * 8 + file);
+            }
+        }
+        // Vertical ray (same file)
+        else if (file1 == file2)
+        {
+            // Determine direction: up or down
+            if (rank1 < rank2)  // Downward
+            {
+                for (var rank = rank1; rank < 8; rank++)
+                    bitboard |= 1UL << (rank * 8 + file1);
+            }
+            else  // Upward
+            {
+                for (var rank = rank1; rank >= 0; rank--)
+                    bitboard |= 1UL << (rank * 8 + file1);
+            }
+        }
+
+        // Remove the origin and target squares
+        bitboard &= ~(1UL << i);
+        bitboard &= ~(1UL << j);
+
+        LineBitBoardsStraightToEdge[i * 64 + j] = bitboard;
+    }
+
+
+    private static void CalculateLineToEdgeBitBoardDiagonal(int i, int j)
+    {
+        // Convert squares i and j to (rank, file) coordinates
+        int rank1 = i / 8, file1 = i % 8;
+        int rank2 = j / 8, file2 = j % 8;
+
+        var bitboard = 0UL;
+
+        // Positive slope diagonal (↘ / top-left to bottom-right)
+        if (rank1 - file1 == rank2 - file2)
+        {
+            int startRank = Math.Max(rank1 - Math.Min(rank1, file1), 0);
+            int startFile = Math.Max(file1 - Math.Min(rank1, file1), 0);
+
+            while (startRank < 8 && startFile < 8)
+            {
+                bitboard |= 1UL << (startRank * 8 + startFile);
+                startRank++;
+                startFile++;
+            }
+        }
+        // Negative slope diagonal (↙ / top-right to bottom-left)
+        else if (rank1 + file1 == rank2 + file2)
+        {
+            int startRank = Math.Min(rank1 + file1, 7);
+            int startFile = Math.Max(rank1 + file1 - 7, 0);
+
+            while (startRank >= 0 && startFile < 8)
+            {
+                bitboard |= 1UL << (startRank * 8 + startFile);
+                startRank--;
+                startFile++;
+            }
+        }
+
+        // Remove the origin and target squares
+        bitboard &= ~(1UL << i);
+        bitboard &= ~(1UL << j);
+
+        LineBitBoardsDiagonalToEdge[i * 64 + j] = bitboard;
+    }
 
     public static ulong RookAttackMask(int square)
     {
@@ -712,5 +881,176 @@ public static unsafe class AttackTables
                (*(KnightAttackTable + index) & board.BlackKnight) |
                (*(WhitePawnAttackTable + index) & board.BlackPawn) |
                (*(KingAttackTable + index) & board.BlackKing);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong WhiteCheckerRays(this ref Board board)
+    {
+        var index = board.BlackKingPos;
+        return (PextBishopAttacks(board.Occupancy, index) &
+                (board.WhiteBishop | board.WhiteQueen)) |
+               (PextRookAttacks(board.Occupancy, index) & (board.WhiteRook | board.WhiteQueen)) |
+               (*(KnightAttackTable + index) & board.WhiteKnight) |
+               (*(BlackPawnAttackTable + index) & board.WhitePawn) |
+               (*(KingAttackTable + index) & board.WhiteKing);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong BlackCheckerRay(this ref Board board)
+    {
+        var index = board.WhiteKingPos;
+        return (PextBishopAttacks(board.Occupancy, index) &
+                (board.BlackBishop | board.BlackQueen)) |
+               (PextRookAttacks(board.Occupancy, index) & (board.BlackRook | board.BlackQueen)) |
+               (*(KnightAttackTable + index) & board.BlackKnight) |
+               (*(WhitePawnAttackTable + index) & board.BlackPawn) |
+               (*(KingAttackTable + index) & board.BlackKing);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong WhiteKingDangerSquares(this ref Board board)
+    {
+        var attackers = 0ul;
+
+        var occupancy = board.Occupancy ^ board.WhiteKing;
+
+        var positions = board.BlackPawn;
+        while (positions != 0) attackers |= *(BlackPawnAttackTable + positions.PopLSB());
+
+        positions = board.BlackKnight;
+        while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
+
+        positions = board.BlackBishop;
+        while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
+
+        positions = board.BlackRook;
+        while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
+
+        positions = board.BlackQueen;
+        while (positions != 0)
+        {
+            var pos = positions.PopLSB();
+            attackers |= PextBishopAttacks(occupancy, pos) | PextRookAttacks(occupancy, pos);
+        }
+
+        positions = board.BlackKing;
+        while (positions != 0) attackers |= *(KingAttackTable + positions.PopLSB());
+
+        return attackers;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong BlackKingDangerSquares(this ref Board board)
+    {
+        var attackers = 0ul;
+
+        var occupancy = board.Occupancy ^ board.BlackKing;
+
+        var positions = board.WhitePawn;
+        while (positions != 0) attackers |= *(WhitePawnAttackTable + positions.PopLSB());
+
+        positions = board.WhiteKnight;
+        while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
+
+        positions = board.WhiteBishop;
+        while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
+
+        positions = board.WhiteRook;
+        while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
+
+        positions = board.WhiteQueen;
+        while (positions != 0)
+        {
+            var pos = positions.PopLSB();
+            attackers |= PextBishopAttacks(occupancy, pos) | PextRookAttacks(occupancy, pos);
+        }
+
+        positions = board.WhiteKing;
+        while (positions != 0) attackers |= *(KingAttackTable + positions.PopLSB());
+
+        return attackers;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong WhiteKingPinnedRay(this ref Board board)
+    {
+        ulong occupancy = board.Occupancy;
+        int kingPos = board.WhiteKingPos;
+
+        return DetectPinsDiagonal(kingPos, board.BlackBishop | board.BlackQueen, occupancy) | DetectPinsStraight(kingPos, board.BlackRook | board.BlackQueen, occupancy);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong BlackKingPinnedRay(this ref Board board)
+    {
+        ulong occupancy = board.Occupancy;
+        int kingPos = board.BlackKingPos;
+
+        return DetectPinsDiagonal(kingPos, board.WhiteBishop | board.WhiteQueen, occupancy) | DetectPinsStraight(kingPos, board.WhiteRook | board.WhiteQueen, occupancy);
+    }
+
+    // Utility function to detect pins along specific rays
+    private static ulong DetectPinsStraight(int kingPos, ulong enemySlidingPieces, ulong occupancy)
+    {
+        ulong pinned = 0ul;
+
+        while (enemySlidingPieces != 0)
+        {
+            int attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
+
+            // Calculate ray between king and attacker
+            ulong pinRay = GetRayBetweenStraight(kingPos, attackerPos) & occupancy;
+
+            // Count the number of pieces in the pinRay
+            if (ulong.PopCount(pinRay) == 1)
+            {
+                pinned |= pinRay; // The single blocking piece is pinned
+            }
+        }
+        return pinned;
+    }
+
+    private static ulong DetectPinsDiagonal(int kingPos, ulong enemySlidingPieces, ulong occupancy)
+    {
+        ulong pinned = 0ul;
+
+        while (enemySlidingPieces != 0)
+        {
+            int attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
+
+            // Calculate ray between king and attacker
+            ulong pinRay = GetRayBetweenDiagonal(kingPos, attackerPos) & occupancy;
+
+            // Count the number of pieces in the pinRay
+            if (ulong.PopCount(pinRay) == 1)
+            {
+                pinned |= pinRay; // The single blocking piece is pinned
+            }
+        }
+        return pinned;
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong GetRayBetweenStraight(int from, int to)
+    {
+        return *(AttackTables.LineBitBoardsStraight + from * 64 + to);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong GetRayBetweenDiagonal(int from, int to)
+    {
+        return *(AttackTables.LineBitBoardsDiagonal + from * 64 + to);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong GetRayToEdgeStraight(int from, int to)
+    {
+        return *(AttackTables.LineBitBoardsStraightToEdge + from * 64 + to);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong GetRayToEdgeDiagonal(int from, int to)
+    {
+        return *(AttackTables.LineBitBoardsDiagonalToEdge + from * 64 + to);
     }
 }

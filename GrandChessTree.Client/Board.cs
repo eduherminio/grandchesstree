@@ -36,6 +36,13 @@ public struct Board
     public int WhiteKingPos;
     public int BlackKingPos;
 
+    public ulong Checkers;
+    public ulong NumCheckers;
+    public ulong AttackedSquares;
+    public ulong CaptureMask;
+    public ulong PushMask;
+    public ulong PinMask;
+
     public void UpdateOccupancy()
     {
         White = WhitePawn |

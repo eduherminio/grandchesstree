@@ -1,4 +1,5 @@
-﻿using GrandChessTree.Client.Tables;
+﻿using System.Runtime.CompilerServices;
+using GrandChessTree.Client.Tables;
 
 namespace GrandChessTree.Client;
 
@@ -14,15 +15,8 @@ public static unsafe class MateChecker
     public const ulong WhiteQueenSideCastleRookPosition = 1UL;
     public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
 
-    public static void WhiteCheckTest(ref Board board, ref Summary summary)
+    public static void WhiteSingleCheckEvasionTest(ref Board board, ref Summary summary)
     {
-        if (board.IsAttackedByBlack(board.WhiteKingPos))
-            summary.AddCheck();
-        else
-            return;
-
-        var oldNodes = summary.Nodes;
-
         var positions = board.WhitePawn;
         while (positions != 0)
             if (PerftWhitePawn(ref board, positions.PopLSB()))
@@ -56,15 +50,17 @@ public static unsafe class MateChecker
         summary.AddMate();
     }
 
-    public static void BlackCheckTest(ref Board board, ref Summary summary)
+    public static void WhiteDoubleCheckEvasionTest(ref Board board, ref Summary summary)
     {
-        if (board.IsAttackedByWhite(board.BlackKingPos))
-            summary.AddCheck();
-        else
+        if (PerftWhiteKing(ref board, board.WhiteKingPos))
             return;
 
+        summary.AddMate();
+    }
 
-        var oldNodes = summary.Nodes;
+
+    public static void BlackSingleCheckEvasionTest(ref Board board, ref Summary summary)
+    {
         var positions = board.BlackPawn;
         while (positions != 0)
             if (PerftBlackPawn(ref board, positions.PopLSB()))
@@ -94,6 +90,14 @@ public static unsafe class MateChecker
         while (positions != 0)
             if (PerftBlackKing(ref board, positions.PopLSB()))
                 return;
+
+        summary.AddMate();
+    }
+
+    public static void BlackDoubleCheckEvasionTest(ref Board board, ref Summary summary)
+    {
+        if (PerftBlackKing(ref board, board.BlackKingPos))
+            return;
 
         summary.AddMate();
     }
@@ -212,153 +216,63 @@ public static unsafe class MateChecker
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftWhiteKnight(ref Board board, int index)
     {
-        Board newBoard = default;
-
-        var potentialMoves = *(AttackTables.KnightAttackTable + index);
-        var captureMoves = potentialMoves & board.Black;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKnight_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
+            return false;
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKnight_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        return false;
+        var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftWhiteBishop(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.Black;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteBishop_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
         }
-
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteBishop_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftWhiteRook(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.Black;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteRook_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteRook_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftWhiteQueen(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
+                             AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.Black;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteQueen_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
-
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteQueen_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftWhiteKing(ref Board board, int index)
     {
-        Board newBoard = default;
-
-        var potentialMoves = *(AttackTables.KingAttackTable + index);
-
-        var captureMoves = potentialMoves & board.Black;
-        while (captureMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        if (index != 4 || board.IsAttackedByBlack(board.WhiteKingPos))
-            // Can't castle if king is attacked or not on the starting position
-            return false;
-
-        if ((board.CastleRights & CastleRights.WhiteKingSide) != 0 &&
-            (board.WhiteRook & WhiteKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & WhiteKingSideCastleEmptyPositions) == 0 &&
-            !board.IsAttackedByBlack(6) &&
-            !board.IsAttackedByBlack(5))
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_KingSideCastle();
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        // Queen Side Castle
-        if ((board.CastleRights & CastleRights.WhiteQueenSide) != 0 &&
-            (board.WhiteRook & WhiteQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & WhiteQueenSideCastleEmptyPositions) == 0 &&
-            !board.IsAttackedByBlack(2) &&
-            !board.IsAttackedByBlack(3))
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_QueenSideCastle();
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
-        }
-
-        return false;
+        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
     }
 
 
@@ -476,153 +390,63 @@ public static unsafe class MateChecker
 
         return false;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftBlackKnight(ref Board board, int index)
     {
-        Board newBoard = default;
-
-        var potentialMoves = *(AttackTables.KnightAttackTable + index);
-        var captureMoves = potentialMoves & board.White;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKnight_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
+            return false;
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKnight_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
+        var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
 
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftBlackBishop(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.White;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackBishop_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackBishop_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftBlackRook(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.White;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackRook_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
-
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackRook_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftBlackQueen(ref Board board, int index)
     {
-        Board newBoard = default;
+        var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
+                             AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index);
-        var captureMoves = potentialMoves & board.White;
-        while (captureMoves != 0)
+        if ((board.PinMask & (1ul << index)) != 0)
         {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackQueen_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
+            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackQueen_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
-
-        return false;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
     }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool PerftBlackKing(ref Board board, int index)
     {
-        Board newBoard = default;
-
-        var potentialMoves = *(AttackTables.KingAttackTable + index);
-        var captureMoves = potentialMoves & board.White;
-        while (captureMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKing_Capture(index, captureMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
-
-        var emptyMoves = potentialMoves & ~board.Occupancy;
-        while (emptyMoves != 0)
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKing_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
-        }
-
-        if (index != 60 || board.IsAttackedByWhite(board.BlackKingPos))
-            // Can't castle if king is attacked or not on the starting position
-            return false;
-
-        // King Side Castle
-        if ((board.CastleRights & CastleRights.BlackKingSide) != 0 &&
-            (board.BlackRook & BlackKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & BlackKingSideCastleEmptyPositions) == 0 &&
-            !board.IsAttackedByWhite(61) &&
-            !board.IsAttackedByWhite(62))
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKing_KingSideCastle();
-            if (!newBoard.IsAttackedByWhite(62)) return true;
-        }
-
-        // Queen Side Castle
-        if ((board.CastleRights & CastleRights.BlackQueenSide) != 0 &&
-            (board.BlackRook & BlackQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & BlackQueenSideCastleEmptyPositions) == 0 &&
-            !board.IsAttackedByWhite(58) &&
-            !board.IsAttackedByWhite(59))
-        {
-            board.CloneTo(ref newBoard);
-            newBoard.BlackKing_QueenSideCastle();
-            if (!newBoard.IsAttackedByWhite(58)) return true;
-        }
-
-        return false;
+        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        // Return true if there are any valid capture or push moves available.
+        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
     }
 }
