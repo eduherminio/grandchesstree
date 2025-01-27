@@ -101,7 +101,7 @@ public static unsafe class Perft
         }
     }
 
-    public static void PerftWhite(ref Board board, ref Summary summary, int depth)
+    public static void PerftWhite(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
         board.Checkers = board.BlackCheckers();
         board.NumCheckers = ulong.PopCount(board.Checkers);
@@ -120,12 +120,28 @@ public static unsafe class Perft
                 }
                 board.AttackedSquares = board.WhiteKingDangerSquares();
 
-                summary.AddCheck();
+                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                {
+                    summary.AddDiscoveredCheck();
+                }
+                else
+                {
+                    summary.AddCheck();
+                }
+
                 MateChecker.WhiteSingleCheckEvasionTest(ref board, ref summary);
             }
             else if (board.NumCheckers > 1)
             {
-                summary.AddDoubleCheck();
+                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                {
+                    summary.AddDiscoveredCheck();
+                }
+                else
+                {
+                    summary.AddDoubleCheck();
+                }
+
                 board.AttackedSquares = board.WhiteKingDangerSquares();
                 MateChecker.WhiteDoubleCheckEvasionTest(ref board, ref summary);
             }
@@ -172,7 +188,7 @@ public static unsafe class Perft
 
     }
 
-    public static void PerftBlack(ref Board board, ref Summary summary, int depth)
+    public static void PerftBlack(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
         board.Checkers = board.WhiteCheckers();
         board.NumCheckers = ulong.PopCount(board.Checkers);
@@ -192,13 +208,28 @@ public static unsafe class Perft
                 }
                 board.AttackedSquares = board.BlackKingDangerSquares();
 
+                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                {
+                    summary.AddDiscoveredCheck();
+                }
+                else
+                {
+                    summary.AddCheck();
+                }
 
-                summary.AddCheck();
                 MateChecker.BlackSingleCheckEvasionTest(ref board, ref summary);
             }
             else if (board.NumCheckers > 1)
             {
-                summary.AddDoubleCheck();
+                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                {
+                    summary.AddDiscoveredCheck();
+                }
+                else
+                {
+                    summary.AddDoubleCheck();
+                }
+
                 board.AttackedSquares = board.BlackKingDangerSquares();
                 MateChecker.BlackDoubleCheckEvasionTest(ref board, ref summary);
             }
@@ -250,21 +281,23 @@ public static unsafe class Perft
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsWhiteEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhitePawn_Enpassant(index);
+            toSquare = Board.BlackWhiteEnpassantOffset + board.EnPassantFile;
+
+            newBoard.WhitePawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             {
                 if (depth == 1) summary.AddEnpassant();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
+                PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
             }
         }
 
         var canPromote = rankIndex.IsSeventhRank();
-        int toSquare;
 
         // Take left piece
         var target = posEncoded.ShiftUpLeft();
@@ -278,7 +311,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -286,7 +319,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -294,7 +327,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -302,7 +335,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
             else
@@ -312,7 +345,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
         }
@@ -329,7 +362,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -337,7 +370,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -345,7 +378,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -353,7 +386,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
             else
@@ -363,7 +396,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
+                    PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
         }
@@ -382,7 +415,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
+                PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -390,7 +423,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
+                PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -398,7 +431,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
+                PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -406,7 +439,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
+                PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             return;
@@ -414,14 +447,15 @@ public static unsafe class Perft
 
         board.CloneTo(ref newBoard);
         newBoard.WhitePawn_Move(index, toSquare);
-        if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+        if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         target = target.ShiftUp();
         if (rankIndex.IsSecondRank() && (board.Occupancy & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
-            newBoard.WhitePawn_DoublePush(index, toSquare.ShiftUp());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = toSquare.ShiftUp();
+            newBoard.WhitePawn_DoublePush(index, toSquare);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -432,23 +466,26 @@ public static unsafe class Perft
             return;
         }
 
+        int toSquare;
         Board newBoard = default;
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteKnight_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.WhiteKnight_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteKnight_Move(index, emptyMoves.PopLSB());
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+            newBoard.WhiteKnight_Move(index, toSquare);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -463,21 +500,24 @@ public static unsafe class Perft
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
         }
 
+        int toSquare;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteBishop_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.WhiteBishop_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteBishop_Move(index, emptyMoves.PopLSB());
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+            newBoard.WhiteBishop_Move(index, toSquare);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -491,22 +531,24 @@ public static unsafe class Perft
         {
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
-
+        int toSquare;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteRook_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.WhiteRook_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteRook_Move(index, emptyMoves.PopLSB());
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+            newBoard.WhiteRook_Move(index, toSquare);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -521,22 +563,24 @@ public static unsafe class Perft
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
-
+        int toSquare;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteQueen_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.WhiteQueen_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteQueen_Move(index, emptyMoves.PopLSB());
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+            newBoard.WhiteQueen_Move(index, toSquare);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -545,22 +589,24 @@ public static unsafe class Perft
         Board newBoard = default;
 
         var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
-
+        int toSquare;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.WhiteKing_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhiteKing_Move(index, emptyMoves.PopLSB());
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+            newBoard.WhiteKing_Move(index, toSquare);
+            PerftBlack(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         if (index != 4 || board.NumCheckers > 0)
@@ -576,7 +622,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_KingSideCastle();
             if (depth == 1) summary.AddCastle();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, 5);
         }
 
         // Queen Side Castle
@@ -589,7 +635,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_QueenSideCastle();
             if (depth == 1) summary.AddCastle();
-            PerftBlack(ref newBoard, ref summary, depth - 1);
+            PerftBlack(ref newBoard, ref summary, depth - 1, 3);
         }
     }
 
@@ -600,21 +646,23 @@ public static unsafe class Perft
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsBlackEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackPawn_Enpassant(index);
+            toSquare = Board.blackEnpassantOffset + board.EnPassantFile;
+
+            newBoard.BlackPawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             {
                 if (depth == 1) summary.AddEnpassant();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
+                PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
             }
         }
 
         var canPromote = rankIndex.IsSecondRank();
-        int toSquare;
 
         // Left capture
         var target = posEncoded.ShiftDownLeft();
@@ -628,7 +676,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -636,7 +684,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -644,7 +692,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -652,7 +700,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
             else
@@ -662,7 +710,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
         }
@@ -680,7 +728,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -688,7 +736,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -696,7 +744,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
 
                 board.CloneTo(ref newBoard);
@@ -704,7 +752,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
             else
@@ -714,7 +762,7 @@ public static unsafe class Perft
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
                 {
                     if (depth == 1) summary.AddCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
+                    PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
                 }
             }
         }
@@ -733,7 +781,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
+                PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -741,7 +789,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
+                PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -749,7 +797,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
+                PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             board.CloneTo(ref newBoard);
@@ -757,7 +805,7 @@ public static unsafe class Perft
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             {
                 if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
+                PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
             return;
@@ -766,14 +814,16 @@ public static unsafe class Perft
         // Move down
         board.CloneTo(ref newBoard);
         newBoard.BlackPawn_Move(index, toSquare);
-        if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+        if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
+
         target = target.ShiftDown();
         if (rankIndex.IsSeventhRank() && (board.Occupancy & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
-            newBoard.BlackPawn_DoublePush(index, toSquare.ShiftDown());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = toSquare.ShiftDown();
+            newBoard.BlackPawn_DoublePush(index, toSquare);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -785,23 +835,28 @@ public static unsafe class Perft
         }
 
         Board newBoard = default;
+        int toSquare;
 
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackKnight_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+
+            newBoard.BlackKnight_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackKnight_Move(index, emptyMoves.PopLSB());
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+
+            newBoard.BlackKnight_Move(index, toSquare);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -815,22 +870,27 @@ public static unsafe class Perft
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
         }
+        int toSquare;
 
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackBishop_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+
+            newBoard.BlackBishop_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackBishop_Move(index, emptyMoves.PopLSB());
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+
+            newBoard.BlackBishop_Move(index, toSquare);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -844,22 +904,27 @@ public static unsafe class Perft
         {
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
+        int toSquare;
 
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackRook_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+
+            newBoard.BlackRook_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackRook_Move(index, emptyMoves.PopLSB());
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+
+            newBoard.BlackRook_Move(index, toSquare);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -874,22 +939,27 @@ public static unsafe class Perft
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
+        int toSquare;
 
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackQueen_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+
+            newBoard.BlackQueen_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackQueen_Move(index, emptyMoves.PopLSB());
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+
+            newBoard.BlackQueen_Move(index, toSquare);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
     }
 
@@ -898,21 +968,26 @@ public static unsafe class Perft
         Board newBoard = default;
 
         var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        int toSquare;
+
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackKing_Capture(index, captureMoves.PopLSB());
+            toSquare = captureMoves.PopLSB();
+            newBoard.BlackKing_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackKing_Move(index, emptyMoves.PopLSB());
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            toSquare = emptyMoves.PopLSB();
+
+            newBoard.BlackKing_Move(index, toSquare);
+            PerftWhite(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
         if (index != 60 || board.NumCheckers > 0)
@@ -929,7 +1004,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_KingSideCastle();
             if (depth == 1) summary.AddCastle();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, 61);
         }
 
         // Queen Side Castle
@@ -942,7 +1017,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_QueenSideCastle();
             if (depth == 1) summary.AddCastle();
-            PerftWhite(ref newBoard, ref summary, depth - 1);
+            PerftWhite(ref newBoard, ref summary, depth - 1, 59);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace GrandChessTree.Client.Tests
         [InlineData(2, 400, 0, 0, 0, 0, 0, 0, 0, 0)]
         [InlineData(3, 8_902, 34, 0, 0, 0, 12, 0, 0, 0)]
         [InlineData(4, 197_281, 1576, 0, 0, 0, 469, 0, 0, 8)]
-        [InlineData(5, 4_865_609, 82_719, 258, 0, 0, 27_351, 0, 0, 347)]
+        [InlineData(5, 4_865_609, 82_719, 258, 0, 0, 27_351, 6, 0, 347)]
         public void InitialPosition_Perft_Returns_Expected_Summary(byte depth, ulong nodes, ulong captures, ulong enpassant, ulong castles, ulong promotions, ulong checks, ulong discoveryChecks, ulong doubleChecks, ulong checkMates)
         {
             // Given
@@ -16,7 +16,7 @@ namespace GrandChessTree.Client.Tests
             Summary summary = default;
 
             // When
-            Perft.PerftWhite(ref board, ref summary, depth);
+            Perft.PerftRoot(ref board, ref summary, depth, true);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -34,7 +34,7 @@ namespace GrandChessTree.Client.Tests
         [InlineData(1, 48, 8, 0, 2, 0, 0, 0, 0, 0)]
         [InlineData(2, 2039, 351, 1, 91, 0, 3, 0, 0, 0)]
         [InlineData(3, 97862, 17102, 45, 3162, 0, 993, 0, 0, 1)]
-        [InlineData(4, 4_085_603, 757163, 1929, 128013, 15172, 25523, 0, 6, 43)]
+        [InlineData(4, 4_085_603, 757163, 1929, 128013, 15172, 25523, 42, 6, 43)]
         public void Position2_Perft_Returns_Expected_Summary(byte depth, ulong nodes, ulong captures, ulong enpassant, ulong castles, ulong promotions, ulong checks, ulong discoveryChecks, ulong doubleChecks, ulong checkMates)
         {
             // Given
@@ -42,7 +42,7 @@ namespace GrandChessTree.Client.Tests
             Summary summary = default;
 
             // When
-            Perft.PerftWhite(ref board, ref summary, depth);
+            Perft.PerftRoot(ref board, ref summary, depth, true);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -59,10 +59,10 @@ namespace GrandChessTree.Client.Tests
         [Theory]
         [InlineData(1, 14, 1, 0, 0, 0, 2, 0, 0, 0)]
         [InlineData(2, 191, 14, 0, 0, 0, 10, 0, 0, 0)]
-        [InlineData(3, 2812, 209, 2, 0, 0, 267, 0, 0, 0)]
-        [InlineData(4, 43238, 3348, 123, 0, 0, 1680, 0, 0, 17)]
-        [InlineData(5, 674624, 52051, 1165, 0, 0, 52950, 0, 3, 0)]
-        [InlineData(6, 11_030_083, 940350, 33325, 0, 7552, 452473, 0, 0, 2733)]
+        [InlineData(3, 2812, 209, 2, 0, 0, 267, 3, 0, 0)]
+        [InlineData(4, 43238, 3348, 123, 0, 0, 1680, 106, 0, 17)]
+        [InlineData(5, 674624, 52051, 1165, 0, 0, 52950, 1292, 3, 0)]
+        [InlineData(6, 11_030_083, 940350, 33325, 0, 7552, 452473, 26067, 0, 2733)]
         public void Position3_Perft_Returns_Expected_Summary(byte depth, ulong nodes, ulong captures, ulong enpassant, ulong castles, ulong promotions, ulong checks, ulong discoveryChecks, ulong doubleChecks, ulong checkMates)
         {
             // Given
@@ -70,7 +70,7 @@ namespace GrandChessTree.Client.Tests
             Summary summary = default;
 
             // When
-            Perft.PerftWhite(ref board, ref summary, depth);
+            Perft.PerftRoot(ref board, ref summary, depth, true);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -87,9 +87,9 @@ namespace GrandChessTree.Client.Tests
         [Theory]
         [InlineData(1, 6, 0, 0, 0, 0, 0, 0, 0, 0)]
         [InlineData(2, 264, 87, 0, 6, 48, 10, 0, 0, 0)]
-        [InlineData(3, 9467, 1021, 4, 0, 120, 38, 0, 0, 22)]
-        [InlineData(4, 422333, 131393, 0, 7795, 60032, 15492, 0, 0, 5)]
-        [InlineData(5, 15_833_292, 2046173, 6512, 0, 329464, 200568, 0, 50, 50562)]
+        [InlineData(3, 9467, 1021, 4, 0, 120, 38, 2, 0, 22)]
+        [InlineData(4, 422333, 131393, 0, 7795, 60032, 15492, 19, 0, 5)]
+        [InlineData(5, 15_833_292, 2046173, 6512, 0, 329464, 200568, 11621, 50, 50562)]
         public void Position4_Perft_Returns_Expected_Summary(byte depth, ulong nodes, ulong captures, ulong enpassant, ulong castles, ulong promotions, ulong checks, ulong discoveryChecks, ulong doubleChecks, ulong checkMates)
         {
             // Given
@@ -97,7 +97,7 @@ namespace GrandChessTree.Client.Tests
             Summary summary = default;
 
             // When
-            Perft.PerftBlack(ref board, ref summary, depth);
+            Perft.PerftRoot(ref board, ref summary, depth, false);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);

@@ -63,11 +63,10 @@ public struct Board
 
     #region moves
 
-    private const int BlackWhiteEnpassantOffset = 5 * 8;
+    public const int BlackWhiteEnpassantOffset = 5 * 8;
 
-    public void WhitePawn_Enpassant(int fromSquare)
+    public void WhitePawn_Enpassant(int fromSquare, int toSquare)
     {
-        var toSquare = BlackWhiteEnpassantOffset + EnPassantFile;
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
 
         WhitePawn ^= moveMask;
@@ -608,11 +607,10 @@ public struct Board
         BlackKingPos = 58;
     }
 
-    private const int blackEnpassantOffset = 2 * 8;
+    public const int blackEnpassantOffset = 2 * 8;
 
-    internal void BlackPawn_Enpassant(int fromSquare)
+    internal void BlackPawn_Enpassant(int fromSquare, int toSquare)
     {
-        var toSquare = blackEnpassantOffset + EnPassantFile;
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
 
         BlackPawn ^= moveMask;

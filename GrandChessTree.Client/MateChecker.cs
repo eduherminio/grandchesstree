@@ -108,17 +108,19 @@ public static unsafe class MateChecker
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsWhiteEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhitePawn_Enpassant(index);
+            toSquare = Board.BlackWhiteEnpassantOffset + board.EnPassantFile;
+
+            newBoard.WhitePawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) return true;
         }
 
         var canPromote = rankIndex.IsSeventhRank();
-        int toSquare;
 
         // Take left piece
         var target = posEncoded.ShiftUpLeft();
@@ -282,17 +284,19 @@ public static unsafe class MateChecker
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsBlackEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackPawn_Enpassant(index);
+            toSquare = Board.blackEnpassantOffset + board.EnPassantFile;
+
+            newBoard.BlackPawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) return true;
         }
 
         var canPromote = rankIndex.IsSecondRank();
-        int toSquare;
 
         // Left capture
         var target = posEncoded.ShiftDownLeft();

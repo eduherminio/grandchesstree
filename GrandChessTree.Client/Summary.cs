@@ -59,6 +59,12 @@ public struct Summary
         DoubleChecks++;
     }
 
+    internal void AddDiscoveredCheck()
+    {
+        Checks++;
+        DiscoveryChecks++;
+    }
+
     internal void AddMate()
     {
         CheckMates++;
