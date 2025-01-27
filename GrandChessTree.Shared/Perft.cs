@@ -37,18 +37,18 @@ public static unsafe class Perft
     {
         const nuint alignment = 64;
 
-        nuint bytes = ((nuint)sizeof(Summary) * (nuint)items);
-        void* block = NativeMemory.AlignedAlloc(bytes, alignment);
+        var bytes = ((nuint)sizeof(Summary) * (nuint)items);
+        var block = NativeMemory.AlignedAlloc(bytes, alignment);
         NativeMemory.Clear(block, bytes);
 
         return (Summary*)block;
     }
 
-    public static readonly Summary* SumTT;
-    public static readonly uint SumTTMask;
+    private static readonly Summary* SumTT;
+    private static readonly uint SumTTMask;
     static Perft()
     {
-        var transpositionSize = (int)Perft.CalculateTranspositionTableSize(1024);
+        var transpositionSize = (int)Perft.CalculateTranspositionTableSize(512);
         SumTT = Perft.AllocateTranspositions((nuint)transpositionSize);
         SumTTMask = (uint)transpositionSize - 1;
     }
@@ -58,29 +58,18 @@ public static unsafe class Perft
         Unsafe.InitBlock(SumTT, 0, (uint)(sizeof(Summary) * (SumTTMask + 1)));
 
     }
-
-    public static int dupecount = 0;
     public static Summary PerftRoot(ref Board board, int depth, bool whiteToMove)
     {
-        var ttEntry = *(SumTT + (board.Hash & SumTTMask));
-        if (ttEntry.FullHash == board.Hash && depth == ttEntry.Depth && ttEntry.Occupancy == (board.Occupancy))
-        {
-            dupecount++;
-            //return ttEntry;
-        }
-
         Summary summary = default;
         summary.FullHash = board.Hash;
         summary.Depth = depth;
         summary.Occupancy = board.Occupancy;
-
-
+        
         if (whiteToMove)
         {
             if (depth == 0)
             {
                 summary.Nodes++;
-                //*(SumTT + (board.Hash & SumTTMask)) = summary;
                 return summary;
             }
 
@@ -113,8 +102,6 @@ public static unsafe class Perft
 
             positions = board.WhiteKing;
             while (positions != 0) PerftWhiteKing(ref board, ref summary, depth, positions.PopLSB());
-            *(SumTT + (board.Hash & SumTTMask)) = summary;
-
             return summary;
         }
         else
@@ -122,8 +109,6 @@ public static unsafe class Perft
             if (depth == 0)
             {
                 summary.Nodes++;
-                //*(SumTT + (board.Hash & SumTTMask)) = summary;
-
                 return summary;
             }
             board.Checkers = board.WhiteCheckers();
@@ -156,8 +141,6 @@ public static unsafe class Perft
 
             positions = board.BlackKing;
             while (positions != 0) PerftBlackKing(ref board, ref summary, depth, positions.PopLSB());
-
-            //*(SumTT + (board.Hash & SumTTMask)) = summary;
             return summary;
         }
     }
@@ -166,7 +149,7 @@ public static unsafe class Perft
     {
         board.Checkers = board.BlackCheckers();
         board.NumCheckers = ulong.PopCount(board.Checkers);
-
+        
         if (depth == 0)
         {
             if (board.NumCheckers == 1)
@@ -192,11 +175,11 @@ public static unsafe class Perft
 
                 MateChecker.WhiteSingleCheckEvasionTest(ref board, ref summary);
             }
-            else if (board.NumCheckers > 1)
+            else if (board.NumCheckers == 2)
             {
                 if ((board.Checkers & (1UL << prevDestination)) == 0)
                 {
-                    summary.AddDiscoveredCheck();
+                    summary.AddDoubleDiscoveredCheck();
                 }
                 else
                 {
@@ -213,9 +196,8 @@ public static unsafe class Perft
 
         var ptr = (SumTT + (board.Hash & SumTTMask));
         var ttEntry = *ptr;
-        if (ttEntry.FullHash == board.Hash && depth == ttEntry.Depth && ttEntry.Occupancy == (board.Occupancy))
+        if (ttEntry.FullHash == board.Hash && ttEntry.Occupancy == board.Occupancy && depth == ttEntry.Depth)
         {
-            dupecount++;
             summary.Accumulate(ttEntry);
             return;
         }
@@ -224,7 +206,7 @@ public static unsafe class Perft
         sum2.FullHash = board.Hash;
         sum2.Depth = depth;
         sum2.Occupancy = board.Occupancy;
-
+        
         board.AttackedSquares = board.WhiteKingDangerSquares();
 
         var positions = board.WhiteKing;
@@ -278,12 +260,8 @@ public static unsafe class Perft
                 board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
                 board.PushMask = 0xFFFFFFFFFFFFFFFF;
                 board.PinMask = board.BlackKingPinnedRay();
-
-                if (board.NumCheckers == 1)
-                {
-                    board.CaptureMask = board.Checkers;
-                    board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
-                }
+                board.CaptureMask = board.Checkers;
+                board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
                 board.AttackedSquares = board.BlackKingDangerSquares();
 
                 if ((board.Checkers & (1UL << prevDestination)) == 0)
@@ -297,11 +275,11 @@ public static unsafe class Perft
 
                 MateChecker.BlackSingleCheckEvasionTest(ref board, ref summary);
             }
-            else if (board.NumCheckers > 1)
+            else if (board.NumCheckers == 2)
             {
                 if ((board.Checkers & (1UL << prevDestination)) == 0)
                 {
-                    summary.AddDiscoveredCheck();
+                    summary.AddDoubleDiscoveredCheck();
                 }
                 else
                 {
@@ -318,9 +296,8 @@ public static unsafe class Perft
 
         var ptr = (SumTT + (board.Hash & SumTTMask));
         var ttEntry = *ptr;
-        if (ttEntry.FullHash == board.Hash && ttEntry.Occupancy == (board.Occupancy) && depth == ttEntry.Depth)
+        if (ttEntry.FullHash == board.Hash && ttEntry.Occupancy == board.Occupancy && depth == ttEntry.Depth)
         {
-            dupecount++;
             summary.Accumulate(ttEntry);
             return;
         }
@@ -329,7 +306,6 @@ public static unsafe class Perft
         sum2.FullHash = board.Hash;
         sum2.Depth = depth;
         sum2.Occupancy = board.Occupancy;
-
         board.AttackedSquares = board.BlackKingDangerSquares();
 
         var positions = board.BlackKing;

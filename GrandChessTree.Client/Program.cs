@@ -1,6 +1,8 @@
-﻿Console.WriteLine("-----TheGreatChessTree-----");
+﻿using GrandChessTree.Client;
 
-var workerCount = 4;  // Number of workers
+Console.WriteLine("-----TheGreatChessTree-----");
+
+var workerCount = 8;  // Number of workers
 var workerMemory = 1024; // Memory per worker (in MB)
 var workerPath = "./GrandChessTree.Client.Worker.exe"; // Path to worker executable
 
@@ -9,24 +11,28 @@ Console.WriteLine($"Starting {workerCount} worker{(workerCount > 1 ? "s" : "")} 
 // Create a list to store worker instances
 var workers = new List<Worker>();
 var commandList = new Queue<string>();
-var fenString = "begin:5:8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -"; // Initial FEN (change as needed)
+var (initialBoard, initialWhiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+var boards = MoveGenerator.PerftRoot(ref initialBoard, 1, initialWhiteToMove);
+List<ulong> enqueuedFens = new List<ulong>();
 
-for (int i = 0; i < 20; i++)
+Console.WriteLine($"Split search into {boards.Length} sub searches");
+foreach (var board in boards)
 {
-    commandList.Enqueue(fenString);
+    var fen = board.ToFen(!initialWhiteToMove);
+    enqueuedFens.Add(board.Hash);
+    var commandString = $"begin:8:{fen}";
+    commandList.Enqueue(commandString);
 }
 
 // Initialize the workers
-for (int i = 0; i < workerCount; i++)
+for (var i = 0; i < workerCount; i++)
 {
     var worker = new Worker(workerPath, $"", i);
     workers.Add(worker);
     worker.Start();
 }
 
-// Start the process of updating the FEN string when a worker is done
-var finishedWorkers = new List<Worker>();
-bool isRunning = true;
+var isRunning = true;
 
 await Task.Delay(5000);
 foreach (var worker in workers)
@@ -45,32 +51,53 @@ while (isRunning)
                 var nextFen = commandList.Dequeue();
                 worker.NextTask(nextFen);
             }
-        }
-
-        if (worker.WorkerResults.TryDequeue(out var result))
-        {
-            Console.WriteLine($"new result! {result.Nps}nps");
-        }
+        } 
     }
 
+    if (workers.All(w => w.State == WorkerState.Ready))
+    {
+        Thread.Sleep(1000);
+        if (workers.All(w => w.State == WorkerState.Ready))
+        {
+            isRunning = false;
+        }
+    }
     // Sleep a bit to avoid 100% CPU usage in the while loop
     Thread.Sleep(100);
 }
 
 Console.WriteLine("\nAll workers have completed.");
 
+AggregateResultResult result = default;
+foreach (var worker in workers)
+{
+    while (worker.WorkerResults.TryDequeue(out var workerResult))
+    {
+        result.Add(workerResult);
+        enqueuedFens.Remove(workerResult.Hash);
+        Console.WriteLine($"{workerResult.Hash} - {workerResult.Fen}");
+    }
+    
+    worker.WaitForExit();
+}
+
+result.Nps /= boards.Length;
+Console.WriteLine($"{enqueuedFens.Count} left..");
+Console.WriteLine("---------------");
+Console.WriteLine($"nps:{result.Nps}");
+result.Print();
+Console.WriteLine("---------------");
+
 // Process the errors and output from workers
 ProcessErrors(workers);
-    
+return;
 
-    static void ProcessErrors(List<Worker> workers)
+
+static void ProcessErrors(List<Worker> workers)
 {
     // Process the error logs
-    foreach (var worker in workers)
+    foreach (var errorLine in workers.SelectMany(worker => worker.GetErrorLogs()))
     {
-        foreach (var errorLine in worker.GetErrorLogs())
-        {
-            Console.WriteLine(errorLine);  // Output error messages
-        }
+        Console.WriteLine(errorLine);  // Output error messages
     }
 }

@@ -49,7 +49,14 @@ public static class Helpers
             (((board.WhiteKing >> square) & 1UL) << 12));
     }
 
-    public static string ToFen(this Board board)
+    public static string ConvertPosition(this int position)
+    {
+        var rank = position.GetRankIndex();
+        var file = position.GetFileIndex();
+        return $"{(char)('a' + file)}{(char)('1' + rank)}";
+    }  
+    
+    public static string ToFen(this Board board, bool whiteToMove)
     {
         var fen = new StringBuilder();
 
@@ -82,8 +89,7 @@ public static class Helpers
         }
 
         fen.Append(' ');
-        // fen.Append(board.WhiteToMove ? "w" : "b");
-        fen.Append('w');
+        fen.Append(whiteToMove ? "w" : "b");
         fen.Append(' ');
 
         if (board.CastleRights == CastleRights.None)
@@ -100,16 +106,18 @@ public static class Helpers
 
             if (board.CastleRights.HasFlag(CastleRights.BlackQueenSide)) fen.Append('q');
         }
+        fen.Append(' ');
 
         if (board.EnPassantFile >= 8)
-            fen.Append(" -");
+            fen.Append("-");
         else
+        {
+            var enpassantTargetSquare = whiteToMove ? 5 * 8 + board.EnPassantFile : 2 * 8 + board.EnPassantFile;
+            fen.Append((enpassantTargetSquare).ConvertPosition());
             fen.Append(' ');
-        //var enpassantTargetSquare = board.WhiteToMove ? 5 * 8 + board.EnPassantFile : 2 * 8 + board.EnPassantFile;
-        //fen.Append(((byte)enpassantTargetSquare).ConvertPosition());
-        fen.Append(' ');
-        //fen.Append(board.HalfMoveClock);
+        }
 
+        //fen.Append(board.HalfMoveClock);
         fen.Append(' ');
         //fen.Append(board.TurnCount);
 

@@ -2,7 +2,7 @@
 
 public static class FenParser
 {
-    public static Board Parse(string fen)
+    public static (Board, bool whiteToMove) Parse(string fen)
     {
         Board board = default;
         var parts = fen.Split(' ');
@@ -79,7 +79,7 @@ public static class FenParser
         else
             board.EnPassantFile = (byte)"abcdefgh".IndexOf(enPassantTarget[0]);
 
-        return board;
+        return (board, turn == "w");
     }
 
 

@@ -863,12 +863,10 @@ public static unsafe class AttackTables
     public static ulong WhiteCheckers(this ref Board board)
     {
         var index = board.BlackKingPos;
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.WhiteBishop | board.WhiteQueen)) |
+        return (PextBishopAttacks(board.Occupancy, index) &  (board.WhiteBishop | board.WhiteQueen)) |
                (PextRookAttacks(board.Occupancy, index) & (board.WhiteRook | board.WhiteQueen)) |
                (*(KnightAttackTable + index) & board.WhiteKnight) |
-               (*(BlackPawnAttackTable + index) & board.WhitePawn) |
-               (*(KingAttackTable + index) & board.WhiteKing);
+               (*(BlackPawnAttackTable + index) & board.WhitePawn);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -879,8 +877,7 @@ public static unsafe class AttackTables
                 (board.BlackBishop | board.BlackQueen)) |
                (PextRookAttacks(board.Occupancy, index) & (board.BlackRook | board.BlackQueen)) |
                (*(KnightAttackTable + index) & board.BlackKnight) |
-               (*(WhitePawnAttackTable + index) & board.BlackPawn) |
-               (*(KingAttackTable + index) & board.BlackKing);
+               (*(WhitePawnAttackTable + index) & board.BlackPawn);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

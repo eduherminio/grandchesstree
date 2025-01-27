@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace GrandChessTree.Client;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public unsafe struct Summary
+public struct Summary
 {
     // Grouping 8-byte fields together
     public ulong Nodes;
@@ -20,10 +20,8 @@ public unsafe struct Summary
 
     // Group smaller fields after larger fields
     public int Depth;       // 4 bytes
-    public ulong Occupancy; // Aligning 8 bytes after a 4-byte field
-
-    // Padding to prevent false sharing
-    private fixed byte _padding[36]; // Ensure struct is 64 bytes for cache line alignment
+    public ulong Occupancy;
+    
     public void Accumulate(Summary summary)
     {
         Nodes += summary.Nodes;
@@ -74,6 +72,12 @@ public unsafe struct Summary
     internal void AddDiscoveredCheck()
     {
         Checks++;
+        DiscoveryChecks++;
+    }
+    
+    internal void AddDoubleDiscoveredCheck()
+    {
+        DoubleChecks++;
         DiscoveryChecks++;
     }
 

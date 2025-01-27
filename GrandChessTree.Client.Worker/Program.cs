@@ -12,23 +12,20 @@ if(args.Length == 0)
 
 RuntimeHelpers.RunClassConstructor(typeof(AttackTables).TypeHandle);
 RuntimeHelpers.RunClassConstructor(typeof(Perft).TypeHandle);
-ConcurrentQueue<string> CommandQueue = new();
-ManualResetEventSlim CommandAvailable = new(false);
-bool hasQuit = false;
+ConcurrentQueue<string> commandQueue = new();
+using ManualResetEventSlim commandAvailable = new(false);
+var hasQuit = false;
 
 
-_ = Task.Run(() =>
-{
-    ReadCommands();
-});
+_ = Task.Run(ReadCommands);
 
 Console.WriteLine("ready");
 while (!hasQuit)
 {
-    CommandAvailable.Wait(); // Wait until a command is available
-    CommandAvailable.Reset(); // Reset the event for the next wait
+    commandAvailable.Wait(); // Wait until a command is available
+    commandAvailable.Reset(); // Reset the event for the next wait
 
-    while (CommandQueue.TryDequeue(out var command))
+    while (commandQueue.TryDequeue(out var command))
     {
         if (command.StartsWith("reset"))
         {
@@ -36,14 +33,17 @@ while (!hasQuit)
         }
         else if (command.StartsWith("begin"))
         {
+            Console.WriteLine("processing");
             var commandParts = command.Split(":");
             if (int.TryParse(commandParts[1], out var depth))
             {
-                var board = FenParser.Parse(commandParts[2]);
+                var (board, whiteToMove) = FenParser.Parse(commandParts[2]);
                 var sw = Stopwatch.StartNew();
-                Summary summary = Perft.PerftRoot(ref board, depth, true);
+                var summary = Perft.PerftRoot(ref board, depth, whiteToMove);
                 var ms = sw.ElapsedMilliseconds;
                 var s = (float)ms / 1000;
+                Console.WriteLine($"fen:{board.ToFen(whiteToMove)}");
+                Console.WriteLine($"hash:{board.Hash}");
                 Console.WriteLine($"nps:{(summary.Nodes / s)}");
                 summary.Print();
                 Console.WriteLine("done");
@@ -51,6 +51,8 @@ while (!hasQuit)
         }
     }
 }
+
+return;
 
 void ReadCommands()
 {
@@ -70,7 +72,7 @@ void ReadCommands()
             break;
         }
 
-        CommandQueue.Enqueue(command);
-        CommandAvailable.Set(); // Signal that a command is available
+        commandQueue.Enqueue(command);
+        commandAvailable.Set(); // Signal that a command is available
     }
 }
