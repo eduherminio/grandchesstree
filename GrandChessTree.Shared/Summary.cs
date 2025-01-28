@@ -77,6 +77,7 @@ public struct Summary
     
     internal void AddDoubleDiscoveredCheck()
     {
+        Checks++;
         DoubleChecks++;
         DiscoveryChecks++;
     }

@@ -2,7 +2,7 @@
 
 Console.WriteLine("-----TheGreatChessTree-----");
 
-var workerCount = 8;  // Number of workers
+var workerCount = 12;  // Number of workers
 var workerMemory = 1024; // Memory per worker (in MB)
 var workerPath = "./GrandChessTree.Client.Worker.exe"; // Path to worker executable
 
@@ -20,7 +20,7 @@ foreach (var board in boards)
 {
     var fen = board.ToFen(!initialWhiteToMove);
     enqueuedFens.Add(board.Hash);
-    var commandString = $"begin:8:{fen}";
+    var commandString = $"begin:7:{fen}";
     commandList.Enqueue(commandString);
 }
 
