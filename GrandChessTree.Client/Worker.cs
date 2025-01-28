@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 public enum WorkerState
 {
@@ -6,9 +7,10 @@ public enum WorkerState
     Ready,
     Processing,
     Error,
+    Exited,
 }
 
-public struct AggregateResultResult
+public class AggregateResultResult
 {
     public float Nps;
     public ulong Nodes;
@@ -160,6 +162,11 @@ public class Worker
 
     private void OnOutputReceived(DataReceivedEventArgs args)
     {
+        if(State == WorkerState.Exited)
+        {
+            return;
+        }
+
         if (string.IsNullOrEmpty(args.Data))
         {
             return;
@@ -171,18 +178,15 @@ public class Worker
 
         if (loweredOutput.Contains("ready"))
         {
-            Console.WriteLine($"{WorkerIndex}:ready");
             State = WorkerState.Ready;
         }
         else if (loweredOutput.Contains("done"))
         {
-            Console.WriteLine($"{WorkerIndex}:done");
             CollectResults();
             // Process output
             SendCommand("reset");  // Reset or take next task
         }else if (loweredOutput.Contains("processing"))
         {
-            Console.WriteLine($"{WorkerIndex}:processing");
             State = WorkerState.Processing;
         }
     }
@@ -211,12 +215,28 @@ public class Worker
 
     public void WaitForExit()
     {
+        if (State == WorkerState.Exited)
+        {
+            return;
+        }
+
+        if (_process.HasExited)
+        {
+            return;
+        }
+        State = WorkerState.Exited;
+
         SendCommand("quit");
         _process.WaitForExit(); // Block until the process exits
     }
 
     private void SendCommand(string command)
     {
+        if (State == WorkerState.Exited)
+        {
+            return;
+        }
+
         // Write a command to the worker's standard input
         if (!_process.HasExited)
         {
@@ -233,8 +253,25 @@ public class Worker
         State = WorkerState.Processing;
     }
 
-    public void IsReady()
+    public void Reset()
     {
         SendCommand("reset");
+    }
+
+    internal void Kill()
+    {
+        if (State == WorkerState.Exited)
+        {
+            return;
+        }
+        State = WorkerState.Exited;
+
+        if (!_process.HasExited)
+        {
+            SendCommand("quit");
+            _process.Kill();
+            _process.WaitForExit();
+            _process.Dispose();
+        }
     }
 }

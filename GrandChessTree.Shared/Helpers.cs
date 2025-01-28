@@ -146,12 +146,28 @@ public static class Helpers
 
     public static string FormatBigNumber(this float number)
     {
-        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";
+        if (number >= 1000000000000) return (number / 1000000000000D).ToString("0.#") + "t";  // Trillion
 
-        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";
+        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";  // Billion
 
-        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";
+        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";  // Million
+
+        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";  // Thousand
 
         return number.ToString();
     }
+
+    public static string FormatBigNumber(this ulong number)
+    {
+        if (number >= 1000000000000) return (number / 1000000000000D).ToString("0.#") + "t";  // Trillion
+
+        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";  // Billion
+
+        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";  // Million
+
+        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";  // Thousand
+
+        return number.ToString();
+    }
+
 }

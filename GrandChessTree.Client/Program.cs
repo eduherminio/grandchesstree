@@ -1,103 +1,74 @@
-﻿using GrandChessTree.Client;
+﻿using ConsoleTables;
+using GrandChessTree.Client;
+
 
 Console.WriteLine("-----TheGreatChessTree-----");
 
-var workerCount = 12;  // Number of workers
-var workerMemory = 1024; // Memory per worker (in MB)
-var workerPath = "./GrandChessTree.Client.Worker.exe"; // Path to worker executable
-
-Console.WriteLine($"Starting {workerCount} worker{(workerCount > 1 ? "s" : "")} with {workerMemory}MB of memory {(workerCount > 1 ? "each" : "")}");
-
-// Create a list to store worker instances
-var workers = new List<Worker>();
-var commandList = new Queue<string>();
-var (initialBoard, initialWhiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-var boards = MoveGenerator.PerftRoot(ref initialBoard, 1, initialWhiteToMove);
-List<ulong> enqueuedFens = new List<ulong>();
-
-Console.WriteLine($"Split search into {boards.Length} sub searches");
-foreach (var board in boards)
+var config = new Config()
 {
-    var fen = board.ToFen(!initialWhiteToMove);
-    enqueuedFens.Add(board.Hash);
-    var commandString = $"begin:7:{fen}";
-    commandList.Enqueue(commandString);
+    WorkerCount = 32,
+    Depth = 10,
+};
+
+var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+var runner = new Runner(config);
+
+AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+_ = Task.Run(ReadCommands);
+await runner.Run(fen);
+
+//var results = new List<AggregateResultResult>();
+//for(int i = 4; i < 9; i++)
+//{
+//    config.Depth = i;
+//    await runner.Run(fen);
+//    results.Add(runner.result);
+//    await runner.Reset();
+//    Console.WriteLine("depth: " +  i);
+//    await Task.Delay(500);
+//}
+
+//var table = new ConsoleTable("depth", "nodes", "captures", "enpassants", "castles", "promotions", "checks", "discovered_checks", "double_checks", "check_mates");
+//for (int i = 0; i < results.Count; i++)
+//{
+//    var result = results[i];
+//    table.AddRow(i + 4, result.Nodes, result.Captures, result.Enpassant, result.Castles, result.Promotions, result.Checks, result.DiscoveredChecks, result.DoubleChecks, result.CheckMates);
+//}
+
+//table.Configure((c) =>
+//{
+//    c.EnableCount = false;
+//});
+
+//Console.Clear();
+//table.Write();
+
+Console.ReadLine();
+
+void CurrentDomain_ProcessExit(object? sender, EventArgs e)
+{
+    Console.WriteLine("process exited");
+    runner.Kill();
 }
 
-// Initialize the workers
-for (var i = 0; i < workerCount; i++)
+void ReadCommands()
 {
-    var worker = new Worker(workerPath, $"", i);
-    workers.Add(worker);
-    worker.Start();
-}
-
-var isRunning = true;
-
-await Task.Delay(5000);
-foreach (var worker in workers)
-{
-    worker.IsReady();
-}
-
-while (isRunning)
-{
-    foreach (var worker in workers)
+    while (true)
     {
-        if (worker.State == WorkerState.Ready)
+        var command = Console.ReadLine();
+        if (string.IsNullOrEmpty(command))
         {
-            if (commandList.Count > 0)
-            {
-                var nextFen = commandList.Dequeue();
-                worker.NextTask(nextFen);
-            }
-        } 
-    }
-
-    if (workers.All(w => w.State == WorkerState.Ready))
-    {
-        Thread.Sleep(1000);
-        if (workers.All(w => w.State == WorkerState.Ready))
-        {
-            isRunning = false;
+            continue; // Skip empty commands
         }
-    }
-    // Sleep a bit to avoid 100% CPU usage in the while loop
-    Thread.Sleep(100);
-}
 
-Console.WriteLine("\nAll workers have completed.");
-
-AggregateResultResult result = default;
-foreach (var worker in workers)
-{
-    while (worker.WorkerResults.TryDequeue(out var workerResult))
-    {
-        result.Add(workerResult);
-        enqueuedFens.Remove(workerResult.Hash);
-        Console.WriteLine($"{workerResult.Hash} - {workerResult.Fen}");
-    }
-    
-    worker.WaitForExit();
-}
-
-result.Nps /= boards.Length;
-Console.WriteLine($"{enqueuedFens.Count} left..");
-Console.WriteLine("---------------");
-Console.WriteLine($"nps:{result.Nps}");
-result.Print();
-Console.WriteLine("---------------");
-
-// Process the errors and output from workers
-ProcessErrors(workers);
-return;
-
-
-static void ProcessErrors(List<Worker> workers)
-{
-    // Process the error logs
-    foreach (var errorLine in workers.SelectMany(worker => worker.GetErrorLogs()))
-    {
-        Console.WriteLine(errorLine);  // Output error messages
+        command = command.Trim();
+        if (command.Contains("quit", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("Quitting");
+            runner.Kill();
+            Environment.Exit(0);
+            break;
+        }
     }
 }

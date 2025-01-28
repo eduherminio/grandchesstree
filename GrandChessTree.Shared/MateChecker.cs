@@ -15,51 +15,48 @@ public static unsafe class MateChecker
     public const ulong WhiteQueenSideCastleRookPosition = 1UL;
     public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
 
-    public static void WhiteSingleCheckEvasionTest(ref Board board, ref Summary summary)
+    public static bool WhiteCanEvadeCheck(ref Board board)
     {
         var positions = board.WhitePawn;
         while (positions != 0)
             if (PerftWhitePawn(ref board, positions.PopLSB()))
-                return;
+                return true;
 
         positions = board.WhiteKnight;
         while (positions != 0)
             if (PerftWhiteKnight(ref board, positions.PopLSB()))
-                return;
+                return true;
 
         positions = board.WhiteBishop;
         while (positions != 0)
             if (PerftWhiteBishop(ref board, positions.PopLSB()))
-                return;
+                return true;
 
         positions = board.WhiteRook;
         while (positions != 0)
             if (PerftWhiteRook(ref board, positions.PopLSB()))
-                return;
+                return true;
 
         positions = board.WhiteQueen;
         while (positions != 0)
             if (PerftWhiteQueen(ref board, positions.PopLSB()))
-                return;
+                return true;
 
         positions = board.WhiteKing;
         while (positions != 0)
             if (PerftWhiteKing(ref board, positions.PopLSB()))
-                return;
+                return true;
 
-        summary.AddMate();
+        return false;
     }
 
-    public static void WhiteDoubleCheckEvasionTest(ref Board board, ref Summary summary)
+    public static bool WhiteCanEvadeDoubleCheck(ref Board board)
     {
-        if (PerftWhiteKing(ref board, board.WhiteKingPos))
-            return;
-
-        summary.AddMate();
+        return PerftWhiteKing(ref board, board.WhiteKingPos);
     }
 
 
-    public static void BlackSingleCheckEvasionTest(ref Board board, ref Summary summary)
+    public static void BlackCanEvadeSingleCheck(ref Board board, ref Summary summary)
     {
         var positions = board.BlackPawn;
         while (positions != 0)
@@ -94,7 +91,7 @@ public static unsafe class MateChecker
         summary.AddMate();
     }
 
-    public static void BlackDoubleCheckEvasionTest(ref Board board, ref Summary summary)
+    public static void BlackCanEvadeDoubleCheck(ref Board board, ref Summary summary)
     {
         if (PerftBlackKing(ref board, board.BlackKingPos))
             return;

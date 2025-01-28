@@ -25,12 +25,18 @@ public static unsafe class AttackTables
 
     private static readonly int[] WhitePawnOffsets = { 7, 9 };
     private static readonly int[] BlackPawnOffsets = { -7, -9 };
+
     private static readonly int[] KnightOffsets = { 17, 15, 10, 6, -6, -10, -15, -17 };
     private static readonly int[] KingOffsets = { 1, -1, 8, -8, 9, -9, 7, -7 };
     public static readonly ulong* KnightAttackTable;
     public static readonly ulong* KingAttackTable;
     public static readonly ulong* WhitePawnAttackTable;
     public static readonly ulong* BlackPawnAttackTable;
+
+    public static readonly ulong* WhitePawnCaptureTable;
+    public static readonly ulong* BlackPawnCaptureTable;
+    public static readonly ulong* WhitePawnPushTable;
+    public static readonly ulong* BlackPawnPushTable;
 
     private static readonly ulong* PextAttacks;
     private static readonly ulong* BishopPextOffset;
@@ -50,8 +56,14 @@ public static unsafe class AttackTables
         RookPextOffset = Allocate<ulong>(64);
         KnightAttackTable = Allocate<ulong>(64);
         KingAttackTable = Allocate<ulong>(64);
+
         WhitePawnAttackTable = Allocate<ulong>(64);
         BlackPawnAttackTable = Allocate<ulong>(64);
+        WhitePawnCaptureTable = Allocate<ulong>(64*64);
+        BlackPawnCaptureTable = Allocate<ulong>(64*64);
+        WhitePawnPushTable = Allocate<ulong>(64);
+        BlackPawnPushTable = Allocate<ulong>(64);
+
         RookAttackMasks = Allocate<ulong>(64);
         BishopAttackMasks = Allocate<ulong>(64);
         LineBitBoards = Allocate<ulong>(64 * 64);
@@ -68,7 +80,6 @@ public static unsafe class AttackTables
             BishopAttackMasks[i] = BishopAttackMask(i);
             BishopAttackMasksAll[i] = BishopAttackMaskAll(i);
         }
-
 
         for (var i = 0; i < 64; i++)
         {
@@ -129,6 +140,48 @@ public static unsafe class AttackTables
                     Math.Abs(file - targetFile) <= 1)
                     kingAttacks |= 1UL << targetSquare;
             }
+
+            // Pawn Enpassant attacks
+            for(int EnPassantFile = 0; EnPassantFile <= 8; EnPassantFile++)
+            {
+                var rankIndex = square.GetRankIndex();
+
+                if (EnPassantFile <= 8 &&
+                    rankIndex.IsWhiteEnPassantRankIndex() &&
+                    Math.Abs(square.GetFileIndex() - EnPassantFile) == 1)
+                {
+                    var toSquare = Board.BlackWhiteEnpassantOffset + EnPassantFile;
+                    WhitePawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks | (1ul << toSquare);
+                }
+                else
+                {
+                    // No enpassant
+                    WhitePawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks;
+                }
+
+                if (EnPassantFile <= 8 &&
+                      rankIndex.IsBlackEnPassantRankIndex() &&
+                      Math.Abs(square.GetFileIndex() - EnPassantFile) == 1)
+                {
+                    var toSquare = Board.blackEnpassantOffset + EnPassantFile;
+                    BlackPawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks | (1ul << toSquare);
+                }
+                else
+                {
+                    // No enpassant
+                    BlackPawnCaptureTable[square * 64 + EnPassantFile] = blackPawnAttacks;
+                }
+            }
+
+            WhitePawnPushTable[square] = (rank < 7)
+              ? (1ul << square.ShiftUp()) |
+                (rank.IsSecondRank() ? (1ul << square.ShiftUp().ShiftUp()) : 0ul)
+              : 0ul;
+
+            BlackPawnPushTable[square] = (rank > 0)
+                ? (1ul << square.ShiftDown()) |
+                  (rank.IsSeventhRank() ? (1ul << square.ShiftDown().ShiftDown()) : 0ul)
+                : 0ul;
 
             WhitePawnAttackTable[square] = whitePawnAttacks;
             BlackPawnAttackTable[square] = blackPawnAttacks;

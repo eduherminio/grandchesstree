@@ -6,7 +6,6 @@ namespace GrandChessTree.Client;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Summary
 {
-    // Grouping 8-byte fields together
     public ulong Nodes;
     public ulong Captures;
     public ulong Enpassant;
@@ -16,10 +15,8 @@ public struct Summary
     public ulong DiscoveryChecks;
     public ulong DoubleChecks;
     public ulong CheckMates;
-    public ulong FullHash; // Hash should ideally be placed at the end for better alignment
-
-    // Group smaller fields after larger fields
-    public int Depth;       // 4 bytes
+    public ulong FullHash;
+    public int Depth;
     public ulong Occupancy;
     
     public void Accumulate(Summary summary)
@@ -95,13 +92,13 @@ public struct Summary
 
     internal void AddPromotion()
     {
-        Promotions++;
+        Promotions+=4;
     }
 
     internal void AddPromotionCapture()
     {
-        Promotions++;
-        Captures++;
+        Promotions+=4;
+        Captures+=4;
     }
 
     internal void Update(Summary summary)

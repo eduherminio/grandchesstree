@@ -12,6 +12,20 @@ if(args.Length == 0)
 
 RuntimeHelpers.RunClassConstructor(typeof(AttackTables).TypeHandle);
 RuntimeHelpers.RunClassConstructor(typeof(Perft).TypeHandle);
+
+//// test
+//var (board, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+//var sw = Stopwatch.StartNew();
+//var summary = Perft.PerftRoot(ref board, 7, whiteToMove);
+//var ms = sw.ElapsedMilliseconds;
+//var s = (float)ms / 1000;
+//Console.WriteLine($"fen:{board.ToFen(whiteToMove)}");
+//Console.WriteLine($"nps:{(summary.Nodes / s).FormatBigNumber()}");
+//summary.Print();
+//Console.WriteLine("done");
+//// test
+//return;
+
 ConcurrentQueue<string> commandQueue = new();
 using ManualResetEventSlim commandAvailable = new(false);
 var hasQuit = false;
@@ -29,6 +43,7 @@ while (!hasQuit)
     {
         if (command.StartsWith("reset"))
         {
+            Perft.ClearTable();
             Console.WriteLine("ready");
         }
         else if (command.StartsWith("begin"))
@@ -43,7 +58,7 @@ while (!hasQuit)
                 var ms = sw.ElapsedMilliseconds;
                 var s = (float)ms / 1000;
                 Console.WriteLine($"fen:{board.ToFen(whiteToMove)}");
-                Console.WriteLine($"hash:{board.Hash}");
+                Console.WriteLine($"hash:{Zobrist.CalculateZobristKey(ref board, whiteToMove)}");
                 Console.WriteLine($"nps:{(summary.Nodes / s)}");
                 summary.Print();
                 Console.WriteLine("done");
