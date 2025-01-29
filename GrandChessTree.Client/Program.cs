@@ -7,7 +7,7 @@ Console.WriteLine("-----TheGreatChessTree-----");
 var config = new Config()
 {
     WorkerCount = 32,
-    Depth = 10,
+    Depth = 9,
 };
 
 var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -19,13 +19,13 @@ _ = Task.Run(ReadCommands);
 await runner.Run(fen);
 
 //var results = new List<AggregateResultResult>();
-//for(int i = 4; i < 9; i++)
+//for (int i = 4; i < 9; i++)
 //{
 //    config.Depth = i;
 //    await runner.Run(fen);
 //    results.Add(runner.result);
 //    await runner.Reset();
-//    Console.WriteLine("depth: " +  i);
+//    Console.WriteLine("depth: " + i);
 //    await Task.Delay(500);
 //}
 
@@ -44,7 +44,7 @@ await runner.Run(fen);
 //Console.Clear();
 //table.Write();
 
-Console.ReadLine();
+//Console.ReadLine();
 
 void CurrentDomain_ProcessExit(object? sender, EventArgs e)
 {

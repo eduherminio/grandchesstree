@@ -41,7 +41,6 @@ public static class FenParser
                             board.WhiteQueen |= 1UL << index;
                             break;
                         case 'K':
-                            board.WhiteKing |= 1UL << index;
                             board.WhiteKingPos = (byte)index;
                             break;
                         case 'p':
@@ -60,7 +59,6 @@ public static class FenParser
                             board.BlackQueen |= 1UL << index;
                             break;
                         case 'k':
-                            board.BlackKing |= 1UL << index;
                             board.BlackKingPos = (byte)index;
                             break;
                         default:

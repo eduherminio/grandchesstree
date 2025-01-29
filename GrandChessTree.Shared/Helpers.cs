@@ -45,8 +45,8 @@ public static class Helpers
             (((board.WhiteRook >> square) & 1UL) << 8) |
             (((board.BlackQueen >> square) & 1UL) << 9) |
             (((board.WhiteQueen >> square) & 1UL) << 10) |
-            (((board.BlackKing >> square) & 1UL) << 11) |
-            (((board.WhiteKing >> square) & 1UL) << 12));
+            ((((1ul << board.BlackKingPos) >> square) & 1UL) << 11) |
+            ((((1ul << board.WhiteKingPos) >> square) & 1UL) << 12));
     }
 
     public static string ConvertPosition(this int position)

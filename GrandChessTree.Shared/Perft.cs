@@ -1,10 +1,21 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using GrandChessTree.Shared.Tables;
 
 namespace GrandChessTree.Shared;
+
+[Flags]
+public enum LeafNodeFlags: byte
+{
+    None = 0,
+    Double = 1 << 0,
+    Mate = 1 << 1,
+    Check = 1 << 2,
+}
+
 public static unsafe class Perft
 {
     private const ulong BlackKingSideCastleRookPosition = 1UL << 63;
@@ -19,7 +30,8 @@ public static unsafe class Perft
 
     #region HashTable
     private static readonly Summary* HashTable;
-    private static readonly uint HashTableMask;
+    private static readonly uint HashTableMask;   
+   
 
     static Perft()
     {
@@ -57,6 +69,7 @@ public static unsafe class Perft
     {
         Unsafe.InitBlock(HashTable, 0, (uint)(sizeof(Summary) * (HashTableMask + 1)));
     }
+
     #endregion
 
 
@@ -64,7 +77,7 @@ public static unsafe class Perft
     {
         Summary summary = default;
         summary.FullHash = board.Hash ^ board.Occupancy;
-        summary.Depth = depth;
+        summary.Depth = (byte)depth;
         if (depth == 0)
         {
             // perft(0) = 1
@@ -74,94 +87,128 @@ public static unsafe class Perft
 
         if (whiteToMove)
         {
-            board.Checkers = board.BlackCheckers();
-            board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
-            board.AttackedSquares = board.WhiteKingDangerSquares();
-            board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-            board.PushMask = 0xFFFFFFFFFFFFFFFF;
-            board.PinMask = board.WhiteKingPinnedRay();
-            if (board.NumCheckers == 1)
+            var Checkers = board.BlackCheckers();
+            var NumCheckers = (byte)ulong.PopCount(Checkers);
+            board.MoveMask = 0xFFFFFFFFFFFFFFFF;
+            if (NumCheckers == 1)
             {
-                board.CaptureMask = board.Checkers;
-                board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
             }
+            var PinMask = board.WhiteKingPinnedRay();
 
             var positions = board.WhitePawn;
-            while (positions != 0) AccumulateWhitePawnMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateWhitePawnMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.WhiteKnight;
-            while (positions != 0) AccumulateWhiteKnightMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                if ((PinMask & (1ul << index)) != 0)
+                {
+                    // Pinned knight can't move
+                    continue;
+                }
+                AccumulateWhiteKnightMoves(ref board, ref summary, depth, index);
+            }
 
             positions = board.WhiteBishop;
-            while (positions != 0) AccumulateWhiteBishopMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateWhiteBishopMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.WhiteRook;
-            while (positions != 0) AccumulateWhiteRookMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateWhiteRookMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.WhiteQueen;
-            while (positions != 0) AccumulateWhiteQueenMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateWhiteQueenMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
-            positions = board.WhiteKing;
-            while (positions != 0) AccumulateWhiteKingMoves(ref board, ref summary, depth, positions.PopLSB());
+            AccumulateWhiteKingMoves(ref board, ref summary, depth, board.WhiteKingPos, NumCheckers > 0);
             return summary;
         }
         else
         {
-            board.Checkers = board.WhiteCheckers();
-            board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
-            board.AttackedSquares = board.BlackKingDangerSquares();
-            board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-            board.PushMask = 0xFFFFFFFFFFFFFFFF;
-            board.PinMask = board.BlackKingPinnedRay();
-            if (board.NumCheckers == 1)
+            var Checkers = board.WhiteCheckers();
+            var NumCheckers = (byte)ulong.PopCount(Checkers);
+            board.MoveMask = 0xFFFFFFFFFFFFFFFF;
+            if (NumCheckers == 1)
             {
-                board.CaptureMask = board.Checkers;
-                board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
             }
+            var PinMask = board.BlackKingPinnedRay();
 
             var positions = board.BlackPawn;
-            while (positions != 0) AccumulateBlackPawnMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateBlackPawnMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.BlackKnight;
-            while (positions != 0) AccumulateBlackKnightMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                if ((PinMask & (1ul << index)) != 0)
+                {
+                    // Pinned knight can't move
+                    continue;
+                }
+
+                AccumulateBlackKnightMoves(ref board, ref summary, depth, index);
+            }
 
             positions = board.BlackBishop;
-            while (positions != 0) AccumulateBlackBishopMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateBlackBishopMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.BlackRook;
-            while (positions != 0) AccumulateBlackRookMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateBlackRookMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
             positions = board.BlackQueen;
-            while (positions != 0) AccumulateBlackQueenMoves(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                AccumulateBlackQueenMoves(ref board, ref summary, depth, index, (PinMask & (1ul << index)) != 0);
+            }
 
-            positions = board.BlackKing;
-            while (positions != 0) AccumulateBlackKingMoves(ref board, ref summary, depth, positions.PopLSB());
+
+            AccumulateBlackKingMoves(ref board, ref summary, depth, board.BlackKingPos, NumCheckers > 0);
             return summary;
         }
     }
 
     private static void AccumulateWhiteMoves(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
-        board.Checkers = board.BlackCheckers();
-        board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
-        // Todo optimize with leaf nodes hashing [checkers / checks / mates]
+        var Checkers = board.BlackCheckers();
+        var NumCheckers = (byte)ulong.PopCount(Checkers);
+
         if (depth == 0)
         {
             // Leaf node
-            if (board.NumCheckers == 1)
+            if (NumCheckers == 1)
             {
-                // Leaf node in check
-                board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-                board.PushMask = 0xFFFFFFFFFFFFFFFF;
-                board.PinMask = board.WhiteKingPinnedRay();
-                if (board.NumCheckers == 1)
-                {
-                    board.CaptureMask = board.Checkers;
-                    board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
-                }
-                board.AttackedSquares = board.WhiteKingDangerSquares();
-
-                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+                if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDiscoveredCheck();
                 }
@@ -177,9 +224,9 @@ public static unsafe class Perft
                 summary.AddMate();
                 return;
             }
-            else if (board.NumCheckers == 2)
+            else if (NumCheckers > 1)
             {
-                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDoubleDiscoveredCheck();
                 }
@@ -188,13 +235,12 @@ public static unsafe class Perft
                     summary.AddDoubleCheck();
                 }
 
-                board.AttackedSquares = board.WhiteKingDangerSquares();
-
                 summary.Nodes++;
-                if (MateChecker.WhiteCanEvadeDoubleCheck(ref board)){ 
+                if (MateChecker.CanWhiteKingMove(ref board)){
                     return;
                 }
                 summary.AddMate();
+                return;
             }
 
             summary.Nodes++;
@@ -205,70 +251,88 @@ public static unsafe class Perft
         var hashEntry = *ptr;
         if (hashEntry.FullHash == (board.Hash ^  board.Occupancy) && depth == hashEntry.Depth)
         {
-            summary.Accumulate(hashEntry);
+            summary.Accumulate(ref hashEntry);
             return;
         }
 
-        Summary childSummary = default;
-        childSummary.FullHash = board.Hash ^ board.Occupancy;
-        childSummary.Depth = depth;
+        hashEntry = default;
+        hashEntry.FullHash = board.Hash ^ board.Occupancy;
+        hashEntry.Depth = (byte)depth;
         
-        board.AttackedSquares = board.WhiteKingDangerSquares();
+        AccumulateWhiteKingMoves(ref board, ref hashEntry, depth, board.WhiteKingPos, NumCheckers > 0);
 
-        var positions = board.WhiteKing;
-        while (positions != 0) AccumulateWhiteKingMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
-        if (board.NumCheckers > 1)
+        if (NumCheckers > 1)
         {
             // Only a king move can evade double check
-            summary.Accumulate(childSummary);
-            *ptr = childSummary;
+            summary.Accumulate(ref hashEntry);
+            *ptr = hashEntry;
             return;
         }
 
-        board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-        board.PushMask = 0xFFFFFFFFFFFFFFFF;
-        board.PinMask = board.WhiteKingPinnedRay();
-        if (board.NumCheckers == 1)
+        board.MoveMask = 0xFFFFFFFFFFFFFFFF;
+        if (NumCheckers == 1)
         {
-            board.CaptureMask = board.Checkers;
-            board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
+            board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+        }
+        var PinMask = board.WhiteKingPinnedRay();
+
+        var positions = board.WhitePawn;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateWhitePawnMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
         }
 
-        positions = board.WhitePawn;
-        while (positions != 0) AccumulateWhitePawnMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
         positions = board.WhiteKnight;
-        while (positions != 0) AccumulateWhiteKnightMoves(ref board, ref childSummary, depth, positions.PopLSB());
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            if ((PinMask & (1ul << index)) != 0)
+            {
+                // Pinned knight can't move
+                continue;
+            }
+            AccumulateWhiteKnightMoves(ref board, ref hashEntry, depth, index);
+        }
 
         positions = board.WhiteBishop;
-        while (positions != 0) AccumulateWhiteBishopMoves(ref board, ref childSummary, depth, positions.PopLSB());
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateWhiteBishopMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
 
         positions = board.WhiteRook;
-        while (positions != 0) AccumulateWhiteRookMoves(ref board, ref childSummary, depth, positions.PopLSB());
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateWhiteRookMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
 
         positions = board.WhiteQueen;
-        while (positions != 0) AccumulateWhiteQueenMoves(ref board, ref childSummary, depth, positions.PopLSB());
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateWhiteQueenMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
 
-        summary.Accumulate(childSummary);
-        *ptr = childSummary;
+        summary.Accumulate(ref hashEntry);
+        *ptr = hashEntry;
     }
 
+    public static ulong hashcnt = 0;
     private static void AccumulateBlackMoves(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
-        board.Checkers = board.WhiteCheckers();
-        board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
 
+        var Checkers = board.WhiteCheckers();
+        var NumCheckers = (byte)ulong.PopCount(Checkers);
         if (depth == 0)
         {
-            if (board.NumCheckers == 1)
+            if (NumCheckers == 1)
             {
-                board.PinMask = board.BlackKingPinnedRay();
-                board.CaptureMask = board.Checkers;
-                board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
-                board.AttackedSquares = board.BlackKingDangerSquares();
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
 
-                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDiscoveredCheck();
                 }
@@ -285,10 +349,9 @@ public static unsafe class Perft
                 summary.AddMate();
                 return;
             }
-
-            if (board.NumCheckers == 2)
+            else if (NumCheckers > 1)
             {
-                if ((board.Checkers & (1UL << prevDestination)) == 0)
+                if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDoubleDiscoveredCheck();
                 }
@@ -297,9 +360,8 @@ public static unsafe class Perft
                     summary.AddDoubleCheck();
                 }
 
-                board.AttackedSquares = board.BlackKingDangerSquares();
                 summary.Nodes++;
-                if (MateChecker.BlackCanEvadeDoubleCheck(ref board)){ 
+                if (MateChecker.CanBlackKingMove(ref board)){
                     return;
                 }
                 summary.AddMate();
@@ -309,71 +371,89 @@ public static unsafe class Perft
             summary.Nodes++;
             return;
         }
-
+    
         var ptr = (HashTable + (board.Hash & HashTableMask));
         var hashEntry = *ptr;
         if (hashEntry.FullHash == (board.Hash ^  board.Occupancy) && depth == hashEntry.Depth)
         {
-            summary.Accumulate(hashEntry);
+            summary.Accumulate(ref hashEntry);
             return;
         }
 
-        Summary childSummary = default;
-        childSummary.FullHash = board.Hash ^  board.Occupancy;
-        childSummary.Depth = depth;
-        board.AttackedSquares = board.BlackKingDangerSquares();
+        hashEntry = default;
+        hashEntry.FullHash = board.Hash ^  board.Occupancy;
+        hashEntry.Depth = (byte)depth;
+        AccumulateBlackKingMoves(ref board, ref hashEntry, depth, board.BlackKingPos, NumCheckers > 0);
 
-        var positions = board.BlackKing;
-        while (positions != 0) AccumulateBlackKingMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
-        if (board.NumCheckers > 1)
+        if (NumCheckers > 1)
         {
             // Only a king move can evade double check
-            summary.Accumulate(childSummary);
-            *ptr = childSummary;
+            summary.Accumulate(ref hashEntry);
+            *ptr = hashEntry;
             return;
         }
 
-        board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-        board.PushMask = 0xFFFFFFFFFFFFFFFF;
-        board.PinMask = board.BlackKingPinnedRay();
-
-        if (board.NumCheckers == 1)
+        board.MoveMask = 0xFFFFFFFFFFFFFFFF;
+        if (NumCheckers == 1)
         {
-            board.CaptureMask = board.Checkers;
-            board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
+            board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+        }
+        var PinMask = board.BlackKingPinnedRay();
+
+        var positions = board.BlackPawn;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackPawnMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
         }
 
-        positions = board.BlackPawn;
-        while (positions != 0) AccumulateBlackPawnMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
         positions = board.BlackKnight;
-        while (positions != 0) AccumulateBlackKnightMoves(ref board, ref childSummary, depth, positions.PopLSB());
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            if((PinMask & (1ul << index)) != 0)
+            {
+                // Pinned knight can't move
+                continue;
+            }
 
+            AccumulateBlackKnightMoves(ref board, ref hashEntry, depth, index);
+        }
+        
         positions = board.BlackBishop;
-        while (positions != 0) AccumulateBlackBishopMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackBishopMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
+        
         positions = board.BlackRook;
-        while (positions != 0) AccumulateBlackRookMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackRookMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
+        
         positions = board.BlackQueen;
-        while (positions != 0) AccumulateBlackQueenMoves(ref board, ref childSummary, depth, positions.PopLSB());
-
-        summary.Accumulate(childSummary);
-        *ptr = childSummary;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackQueenMoves(ref board, ref hashEntry, depth, index, (PinMask & (1ul << index)) != 0);
+        }
+        
+        summary.Accumulate(ref hashEntry);
+        *ptr = hashEntry;
     }
 
-    private static void AccumulateWhitePawnMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateWhitePawnMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
-        var isPinned = (board.PinMask & (1ul << index)) != 0;
-
         Board newBoard = default;
         var rankIndex = index.GetRankIndex();
         int toSquare;
         if (rankIndex.IsSeventhRank())
         {
             // Promoting moves
-            var validMoves = AttackTables.WhitePawnAttackTable[index] & (board.PushMask | board.CaptureMask) & board.Black;
+            var validMoves = AttackTables.WhitePawnAttackTable[index] & board.MoveMask & board.Black;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
@@ -398,7 +478,7 @@ public static unsafe class Perft
                 AccumulateBlackMoves(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
-            validMoves = AttackTables.WhitePawnPushTable[index] & (board.PushMask | board.CaptureMask) & ~board.Occupancy;
+            validMoves = AttackTables.WhitePawnPushTable[index] & board.MoveMask & ~board.Occupancy;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
@@ -424,7 +504,7 @@ public static unsafe class Perft
         }
         else
         {
-            var validMoves = AttackTables.WhitePawnAttackTable[index] & (board.PushMask | board.CaptureMask) & board.Black;
+            var validMoves = AttackTables.WhitePawnAttackTable[index] & board.MoveMask & board.Black;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
@@ -444,7 +524,7 @@ public static unsafe class Perft
                 Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
             {
                 board.CloneTo(ref newBoard);
-                toSquare = Board.BlackWhiteEnpassantOffset + board.EnPassantFile;
+                toSquare = Board.WhiteEnpassantOffset + board.EnPassantFile;
 
                 newBoard.WhitePawn_Enpassant(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
@@ -454,7 +534,7 @@ public static unsafe class Perft
                 }
             }
 
-            validMoves = AttackTables.WhitePawnPushTable[index] & (board.PushMask | board.CaptureMask) & ~board.Occupancy;
+            validMoves = AttackTables.WhitePawnPushTable[index] & board.MoveMask & ~board.Occupancy;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
@@ -488,14 +568,9 @@ public static unsafe class Perft
 
     private static void AccumulateWhiteKnightMoves(ref Board board, ref Summary summary, int depth, int index)
     {
-        if ((board.PinMask & (1ul << index)) != 0)
-        {
-            return;
-        }
-
         int toSquare;
         Board newBoard = default;
-        var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
+        var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
@@ -516,11 +591,11 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateWhiteBishopMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateWhiteBishopMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
-        if ((board.PinMask & (1ul << index)) != 0)
+        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
         }
@@ -546,11 +621,11 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateWhiteRookMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateWhiteRookMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
-        if ((board.PinMask & (1ul << index)) != 0)
+        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
@@ -575,14 +650,14 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateWhiteQueenMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateWhiteQueenMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
 
         var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
+                             AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
 
-        if ((board.PinMask & (1ul << index)) != 0)
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
@@ -607,11 +682,12 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateWhiteKingMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateWhiteKingMoves(ref Board board, ref Summary summary, int depth, int index, bool inCheck)
     {
         Board newBoard = default;
+        var attackedSquares = board.WhiteKingDangerSquares();
 
-        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~attackedSquares;
         int toSquare;
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
@@ -632,15 +708,15 @@ public static unsafe class Perft
             AccumulateBlackMoves(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
-        if (index != 4 || board.NumCheckers > 0)
+        if (index != 4 || inCheck)
             // Can't castle if king is attacked or not on the starting position
             return;
 
         if ((board.CastleRights & CastleRights.WhiteKingSide) != 0 &&
             (board.WhiteRook & WhiteKingSideCastleRookPosition) > 0 &&
             (board.Occupancy & WhiteKingSideCastleEmptyPositions) == 0 &&
-            (board.AttackedSquares & (1ul << 6)) == 0 &&
-            (board.AttackedSquares & (1ul << 5)) == 0)
+            (attackedSquares & (1ul << 6)) == 0 &&
+            (attackedSquares & (1ul << 5)) == 0)
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_KingSideCastle();
@@ -652,8 +728,8 @@ public static unsafe class Perft
         if ((board.CastleRights & CastleRights.WhiteQueenSide) != 0 &&
             (board.WhiteRook & WhiteQueenSideCastleRookPosition) > 0 &&
             (board.Occupancy & WhiteQueenSideCastleEmptyPositions) == 0 &&
-              (board.AttackedSquares & (1ul << 2)) == 0 &&
-            (board.AttackedSquares & (1ul << 3)) == 0)
+              (attackedSquares & (1ul << 2)) == 0 &&
+            (attackedSquares & (1ul << 3)) == 0)
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_QueenSideCastle();
@@ -663,17 +739,15 @@ public static unsafe class Perft
     }
 
 
-    private static void AccumulateBlackPawnMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateBlackPawnMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
-        var isPinned = (board.PinMask & (1ul << index)) != 0;
-
         Board newBoard = default;
         var rankIndex = index.GetRankIndex();
         int toSquare;
         if (rankIndex.IsSecondRank())
         {
             // Promoting moves
-            var validMoves = AttackTables.BlackPawnAttackTable[index] & (board.PushMask | board.CaptureMask) & board.White;
+            var validMoves = AttackTables.BlackPawnAttackTable[index] & board.MoveMask & board.White;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
@@ -698,7 +772,7 @@ public static unsafe class Perft
                 AccumulateWhiteMoves(ref newBoard, ref summary, depth - 1, toSquare);
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & (board.PushMask | board.CaptureMask) & ~board.Occupancy;
+            validMoves = AttackTables.BlackPawnPushTable[index] & board.MoveMask & ~board.Occupancy;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
@@ -724,7 +798,7 @@ public static unsafe class Perft
         }
         else
         {
-            var validMoves = AttackTables.BlackPawnAttackTable[index] & (board.PushMask | board.CaptureMask) & board.White;
+            var validMoves = AttackTables.BlackPawnAttackTable[index] & board.MoveMask & board.White;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
@@ -754,7 +828,7 @@ public static unsafe class Perft
                 }
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & (board.PushMask | board.CaptureMask) & ~board.Occupancy;
+            validMoves = AttackTables.BlackPawnPushTable[index] & board.MoveMask & ~board.Occupancy;
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
@@ -788,15 +862,10 @@ public static unsafe class Perft
 
     private static void AccumulateBlackKnightMoves(ref Board board, ref Summary summary, int depth, int index)
     {
-        if ((board.PinMask & (1ul << index)) != 0)
-        {
-            return;
-        }
-
         Board newBoard = default;
         int toSquare;
 
-        var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
+        var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
@@ -819,16 +888,17 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateBlackBishopMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateBlackBishopMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
+        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
 
-        if ((board.PinMask & (1ul << index)) != 0)
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
         }
+
         int toSquare;
 
         var captureMoves = potentialMoves & board.White;
@@ -853,13 +923,13 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateBlackRookMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateBlackRookMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
+        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
 
-        if ((board.PinMask & (1ul << index)) != 0)
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
@@ -887,14 +957,14 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateBlackQueenMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateBlackQueenMoves(ref Board board, ref Summary summary, int depth, int index, bool isPinned)
     {
         Board newBoard = default;
 
         var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
+                             AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
 
-        if ((board.PinMask & (1ul << index)) != 0)
+        if (isPinned)
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
@@ -922,11 +992,12 @@ public static unsafe class Perft
         }
     }
 
-    private static void AccumulateBlackKingMoves(ref Board board, ref Summary summary, int depth, int index)
+    private static void AccumulateBlackKingMoves(ref Board board, ref Summary summary, int depth, int index, bool inCheck)
     {
+        var attackedSquares = board.BlackKingDangerSquares();
         Board newBoard = default;
 
-        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~attackedSquares;
         int toSquare;
 
         var captureMoves = potentialMoves & board.White;
@@ -949,7 +1020,7 @@ public static unsafe class Perft
             AccumulateWhiteMoves(ref newBoard, ref summary, depth - 1, toSquare);
         }
 
-        if (index != 60 || board.NumCheckers > 0)
+        if (index != 60 || inCheck)
             // Can't castle if king is attacked or not on the starting position
             return;
 
@@ -957,8 +1028,8 @@ public static unsafe class Perft
         if ((board.CastleRights & CastleRights.BlackKingSide) != 0 &&
             (board.BlackRook & BlackKingSideCastleRookPosition) > 0 &&
             (board.Occupancy & BlackKingSideCastleEmptyPositions) == 0 &&
-            (board.AttackedSquares & (1ul << 61)) == 0 &&
-            (board.AttackedSquares & (1ul << 62)) == 0)
+            (attackedSquares & (1ul << 61)) == 0 &&
+            (attackedSquares & (1ul << 62)) == 0)
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_KingSideCastle();
@@ -970,8 +1041,8 @@ public static unsafe class Perft
         if ((board.CastleRights & CastleRights.BlackQueenSide) != 0 &&
             (board.BlackRook & BlackQueenSideCastleRookPosition) > 0 &&
             (board.Occupancy & BlackQueenSideCastleEmptyPositions) == 0 &&
-            (board.AttackedSquares & (1ul << 58)) == 0 &&
-            (board.AttackedSquares & (1ul << 59)) == 0)
+            (attackedSquares & (1ul << 58)) == 0 &&
+            (attackedSquares & (1ul << 59)) == 0)
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_QueenSideCastle();

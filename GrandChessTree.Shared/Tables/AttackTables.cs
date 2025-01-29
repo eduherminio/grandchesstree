@@ -148,7 +148,7 @@ public static unsafe class AttackTables
                     rankIndex.IsWhiteEnPassantRankIndex() &&
                     Math.Abs(square.GetFileIndex() - EnPassantFile) == 1)
                 {
-                    var toSquare = Board.BlackWhiteEnpassantOffset + EnPassantFile;
+                    var toSquare = Board.WhiteEnpassantOffset + EnPassantFile;
                     WhitePawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks | (1ul << toSquare);
                 }
                 else
@@ -895,7 +895,7 @@ public static unsafe class AttackTables
                0 ||
                (*(KnightAttackTable + index) & board.WhiteKnight) != 0 ||
                (*(BlackPawnAttackTable + index) & board.WhitePawn) != 0 ||
-               (*(KingAttackTable + index) & board.WhiteKing) != 0;
+               (*(KingAttackTable + index) & (1ul << board.WhiteKingPos)) != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -907,7 +907,7 @@ public static unsafe class AttackTables
                0 ||
                (*(KnightAttackTable + index) & board.BlackKnight) != 0 ||
                (*(WhitePawnAttackTable + index) & board.BlackPawn) != 0 ||
-               (*(KingAttackTable + index) & board.BlackKing) != 0;
+               (*(KingAttackTable + index) & (1ul << board.BlackKingPos)) != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -932,35 +932,11 @@ public static unsafe class AttackTables
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong WhiteCheckerRays(this ref Board board)
-    {
-        var index = board.BlackKingPos;
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.WhiteBishop | board.WhiteQueen)) |
-               (PextRookAttacks(board.Occupancy, index) & (board.WhiteRook | board.WhiteQueen)) |
-               (*(KnightAttackTable + index) & board.WhiteKnight) |
-               (*(BlackPawnAttackTable + index) & board.WhitePawn) |
-               (*(KingAttackTable + index) & board.WhiteKing);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong BlackCheckerRay(this ref Board board)
-    {
-        var index = board.WhiteKingPos;
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.BlackBishop | board.BlackQueen)) |
-               (PextRookAttacks(board.Occupancy, index) & (board.BlackRook | board.BlackQueen)) |
-               (*(KnightAttackTable + index) & board.BlackKnight) |
-               (*(WhitePawnAttackTable + index) & board.BlackPawn) |
-               (*(KingAttackTable + index) & board.BlackKing);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong WhiteKingDangerSquares(this ref Board board)
     {
         var attackers = 0ul;
 
-        var occupancy = board.Occupancy ^ board.WhiteKing;
+        var occupancy = board.Occupancy ^ (1ul << board.WhiteKingPos);
 
         var positions = board.BlackPawn;
         while (positions != 0) attackers |= *(BlackPawnAttackTable + positions.PopLSB());
@@ -968,21 +944,13 @@ public static unsafe class AttackTables
         positions = board.BlackKnight;
         while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
 
-        positions = board.BlackBishop;
+        positions = board.BlackBishop | board.BlackQueen;
         while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
 
-        positions = board.BlackRook;
+        positions = board.BlackRook | board.BlackQueen;
         while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
 
-        positions = board.BlackQueen;
-        while (positions != 0)
-        {
-            var pos = positions.PopLSB();
-            attackers |= PextBishopAttacks(occupancy, pos) | PextRookAttacks(occupancy, pos);
-        }
-
-        positions = board.BlackKing;
-        while (positions != 0) attackers |= *(KingAttackTable + positions.PopLSB());
+        attackers |= *(KingAttackTable + board.BlackKingPos);
 
         return attackers;
     }
@@ -992,7 +960,7 @@ public static unsafe class AttackTables
     {
         var attackers = 0ul;
 
-        var occupancy = board.Occupancy ^ board.BlackKing;
+        var occupancy = board.Occupancy ^ (1ul << board.BlackKingPos);
 
         var positions = board.WhitePawn;
         while (positions != 0) attackers |= *(WhitePawnAttackTable + positions.PopLSB());
@@ -1000,21 +968,13 @@ public static unsafe class AttackTables
         positions = board.WhiteKnight;
         while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
 
-        positions = board.WhiteBishop;
+        positions = board.WhiteBishop | board.WhiteQueen;
         while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
 
-        positions = board.WhiteRook;
+        positions = board.WhiteRook | board.WhiteQueen;
         while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
 
-        positions = board.WhiteQueen;
-        while (positions != 0)
-        {
-            var pos = positions.PopLSB();
-            attackers |= PextBishopAttacks(occupancy, pos) | PextRookAttacks(occupancy, pos);
-        }
-
-        positions = board.WhiteKing;
-        while (positions != 0) attackers |= *(KingAttackTable + positions.PopLSB());
+        attackers |= *(KingAttackTable + board.WhiteKingPos);
 
         return attackers;
     }

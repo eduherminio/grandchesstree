@@ -39,8 +39,7 @@ public static unsafe class LeafNodeGenerator
             positions = board.WhiteQueen;
             while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteKing;
-            while (positions != 0) GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
+            GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
         }
         else
         {
@@ -59,8 +58,7 @@ public static unsafe class LeafNodeGenerator
             positions = board.BlackQueen;
             while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackKing;
-            while (positions != 0) GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
+            GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
         }
 
         var leafNodeWhiteToMove = depth % 2 == 0 ? whiteToMove : !whiteToMove;
@@ -95,8 +93,7 @@ public static unsafe class LeafNodeGenerator
         positions = board.WhiteQueen;
         while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteKing;
-        while (positions != 0) GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
+        GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
     }
 
     private static void GenerateBlackNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth)
@@ -122,8 +119,7 @@ public static unsafe class LeafNodeGenerator
         positions = board.BlackQueen;
         while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackKing;
-        while (positions != 0) GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
+       GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
     }
 
     private static void GenerateWhitePawnNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
@@ -138,7 +134,7 @@ public static unsafe class LeafNodeGenerator
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            toSquare = Board.BlackWhiteEnpassantOffset + board.EnPassantFile;
+            toSquare = Board.WhiteEnpassantOffset + board.EnPassantFile;
 
             newBoard.WhitePawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))

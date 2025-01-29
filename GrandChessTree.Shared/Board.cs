@@ -1,4 +1,6 @@
-﻿namespace GrandChessTree.Shared;
+﻿using System.Runtime.InteropServices;
+
+namespace GrandChessTree.Shared;
 
 [Flags]
 public enum CastleRights : byte
@@ -10,39 +12,38 @@ public enum CastleRights : byte
     BlackQueenSide = 8
 }
 
+[StructLayout(LayoutKind.Explicit, Pack = 1)]
 public struct Board
 {
-    public ulong WhitePawn;
-    public ulong WhiteKnight;
-    public ulong WhiteBishop;
-    public ulong WhiteRook;
-    public ulong WhiteQueen;
-    public ulong WhiteKing;
+    // White Pieces
+    [FieldOffset(0)] public ulong WhitePawn;      // Offset: 0
+    [FieldOffset(8)] public ulong WhiteKnight;    // Offset: 8
+    [FieldOffset(16)] public ulong WhiteBishop;    // Offset: 16
+    [FieldOffset(24)] public ulong WhiteRook;      // Offset: 24
+    [FieldOffset(32)] public ulong WhiteQueen;     // Offset: 32
 
-    public ulong BlackPawn;
-    public ulong BlackKnight;
-    public ulong BlackBishop;
-    public ulong BlackRook;
-    public ulong BlackQueen;
-    public ulong BlackKing;
+    // Black Pieces
+    [FieldOffset(40)] public ulong BlackPawn;      // Offset: 40
+    [FieldOffset(48)] public ulong BlackKnight;    // Offset: 48
+    [FieldOffset(56)] public ulong BlackBishop;    // Offset: 56
+    [FieldOffset(64)] public ulong BlackRook;      // Offset: 64
+    [FieldOffset(72)] public ulong BlackQueen;     // Offset: 72
 
-    public ulong White;
-    public ulong Black;
-    public ulong Occupancy;
+    // Occupancy Information
+    [FieldOffset(80)] public ulong White;          // Offset: 80
+    [FieldOffset(88)] public ulong Black;          // Offset: 88
+    [FieldOffset(96)] public ulong Occupancy;      // Offset: 96
 
-    public CastleRights CastleRights;
-    public byte EnPassantFile;
+    // Game State
+    [FieldOffset(104)] public CastleRights CastleRights;   // Offset: 104 (1 byte)
+    [FieldOffset(105)] public byte EnPassantFile;  // Offset: 105 (1 byte)
+    [FieldOffset(106)] public byte WhiteKingPos;   // Offset: 106 (1 byte)
+    [FieldOffset(107)] public byte BlackKingPos;   // Offset: 107 (1 byte)
 
-    public byte WhiteKingPos;
-    public byte BlackKingPos;
+    // Move Mask & Hash
+    [FieldOffset(112)] public ulong MoveMask;      // Offset: 112
+    [FieldOffset(120)] public ulong Hash;          // Offset: 120
 
-    public ulong Checkers;
-    public byte NumCheckers;
-    public ulong AttackedSquares;
-    public ulong CaptureMask;
-    public ulong PushMask;
-    public ulong PinMask;
-    public ulong Hash;
     public void UpdateOccupancy()
     {
         White = WhitePawn |
@@ -50,20 +51,20 @@ public struct Board
                 WhiteBishop |
                 WhiteRook |
                 WhiteQueen |
-                WhiteKing;
+                (1ul << WhiteKingPos);
 
         Black = BlackPawn |
                 BlackKnight |
                 BlackBishop |
                 BlackRook |
                 BlackQueen |
-                BlackKing;
+                (1ul << BlackKingPos);
         Occupancy = White | Black;
     }
 
     #region moves
 
-    public const int BlackWhiteEnpassantOffset = 5 * 8;
+    public const int WhiteEnpassantOffset = 5 * 8;
 
     public unsafe void WhitePawn_Enpassant(int fromSquare, int toSquare)
     {
@@ -805,7 +806,6 @@ Zobrist.SideToMove ^
     internal unsafe void WhiteKing_Capture(int fromSquare, int toSquare)
     {
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
-        WhiteKing ^= moveMask;
         White ^= moveMask;
         var prevCastleRights = CastleRights;
         CastleRights &= ~(CastleRights.WhiteKingSide | CastleRights.WhiteQueenSide);
@@ -874,7 +874,6 @@ Zobrist.SideToMove ^
     internal unsafe void WhiteKing_Move(int fromSquare, int toSquare)
     {
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
-        WhiteKing ^= moveMask;
         White ^= moveMask;
 
         Occupancy = Black | White;
@@ -894,7 +893,6 @@ Zobrist.SideToMove ^
 
     internal unsafe void WhiteKing_KingSideCastle()
     {
-        WhiteKing ^= (1UL << 4) | (1UL << 6);
         WhiteRook ^= (1UL << 7) | (1UL << 5);
         White ^= (1UL << 4) | (1UL << 7);
         White |= (1UL << 6) | (1UL << 5);
@@ -917,7 +915,6 @@ Zobrist.SideToMove ^
 
     internal unsafe void WhiteKing_QueenSideCastle()
     {
-        WhiteKing ^= (1UL << 4) | (1UL << 2);
         WhiteRook ^= (1UL << 0) | (1UL << 3);
         White ^= (1UL << 4) | (1UL << 0);
         White |= (1UL << 2) | (1UL << 3);
@@ -1263,7 +1260,6 @@ Zobrist.SideToMove ^
     internal unsafe void BlackKing_Capture(int fromSquare, int toSquare)
     {
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
-        BlackKing ^= moveMask;
         Black ^= moveMask;
 
         var prevCastleRights = CastleRights;
@@ -1332,7 +1328,6 @@ Zobrist.SideToMove ^
     internal unsafe void BlackKing_Move(int fromSquare, int toSquare)
     {
         var moveMask = (1UL << fromSquare) | (1UL << toSquare);
-        BlackKing ^= moveMask;
         Black ^= moveMask;
         var prevCastleRights = CastleRights;
         CastleRights &= ~(CastleRights.BlackKingSide | CastleRights.BlackQueenSide);
@@ -1350,7 +1345,6 @@ Zobrist.SideToMove ^
 
     internal unsafe void BlackKing_KingSideCastle()
     {
-        BlackKing ^= (1UL << 60) | (1UL << 62);
         BlackRook ^= (1UL << 63) | (1UL << 61);
         Black ^= (1UL << 60) | (1UL << 63);
         Black |= (1UL << 62) | (1UL << 61);
@@ -1373,7 +1367,6 @@ Zobrist.SideToMove ^
 
     internal unsafe void BlackKing_QueenSideCastle()
     {
-        BlackKing ^= (1UL << 60) | (1UL << 58);
         BlackRook ^= (1UL << 56) | (1UL << 59);
         Black ^= (1UL << 60) | (1UL << 56);
         Black |= (1UL << 58) | (1UL << 59);

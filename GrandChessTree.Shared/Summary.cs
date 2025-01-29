@@ -16,10 +16,8 @@ public struct Summary
     public ulong DoubleChecks;
     public ulong CheckMates;
     public ulong FullHash;
-    public int Depth;
-    public ulong Checkers;
-    public int NumCheckers;
-    public void Accumulate(Summary summary)
+    public byte Depth;
+    public void Accumulate(ref Summary summary)
     {
         Nodes += summary.Nodes;
         Captures += summary.Captures;

@@ -93,8 +93,7 @@ namespace GrandChessTree.Client
                 }
             }
 
-            Console.WriteLine(workerResults.DistinctBy(w => w.Hash).Count() + " / " + workerResults.Count());
-            Console.ReadLine();
+            //Console.WriteLine(workerResults.DistinctBy(w => w.Hash).Count() + " / " + workerResults.Count());
             PrintOutput();
         }
 
