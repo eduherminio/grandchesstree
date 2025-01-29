@@ -1,5 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+
+namespace GrandChessTree.Client;
 
 public enum WorkerState
 {

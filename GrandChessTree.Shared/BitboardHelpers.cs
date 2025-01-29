@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 public static class BitboardHelpers
 {

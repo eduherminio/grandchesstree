@@ -2,7 +2,7 @@
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 public static class Helpers
 {

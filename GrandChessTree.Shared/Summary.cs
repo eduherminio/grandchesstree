@@ -1,7 +1,7 @@
 ﻿
 using System.Runtime.InteropServices;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Summary
@@ -17,8 +17,8 @@ public struct Summary
     public ulong CheckMates;
     public ulong FullHash;
     public int Depth;
-    public ulong Occupancy;
-    
+    public ulong Checkers;
+    public int NumCheckers;
     public void Accumulate(Summary summary)
     {
         Nodes += summary.Nodes;
@@ -114,6 +114,5 @@ public struct Summary
         CheckMates = summary.CheckMates;
         FullHash = summary.FullHash;
         Depth = summary.Depth;
-        Occupancy = summary.Occupancy;
     }
 }

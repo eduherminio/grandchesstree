@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ConsoleTables;
+using GrandChessTree.Shared;
 
 namespace GrandChessTree.Client
 {

@@ -1,6 +1,6 @@
-﻿using GrandChessTree.Client.Tables;
+﻿using GrandChessTree.Shared.Tables;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 public static unsafe class LeafNodeGenerator
 {

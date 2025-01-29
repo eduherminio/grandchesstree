@@ -1,3 +1,5 @@
+using GrandChessTree.Shared;
+
 namespace GrandChessTree.Client.Tests
 {
     public class PerftTests

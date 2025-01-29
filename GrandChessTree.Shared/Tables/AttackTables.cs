@@ -1,10 +1,8 @@
-﻿using System;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
-namespace GrandChessTree.Client.Tables;
+namespace GrandChessTree.Shared.Tables;
 
 public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Position, ulong[] Moves)
 {
@@ -16,10 +14,10 @@ public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Po
 
 public static unsafe class AttackTables
 {
-    public static readonly ulong* RookAttackMasks;
+    public static readonly ulong* RookAttackRays;
     public static readonly ulong[] RookAttackMasksAll = new ulong[64];
     public static readonly MagicBitBoard[] RookMagics = new MagicBitBoard[64];
-    public static readonly ulong* BishopAttackMasks;
+    public static readonly ulong* BishopAttackRays;
     public static readonly ulong[] BishopAttackMasksAll = new ulong[64];
     public static readonly MagicBitBoard[] BishopMagics = new MagicBitBoard[64];
 
@@ -64,8 +62,8 @@ public static unsafe class AttackTables
         WhitePawnPushTable = Allocate<ulong>(64);
         BlackPawnPushTable = Allocate<ulong>(64);
 
-        RookAttackMasks = Allocate<ulong>(64);
-        BishopAttackMasks = Allocate<ulong>(64);
+        RookAttackRays = Allocate<ulong>(64);
+        BishopAttackRays = Allocate<ulong>(64);
         LineBitBoards = Allocate<ulong>(64 * 64);
         LineBitBoardsStraight = Allocate<ulong>(64 * 64);
         LineBitBoardsDiagonal = Allocate<ulong>(64 * 64);
@@ -75,9 +73,9 @@ public static unsafe class AttackTables
         var rand = Random.Shared;
         for (var i = 0; i < 64; i++)
         {
-            RookAttackMasks[i] = RookAttackMask(i);
+            RookAttackRays[i] = RookAttackMask(i);
             RookAttackMasksAll[i] = RookAttackMaskAll(i);
-            BishopAttackMasks[i] = BishopAttackMask(i);
+            BishopAttackRays[i] = BishopAttackMask(i);
             BishopAttackMasksAll[i] = BishopAttackMaskAll(i);
         }
 
@@ -193,7 +191,7 @@ public static unsafe class AttackTables
         for (var square = 0; square < 64; square++)
         {
             BishopPextOffset[square] = pextAttackIndex;
-            var bishopAttackMask = BishopAttackMasks[square];
+            var bishopAttackMask = BishopAttackRays[square];
             var patterns = 1UL << (byte)Popcnt.X64.PopCount(bishopAttackMask);
             for (ulong i = 0; i < patterns; i++)
             {
@@ -205,7 +203,7 @@ public static unsafe class AttackTables
         for (var square = 0; square < 64; square++)
         {
             RookPextOffset[square] = pextAttackIndex;
-            var rookAttackMask = RookAttackMasks[square];
+            var rookAttackMask = RookAttackRays[square];
             var patterns = 1UL << (byte)Popcnt.X64.PopCount(rookAttackMask);
             for (ulong i = 0; i < patterns; i++)
             {
@@ -777,7 +775,7 @@ public static unsafe class AttackTables
 
     private static MagicBitBoard GetBishopMagicNumbers(int square, Random rand)
     {
-        var movementMask = BishopAttackMasks[square];
+        var movementMask = BishopAttackRays[square];
 
         // Calculate all possible blocker configurations for movement mask
         var blockers = CreateAllBlockerBitBoards(movementMask);
@@ -827,7 +825,7 @@ public static unsafe class AttackTables
 
     private static MagicBitBoard GetRookMagicNumbers(int square, Random rand)
     {
-        var movementMask = RookAttackMasks[square];
+        var movementMask = RookAttackRays[square];
 
         // Calculate all possible blocker configurations for movement mask
         var blockers = CreateAllBlockerBitBoards(movementMask);
@@ -878,14 +876,14 @@ public static unsafe class AttackTables
     public static ulong PextRookAttacks(ulong occupation, int square)
     {
         return *(PextAttacks +
-                 *(RookPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(RookAttackMasks + square)));
+                 *(RookPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(RookAttackRays + square)));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong PextBishopAttacks(ulong occupation, int square)
     {
         return *(PextAttacks +
-                 *(BishopPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(BishopAttackMasks + square)));
+                 *(BishopPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(BishopAttackRays + square)));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1024,32 +1022,34 @@ public static unsafe class AttackTables
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong WhiteKingPinnedRay(this ref Board board)
     {
-        ulong occupancy = board.Occupancy;
+        var occupancy = board.Occupancy;
         int kingPos = board.WhiteKingPos;
 
-        return DetectPinsDiagonal(kingPos, board.BlackBishop | board.BlackQueen, occupancy) | DetectPinsStraight(kingPos, board.BlackRook | board.BlackQueen, occupancy);
+        return DetectPinsDiagonal(kingPos, (board.BlackBishop | board.BlackQueen), occupancy) | 
+               DetectPinsStraight(kingPos, (board.BlackRook | board.BlackQueen), occupancy);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong BlackKingPinnedRay(this ref Board board)
     {
-        ulong occupancy = board.Occupancy;
+        var occupancy = board.Occupancy;
         int kingPos = board.BlackKingPos;
-
-        return DetectPinsDiagonal(kingPos, board.WhiteBishop | board.WhiteQueen, occupancy) | DetectPinsStraight(kingPos, board.WhiteRook | board.WhiteQueen, occupancy);
+        
+        return DetectPinsDiagonal(kingPos, (board.WhiteBishop | board.WhiteQueen), occupancy) | 
+               DetectPinsStraight(kingPos, (board.WhiteRook | board.WhiteQueen), occupancy);
     }
 
-    // Utility function to detect pins along specific rays
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong DetectPinsStraight(int kingPos, ulong enemySlidingPieces, ulong occupancy)
     {
-        ulong pinned = 0ul;
+        var pinned = 0ul;
 
         while (enemySlidingPieces != 0)
         {
-            int attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
+            var attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
 
             // Calculate ray between king and attacker
-            ulong pinRay = GetRayBetweenStraight(kingPos, attackerPos) & occupancy;
+            var pinRay = *(LineBitBoardsStraight + kingPos * 64 + attackerPos) & occupancy;
 
             // Count the number of pieces in the pinRay
             if (ulong.PopCount(pinRay) == 1)
@@ -1060,16 +1060,17 @@ public static unsafe class AttackTables
         return pinned;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong DetectPinsDiagonal(int kingPos, ulong enemySlidingPieces, ulong occupancy)
     {
-        ulong pinned = 0ul;
+        var pinned = 0ul;
 
         while (enemySlidingPieces != 0)
         {
-            int attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
+            var attackerPos = enemySlidingPieces.PopLSB(); // Get one attacker at a time
 
             // Calculate ray between king and attacker
-            ulong pinRay = GetRayBetweenDiagonal(kingPos, attackerPos) & occupancy;
+            var pinRay = *(LineBitBoardsDiagonal + kingPos * 64 + attackerPos) & occupancy;
 
             // Count the number of pieces in the pinRay
             if (ulong.PopCount(pinRay) == 1)
@@ -1079,19 +1080,7 @@ public static unsafe class AttackTables
         }
         return pinned;
     }
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong GetRayBetweenStraight(int from, int to)
-    {
-        return *(AttackTables.LineBitBoardsStraight + from * 64 + to);
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong GetRayBetweenDiagonal(int from, int to)
-    {
-        return *(AttackTables.LineBitBoardsDiagonal + from * 64 + to);
-    }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong GetRayToEdgeStraight(int from, int to)
     {

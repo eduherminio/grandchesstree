@@ -1,4 +1,4 @@
-﻿namespace GrandChessTree.Client;
+﻿namespace GrandChessTree.Shared;
 
 [Flags]
 public enum CastleRights : byte
@@ -33,11 +33,11 @@ public struct Board
     public CastleRights CastleRights;
     public byte EnPassantFile;
 
-    public int WhiteKingPos;
-    public int BlackKingPos;
+    public byte WhiteKingPos;
+    public byte BlackKingPos;
 
     public ulong Checkers;
-    public ulong NumCheckers;
+    public byte NumCheckers;
     public ulong AttackedSquares;
     public ulong CaptureMask;
     public ulong PushMask;
@@ -868,7 +868,7 @@ Zobrist.SideToMove ^
 
         Occupancy = Black | White;
         EnPassantFile = 8;
-        WhiteKingPos = toSquare;
+        WhiteKingPos = (byte)toSquare;
     }
 
     internal unsafe void WhiteKing_Move(int fromSquare, int toSquare)
@@ -889,7 +889,7 @@ Zobrist.SideToMove ^
 
 
         EnPassantFile = 8;
-        WhiteKingPos = toSquare;
+        WhiteKingPos = (byte)toSquare;
     }
 
     internal unsafe void WhiteKing_KingSideCastle()
@@ -1326,7 +1326,7 @@ Zobrist.SideToMove ^
 
         Occupancy = Black | White;
         EnPassantFile = 8;
-        BlackKingPos = toSquare;
+        BlackKingPos = (byte)toSquare;
     }
 
     internal unsafe void BlackKing_Move(int fromSquare, int toSquare)
@@ -1345,7 +1345,7 @@ Zobrist.SideToMove ^
 
         Occupancy = Black | White;
         EnPassantFile = 8;
-        BlackKingPos = toSquare;
+        BlackKingPos = (byte)toSquare;
     }
 
     internal unsafe void BlackKing_KingSideCastle()

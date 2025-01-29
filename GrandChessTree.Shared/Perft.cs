@@ -2,9 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
-using GrandChessTree.Client.Tables;
+using GrandChessTree.Shared.Tables;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 public static unsafe class Perft
 {
     private const ulong BlackKingSideCastleRookPosition = 1UL << 63;
@@ -23,11 +23,11 @@ public static unsafe class Perft
 
     static Perft()
     {
-        int hashTableSize = (int)CalculateHashTableEntries(512);
+        var hashTableSize = (int)CalculateHashTableEntries(1024);
         HashTable = AllocateHashTable((nuint)hashTableSize);
         HashTableMask = (uint)hashTableSize - 1;
     }
-    private static unsafe uint CalculateHashTableEntries(int sizeInMb)
+    private static uint CalculateHashTableEntries(int sizeInMb)
     {
         var transpositionCount = (ulong)sizeInMb * 1024ul * 1024ul / (ulong)sizeof(Summary);
         if (!BitOperations.IsPow2(transpositionCount))
@@ -43,7 +43,7 @@ public static unsafe class Perft
         return (uint)transpositionCount;
     }
 
-    private static unsafe Summary* AllocateHashTable(nuint items)
+    private static Summary* AllocateHashTable(nuint items)
     {
         const nuint alignment = 64;
 
@@ -53,7 +53,7 @@ public static unsafe class Perft
 
         return (Summary*)block;
     }
-    public static unsafe void ClearTable()
+    public static void ClearTable()
     {
         Unsafe.InitBlock(HashTable, 0, (uint)(sizeof(Summary) * (HashTableMask + 1)));
     }
@@ -63,9 +63,8 @@ public static unsafe class Perft
     public static Summary PerftRoot(ref Board board, int depth, bool whiteToMove)
     {
         Summary summary = default;
-        summary.FullHash = board.Hash;
+        summary.FullHash = board.Hash ^ board.Occupancy;
         summary.Depth = depth;
-        summary.Occupancy = board.Occupancy;
         if (depth == 0)
         {
             // perft(0) = 1
@@ -76,7 +75,7 @@ public static unsafe class Perft
         if (whiteToMove)
         {
             board.Checkers = board.BlackCheckers();
-            board.NumCheckers = ulong.PopCount(board.Checkers);
+            board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
             board.AttackedSquares = board.WhiteKingDangerSquares();
             board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
             board.PushMask = 0xFFFFFFFFFFFFFFFF;
@@ -109,7 +108,7 @@ public static unsafe class Perft
         else
         {
             board.Checkers = board.WhiteCheckers();
-            board.NumCheckers = ulong.PopCount(board.Checkers);
+            board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
             board.AttackedSquares = board.BlackKingDangerSquares();
             board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
             board.PushMask = 0xFFFFFFFFFFFFFFFF;
@@ -120,7 +119,6 @@ public static unsafe class Perft
                 board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
             }
 
-            var oldNodes = summary.Nodes;
             var positions = board.BlackPawn;
             while (positions != 0) AccumulateBlackPawnMoves(ref board, ref summary, depth, positions.PopLSB());
 
@@ -145,8 +143,8 @@ public static unsafe class Perft
     private static void AccumulateWhiteMoves(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
         board.Checkers = board.BlackCheckers();
-        board.NumCheckers = ulong.PopCount(board.Checkers);
-        
+        board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
+        // Todo optimize with leaf nodes hashing [checkers / checks / mates]
         if (depth == 0)
         {
             // Leaf node
@@ -205,16 +203,15 @@ public static unsafe class Perft
 
         var ptr = (HashTable + (board.Hash & HashTableMask));
         var hashEntry = *ptr;
-        if (hashEntry.FullHash == board.Hash && hashEntry.Occupancy == board.Occupancy && depth == hashEntry.Depth)
+        if (hashEntry.FullHash == (board.Hash ^  board.Occupancy) && depth == hashEntry.Depth)
         {
             summary.Accumulate(hashEntry);
             return;
         }
 
         Summary childSummary = default;
-        childSummary.FullHash = board.Hash;
+        childSummary.FullHash = board.Hash ^ board.Occupancy;
         childSummary.Depth = depth;
-        childSummary.Occupancy = board.Occupancy;
         
         board.AttackedSquares = board.WhiteKingDangerSquares();
 
@@ -260,14 +257,12 @@ public static unsafe class Perft
     private static void AccumulateBlackMoves(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
         board.Checkers = board.WhiteCheckers();
-        board.NumCheckers = ulong.PopCount(board.Checkers);
+        board.NumCheckers = (byte)ulong.PopCount(board.Checkers);
 
         if (depth == 0)
         {
             if (board.NumCheckers == 1)
             {
-                board.CaptureMask = 0xFFFFFFFFFFFFFFFF;
-                board.PushMask = 0xFFFFFFFFFFFFFFFF;
                 board.PinMask = board.BlackKingPinnedRay();
                 board.CaptureMask = board.Checkers;
                 board.PushMask = *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(board.Checkers));
@@ -281,10 +276,17 @@ public static unsafe class Perft
                 {
                     summary.AddCheck();
                 }
+                summary.Nodes++;
 
-                MateChecker.BlackCanEvadeSingleCheck(ref board, ref summary);
+                if (MateChecker.BlackCanEvadeSingleCheck(ref board))
+                {
+                    return;
+                }
+                summary.AddMate();
+                return;
             }
-            else if (board.NumCheckers == 2)
+
+            if (board.NumCheckers == 2)
             {
                 if ((board.Checkers & (1UL << prevDestination)) == 0)
                 {
@@ -296,7 +298,12 @@ public static unsafe class Perft
                 }
 
                 board.AttackedSquares = board.BlackKingDangerSquares();
-                MateChecker.BlackCanEvadeDoubleCheck(ref board, ref summary);
+                summary.Nodes++;
+                if (MateChecker.BlackCanEvadeDoubleCheck(ref board)){ 
+                    return;
+                }
+                summary.AddMate();
+                return;
             }
 
             summary.Nodes++;
@@ -305,16 +312,15 @@ public static unsafe class Perft
 
         var ptr = (HashTable + (board.Hash & HashTableMask));
         var hashEntry = *ptr;
-        if (hashEntry.FullHash == board.Hash && hashEntry.Occupancy == board.Occupancy && depth == hashEntry.Depth)
+        if (hashEntry.FullHash == (board.Hash ^  board.Occupancy) && depth == hashEntry.Depth)
         {
             summary.Accumulate(hashEntry);
             return;
         }
 
         Summary childSummary = default;
-        childSummary.FullHash = board.Hash;
+        childSummary.FullHash = board.Hash ^  board.Occupancy;
         childSummary.Depth = depth;
-        childSummary.Occupancy = board.Occupancy;
         board.AttackedSquares = board.BlackKingDangerSquares();
 
         var positions = board.BlackKing;
@@ -491,8 +497,6 @@ public static unsafe class Perft
         Board newBoard = default;
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
         var captureMoves = potentialMoves & board.Black;
-
-
         while (captureMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -515,9 +519,7 @@ public static unsafe class Perft
     private static void AccumulateWhiteBishopMoves(ref Board board, ref Summary summary, int depth, int index)
     {
         Board newBoard = default;
-
         var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
-
         if ((board.PinMask & (1ul << index)) != 0)
         {
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
@@ -547,9 +549,7 @@ public static unsafe class Perft
     private static void AccumulateWhiteRookMoves(ref Board board, ref Summary summary, int depth, int index)
     {
         Board newBoard = default;
-
         var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
-
         if ((board.PinMask & (1ul << index)) != 0)
         {
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);

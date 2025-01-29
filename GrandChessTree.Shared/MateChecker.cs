@@ -1,105 +1,87 @@
 ﻿using System.Runtime.CompilerServices;
-using GrandChessTree.Client.Tables;
+using GrandChessTree.Shared.Tables;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 public static unsafe class MateChecker
 {
-    public const ulong BlackKingSideCastleRookPosition = 1UL << 63;
-    public const ulong BlackKingSideCastleEmptyPositions = (1UL << 61) | (1UL << 62);
-    public const ulong BlackQueenSideCastleRookPosition = 1UL << 56;
-    public const ulong BlackQueenSideCastleEmptyPositions = (1UL << 57) | (1UL << 58) | (1UL << 59);
-
-    public const ulong WhiteKingSideCastleRookPosition = 1UL << 7;
-    public const ulong WhiteKingSideCastleEmptyPositions = (1UL << 6) | (1UL << 5);
-    public const ulong WhiteQueenSideCastleRookPosition = 1UL;
-    public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
-
     public static bool WhiteCanEvadeCheck(ref Board board)
     {
-        var positions = board.WhitePawn;
+        if (CanWhiteKingMove(ref board))
+            return true;
+        
+        var positions = board.WhiteKnight;
         while (positions != 0)
-            if (PerftWhitePawn(ref board, positions.PopLSB()))
-                return true;
-
-        positions = board.WhiteKnight;
-        while (positions != 0)
-            if (PerftWhiteKnight(ref board, positions.PopLSB()))
+            if (CanWhiteKnightMove(ref board, positions.PopLSB()))
                 return true;
 
         positions = board.WhiteBishop;
         while (positions != 0)
-            if (PerftWhiteBishop(ref board, positions.PopLSB()))
+            if (CanWhiteBishopMove(ref board, positions.PopLSB()))
                 return true;
 
         positions = board.WhiteRook;
         while (positions != 0)
-            if (PerftWhiteRook(ref board, positions.PopLSB()))
+            if (CanWhiteRookMove(ref board, positions.PopLSB()))
                 return true;
 
         positions = board.WhiteQueen;
         while (positions != 0)
-            if (PerftWhiteQueen(ref board, positions.PopLSB()))
+            if (CanWhiteQueenMove(ref board, positions.PopLSB()))
                 return true;
 
-        positions = board.WhiteKing;
+        positions = board.WhitePawn;
         while (positions != 0)
-            if (PerftWhiteKing(ref board, positions.PopLSB()))
+            if (CanWhitePawnMove(ref board, positions.PopLSB()))
                 return true;
-
+        
         return false;
     }
 
     public static bool WhiteCanEvadeDoubleCheck(ref Board board)
     {
-        return PerftWhiteKing(ref board, board.WhiteKingPos);
+        return CanWhiteKingMove(ref board);
     }
 
-
-    public static void BlackCanEvadeSingleCheck(ref Board board, ref Summary summary)
+    public static bool BlackCanEvadeSingleCheck(ref Board board)
     {
-        var positions = board.BlackPawn;
+        if (CanBlackKingMove(ref board))
+            return true;
+        
+        var positions = board.BlackKnight;
         while (positions != 0)
-            if (PerftBlackPawn(ref board, positions.PopLSB()))
-                return;
-
-        positions = board.BlackKnight;
-        while (positions != 0)
-            if (PerftBlackKnight(ref board, positions.PopLSB()))
-                return;
+            if (CanBlackKnightMove(ref board, positions.PopLSB()))
+                return true;
 
         positions = board.BlackBishop;
         while (positions != 0)
-            if (PerftBlackBishop(ref board, positions.PopLSB()))
-                return;
+            if (CanBlackBishopMove(ref board, positions.PopLSB()))
+                return true;
 
         positions = board.BlackRook;
         while (positions != 0)
-            if (PerftBlackRook(ref board, positions.PopLSB()))
-                return;
+            if (CanBlackRookMove(ref board, positions.PopLSB()))
+                return true;
 
         positions = board.BlackQueen;
         while (positions != 0)
-            if (PerftBlackQueen(ref board, positions.PopLSB()))
-                return;
-
-        positions = board.BlackKing;
+            if (CanBlackQueenMove(ref board, positions.PopLSB()))
+                return true;
+        
+        positions = board.BlackPawn;
         while (positions != 0)
-            if (PerftBlackKing(ref board, positions.PopLSB()))
-                return;
+            if (CanBlackPawnMove(ref board, positions.PopLSB()))
+                return true;
 
-        summary.AddMate();
+        return false;
     }
 
-    public static void BlackCanEvadeDoubleCheck(ref Board board, ref Summary summary)
+    public static bool BlackCanEvadeDoubleCheck(ref Board board)
     {
-        if (PerftBlackKing(ref board, board.BlackKingPos))
-            return;
-
-        summary.AddMate();
+        return CanBlackKingMove(ref board);
     }
 
-    public static bool PerftWhitePawn(ref Board board, int index)
+    private static bool CanWhitePawnMove(ref Board board, int index)
     {
         Board newBoard = default;
 
@@ -216,7 +198,7 @@ public static unsafe class MateChecker
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftWhiteKnight(ref Board board, int index)
+    private static bool CanWhiteKnightMove(ref Board board, int index)
     {
         if ((board.PinMask & (1ul << index)) != 0)
         {
@@ -225,11 +207,11 @@ public static unsafe class MateChecker
 
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.White) != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftWhiteBishop(ref Board board, int index)
+    private static bool CanWhiteBishopMove(ref Board board, int index)
     {
         var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
@@ -238,10 +220,10 @@ public static unsafe class MateChecker
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
         }
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.White) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftWhiteRook(ref Board board, int index)
+    private static bool CanWhiteRookMove(ref Board board, int index)
     {
         var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
@@ -251,10 +233,10 @@ public static unsafe class MateChecker
         }
 
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.White) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftWhiteQueen(ref Board board, int index)
+    private static bool CanWhiteQueenMove(ref Board board, int index)
     {
         var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
                              AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
@@ -264,18 +246,16 @@ public static unsafe class MateChecker
             potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.White) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftWhiteKing(ref Board board, int index)
+    private static bool CanWhiteKingMove(ref Board board)
     {
-        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        var potentialMoves = *(AttackTables.KingAttackTable + board.WhiteKingPos) & ~board.AttackedSquares;
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.Black | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.White) != 0;
     }
-
-
-    public static bool PerftBlackPawn(ref Board board, int index)
+    private static bool CanBlackPawnMove(ref Board board, int index)
     {
         Board newBoard = default;
 
@@ -392,7 +372,7 @@ public static unsafe class MateChecker
         return false;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftBlackKnight(ref Board board, int index)
+    private static bool CanBlackKnightMove(ref Board board, int index)
     {
         if ((board.PinMask & (1ul << index)) != 0)
         {
@@ -402,10 +382,10 @@ public static unsafe class MateChecker
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & (board.PushMask | board.CaptureMask);
 
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.Black) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftBlackBishop(ref Board board, int index)
+    private static bool CanBlackBishopMove(ref Board board, int index)
     {
         var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
@@ -415,10 +395,10 @@ public static unsafe class MateChecker
         }
 
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.Black) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftBlackRook(ref Board board, int index)
+    private static bool CanBlackRookMove(ref Board board, int index)
     {
         var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & (board.PushMask | board.CaptureMask);
 
@@ -427,10 +407,10 @@ public static unsafe class MateChecker
             potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.Black) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftBlackQueen(ref Board board, int index)
+    private static bool CanBlackQueenMove(ref Board board, int index)
     {
         var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
                              AttackTables.PextRookAttacks(board.Occupancy, index)) & (board.PushMask | board.CaptureMask);
@@ -441,13 +421,13 @@ public static unsafe class MateChecker
         }
 
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.Black) != 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool PerftBlackKing(ref Board board, int index)
+    private static bool CanBlackKingMove(ref Board board)
     {
-        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~board.AttackedSquares;
+        var potentialMoves = *(AttackTables.KingAttackTable + board.BlackKingPos) & ~board.AttackedSquares;
         // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & (board.White | ~board.Occupancy)) != 0;
+        return (potentialMoves & ~board.Black) != 0;
     }
 }

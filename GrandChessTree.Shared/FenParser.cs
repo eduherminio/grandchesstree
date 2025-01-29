@@ -1,4 +1,4 @@
-﻿namespace GrandChessTree.Client;
+﻿namespace GrandChessTree.Shared;
 
 public static class FenParser
 {
@@ -42,7 +42,7 @@ public static class FenParser
                             break;
                         case 'K':
                             board.WhiteKing |= 1UL << index;
-                            board.WhiteKingPos = index;
+                            board.WhiteKingPos = (byte)index;
                             break;
                         case 'p':
                             board.BlackPawn |= 1UL << index;
@@ -61,7 +61,7 @@ public static class FenParser
                             break;
                         case 'k':
                             board.BlackKing |= 1UL << index;
-                            board.BlackKingPos = index;
+                            board.BlackKingPos = (byte)index;
                             break;
                         default:
                             throw new Exception($"invalid piece '{c}'");
