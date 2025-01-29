@@ -1,8 +1,8 @@
-﻿namespace GrandChessTree.Client;
+﻿namespace GrandChessTree.Shared;
 
 public static class FenParser
 {
-    public static Board Parse(string fen)
+    public static (Board, bool whiteToMove) Parse(string fen)
     {
         Board board = default;
         var parts = fen.Split(' ');
@@ -41,8 +41,7 @@ public static class FenParser
                             board.WhiteQueen |= 1UL << index;
                             break;
                         case 'K':
-                            board.WhiteKing |= 1UL << index;
-                            board.WhiteKingPos = index;
+                            board.WhiteKingPos = (byte)index;
                             break;
                         case 'p':
                             board.BlackPawn |= 1UL << index;
@@ -60,8 +59,7 @@ public static class FenParser
                             board.BlackQueen |= 1UL << index;
                             break;
                         case 'k':
-                            board.BlackKing |= 1UL << index;
-                            board.BlackKingPos = index;
+                            board.BlackKingPos = (byte)index;
                             break;
                         default:
                             throw new Exception($"invalid piece '{c}'");
@@ -79,7 +77,7 @@ public static class FenParser
         else
             board.EnPassantFile = (byte)"abcdefgh".IndexOf(enPassantTarget[0]);
 
-        return board;
+        return (board, turn == "w");
     }
 
 

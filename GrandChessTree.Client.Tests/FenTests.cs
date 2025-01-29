@@ -1,3 +1,5 @@
+using GrandChessTree.Shared;
+
 namespace GrandChessTree.Client.Tests
 {
     public class FenTests
@@ -13,7 +15,7 @@ namespace GrandChessTree.Client.Tests
         {
             // Given
             // When
-            var board = FenParser.Parse(fen);
+            var (board, _) = FenParser.Parse(fen);
 
             // Then
             Assert.Equal(expected, board.CastleRights);
@@ -26,7 +28,7 @@ namespace GrandChessTree.Client.Tests
         {
             // Given
             // When
-            var board = FenParser.Parse(fen);
+            var (board, _) = FenParser.Parse(fen);
 
             // Then
             Assert.Equal(expected, board.EnPassantFile);

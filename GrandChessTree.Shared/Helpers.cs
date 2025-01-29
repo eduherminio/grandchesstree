@@ -2,7 +2,7 @@
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
 public static class Helpers
 {
@@ -30,7 +30,7 @@ public static class Helpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetPiece(this ref Board board, int square)
+    public static byte GetPiece(this ref Board board, int square)
     {
         if ((board.Occupancy & (1UL << square)) == 0) return 0;
 
@@ -45,11 +45,18 @@ public static class Helpers
             (((board.WhiteRook >> square) & 1UL) << 8) |
             (((board.BlackQueen >> square) & 1UL) << 9) |
             (((board.WhiteQueen >> square) & 1UL) << 10) |
-            (((board.BlackKing >> square) & 1UL) << 11) |
-            (((board.WhiteKing >> square) & 1UL) << 12));
+            ((((1ul << board.BlackKingPos) >> square) & 1UL) << 11) |
+            ((((1ul << board.WhiteKingPos) >> square) & 1UL) << 12));
     }
 
-    public static string ToFen(this Board board)
+    public static string ConvertPosition(this int position)
+    {
+        var rank = position.GetRankIndex();
+        var file = position.GetFileIndex();
+        return $"{(char)('a' + file)}{(char)('1' + rank)}";
+    }  
+    
+    public static string ToFen(this Board board, bool whiteToMove)
     {
         var fen = new StringBuilder();
 
@@ -82,8 +89,7 @@ public static class Helpers
         }
 
         fen.Append(' ');
-        // fen.Append(board.WhiteToMove ? "w" : "b");
-        fen.Append('w');
+        fen.Append(whiteToMove ? "w" : "b");
         fen.Append(' ');
 
         if (board.CastleRights == CastleRights.None)
@@ -100,16 +106,18 @@ public static class Helpers
 
             if (board.CastleRights.HasFlag(CastleRights.BlackQueenSide)) fen.Append('q');
         }
+        fen.Append(' ');
 
         if (board.EnPassantFile >= 8)
-            fen.Append(" -");
+            fen.Append("-");
         else
+        {
+            var enpassantTargetSquare = whiteToMove ? 5 * 8 + board.EnPassantFile : 2 * 8 + board.EnPassantFile;
+            fen.Append((enpassantTargetSquare).ConvertPosition());
             fen.Append(' ');
-        //var enpassantTargetSquare = board.WhiteToMove ? 5 * 8 + board.EnPassantFile : 2 * 8 + board.EnPassantFile;
-        //fen.Append(((byte)enpassantTargetSquare).ConvertPosition());
-        fen.Append(' ');
-        //fen.Append(board.HalfMoveClock);
+        }
 
+        //fen.Append(board.HalfMoveClock);
         fen.Append(' ');
         //fen.Append(board.TurnCount);
 
@@ -138,12 +146,28 @@ public static class Helpers
 
     public static string FormatBigNumber(this float number)
     {
-        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";
+        if (number >= 1000000000000) return (number / 1000000000000D).ToString("0.#") + "t";  // Trillion
 
-        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";
+        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";  // Billion
 
-        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";
+        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";  // Million
+
+        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";  // Thousand
 
         return number.ToString();
     }
+
+    public static string FormatBigNumber(this ulong number)
+    {
+        if (number >= 1000000000000) return (number / 1000000000000D).ToString("0.#") + "t";  // Trillion
+
+        if (number >= 1000000000) return (number / 1000000000D).ToString("0.#") + "b";  // Billion
+
+        if (number >= 1000000) return (number / 1000000D).ToString("0.#") + "m";  // Million
+
+        if (number >= 1000) return (number / 1000D).ToString("0.#") + "k";  // Thousand
+
+        return number.ToString();
+    }
+
 }

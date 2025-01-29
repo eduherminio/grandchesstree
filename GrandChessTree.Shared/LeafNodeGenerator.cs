@@ -1,8 +1,8 @@
-﻿using GrandChessTree.Client.Tables;
+﻿using GrandChessTree.Shared.Tables;
 
-namespace GrandChessTree.Client;
+namespace GrandChessTree.Shared;
 
-public static unsafe class Perft
+public static unsafe class LeafNodeGenerator
 {
     public const ulong BlackKingSideCastleRookPosition = 1UL << 63;
     public const ulong BlackKingSideCastleEmptyPositions = (1UL << 61) | (1UL << 62);
@@ -14,147 +14,134 @@ public static unsafe class Perft
     public const ulong WhiteQueenSideCastleRookPosition = 1UL;
     public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
 
-
-    public static void PerftRoot(ref Board board, ref Summary summary, int depth, bool whiteToMove)
+    public static Board[] GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
     {
+        var summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+
+        var output = new Board[summary.Nodes];
+        var boards = new Span<Board>(output);
+        var moveIndex = 0;
+
         if (whiteToMove)
         {
-            if (depth == 0)
-            {
-                summary.Nodes++;
-                return;
-            }
-
-            var oldNodes = summary.Nodes;
-
             var positions = board.WhitePawn;
-            while (positions != 0) PerftWhitePawn(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateWhitePawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.WhiteKnight;
-            while (positions != 0) PerftWhiteKnight(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateWhiteKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.WhiteBishop;
-            while (positions != 0) PerftWhiteBishop(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateWhiteBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.WhiteRook;
-            while (positions != 0) PerftWhiteRook(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateWhiteRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.WhiteQueen;
-            while (positions != 0) PerftWhiteQueen(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteKing;
-            while (positions != 0) PerftWhiteKing(ref board, ref summary, depth, positions.PopLSB());
-
-            if (oldNodes == summary.Nodes) summary.CheckMates++;
+            GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
         }
         else
         {
-            if (depth == 0)
-            {
-                summary.Nodes++;
-                return;
-            }
-
-            var oldNodes = summary.Nodes;
             var positions = board.BlackPawn;
-            while (positions != 0) PerftBlackPawn(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateBlackPawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.BlackKnight;
-            while (positions != 0) PerftBlackKnight(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateBlackKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.BlackBishop;
-            while (positions != 0) PerftBlackBishop(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateBlackBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.BlackRook;
-            while (positions != 0) PerftBlackRook(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateBlackRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             positions = board.BlackQueen;
-            while (positions != 0) PerftBlackQueen(ref board, ref summary, depth, positions.PopLSB());
+            while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackKing;
-            while (positions != 0) PerftBlackKing(ref board, ref summary, depth, positions.PopLSB());
-
-            if (depth == 1 && oldNodes == summary.Nodes) summary.CheckMates++;
+            GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
         }
+
+        var leafNodeWhiteToMove = depth % 2 == 0 ? whiteToMove : !whiteToMove;
+        for(int i = 0; i < boards.Length; i++)
+        {
+            output[i].Hash = Zobrist.CalculateZobristKey(ref output[i], leafNodeWhiteToMove);
+        }
+
+        return output;
     }
 
-    public static void PerftWhite(ref Board board, ref Summary summary, int depth)
+    private static void GenerateWhiteNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth)
     {
         if (depth == 0)
         {
-            MateChecker.WhiteCheckTest(ref board, ref summary);
-            summary.Nodes++;
+            boards[moveIndex++] = board;
             return;
         }
 
         var positions = board.WhitePawn;
-        while (positions != 0) PerftWhitePawn(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateWhitePawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.WhiteKnight;
-        while (positions != 0) PerftWhiteKnight(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateWhiteKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.WhiteBishop;
-        while (positions != 0) PerftWhiteBishop(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateWhiteBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.WhiteRook;
-        while (positions != 0) PerftWhiteRook(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateWhiteRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.WhiteQueen;
-        while (positions != 0) PerftWhiteQueen(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteKing;
-        while (positions != 0) PerftWhiteKing(ref board, ref summary, depth, positions.PopLSB());
+        GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
     }
 
-    public static void PerftBlack(ref Board board, ref Summary summary, int depth)
+    private static void GenerateBlackNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth)
     {
         if (depth == 0)
         {
-            MateChecker.BlackCheckTest(ref board, ref summary);
-            summary.Nodes++;
+            boards[moveIndex++] = board;
             return;
         }
 
         var positions = board.BlackPawn;
-        while (positions != 0) PerftBlackPawn(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateBlackPawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.BlackKnight;
-        while (positions != 0) PerftBlackKnight(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateBlackKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.BlackBishop;
-        while (positions != 0) PerftBlackBishop(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateBlackBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.BlackRook;
-        while (positions != 0) PerftBlackRook(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateBlackRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         positions = board.BlackQueen;
-        while (positions != 0) PerftBlackQueen(ref board, ref summary, depth, positions.PopLSB());
+        while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackKing;
-        while (positions != 0) PerftBlackKing(ref board, ref summary, depth, positions.PopLSB());
+       GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
     }
 
-    public static void PerftWhitePawn(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhitePawnNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsWhiteEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.WhitePawn_Enpassant(index);
+            toSquare = Board.WhiteEnpassantOffset + board.EnPassantFile;
+
+            newBoard.WhitePawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddEnpassant();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var canPromote = rankIndex.IsSeventhRank();
-        int toSquare;
 
         // Take left piece
         var target = posEncoded.ShiftUpLeft();
@@ -166,44 +153,26 @@ public static unsafe class Perft
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_KnightPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_BishopPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_RookPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_QueenPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
             else
             {
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
         }
 
@@ -217,44 +186,26 @@ public static unsafe class Perft
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_KnightPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_BishopPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_RookPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture_QueenPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
             else
             {
                 board.CloneTo(ref newBoard);
                 newBoard.WhitePawn_Capture(index, toSquare);
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-                {
-                    if (depth == 1) summary.AddCapture();
-                    PerftBlack(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
         }
 
@@ -270,52 +221,39 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhitePawn_KnightPromotion(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.WhitePawn_BishopPromotion(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.WhitePawn_RookPromotion(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.WhitePawn_QueenPromotion(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             return;
         }
 
         board.CloneTo(ref newBoard);
         newBoard.WhitePawn_Move(index, toSquare);
-        if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+        if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+            GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         target = target.ShiftUp();
         if (rankIndex.IsSecondRank() && (board.Occupancy & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
             newBoard.WhitePawn_DoublePush(index, toSquare.ShiftUp());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftWhiteKnight(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhiteKnightNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth,
+        int index)
     {
         Board newBoard = default;
 
@@ -326,10 +264,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKnight_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -337,11 +272,13 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteKnight_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftWhiteBishop(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhiteBishopNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth,
+        int index)
     {
         Board newBoard = default;
 
@@ -352,10 +289,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteBishop_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -363,11 +297,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteBishop_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftWhiteRook(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhiteRookNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -378,10 +313,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteRook_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -389,11 +321,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteRook_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftWhiteQueen(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhiteQueenNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -405,10 +338,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteQueen_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -416,11 +346,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteQueen_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftWhiteKing(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateWhiteKingNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -432,10 +363,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -443,7 +371,8 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos)) PerftBlack(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         if (index != 4 || board.IsAttackedByBlack(board.WhiteKingPos))
@@ -459,10 +388,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_KingSideCastle();
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCastle();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         // Queen Side Castle
@@ -475,35 +401,31 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.WhiteKing_QueenSideCastle();
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
-            {
-                if (depth == 1) summary.AddCastle();
-                PerftBlack(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
 
-    public static void PerftBlackPawn(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackPawnNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
         var rankIndex = index.GetRankIndex();
         var posEncoded = 1UL << index;
+        int toSquare;
 
         if (board.EnPassantFile != 8 && rankIndex.IsBlackEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            newBoard.BlackPawn_Enpassant(index);
+            toSquare = Board.blackEnpassantOffset + board.EnPassantFile;
+
+            newBoard.BlackPawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddEnpassant();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var canPromote = rankIndex.IsSecondRank();
-        int toSquare;
 
         // Left capture
         var target = posEncoded.ShiftDownLeft();
@@ -515,44 +437,26 @@ public static unsafe class Perft
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_KnightPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_BishopPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_RookPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_QueenPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
             else
             {
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
         }
 
@@ -567,44 +471,26 @@ public static unsafe class Perft
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_KnightPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_BishopPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_RookPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
-
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture_QueenPromotion(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddPromotionCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
             else
             {
                 board.CloneTo(ref newBoard);
                 newBoard.BlackPawn_Capture(index, toSquare);
                 if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-                {
-                    if (depth == 1) summary.AddCapture();
-                    PerftWhite(ref newBoard, ref summary, depth - 1);
-                }
+                    GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             }
         }
 
@@ -620,53 +506,40 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackPawn_KnightPromotion(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.BlackPawn_BishopPromotion(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.BlackPawn_RookPromotion(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             board.CloneTo(ref newBoard);
             newBoard.BlackPawn_QueenPromotion(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddPromotion();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
-
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
             return;
         }
 
         // Move down
         board.CloneTo(ref newBoard);
         newBoard.BlackPawn_Move(index, toSquare);
-        if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+        if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+            GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         target = target.ShiftDown();
         if (rankIndex.IsSeventhRank() && (board.Occupancy & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
             newBoard.BlackPawn_DoublePush(index, toSquare.ShiftDown());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftBlackKnight(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackKnightNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth,
+        int index)
     {
         Board newBoard = default;
 
@@ -677,10 +550,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackKnight_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -688,11 +558,13 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKnight_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftBlackBishop(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackBishopNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth,
+        int index)
     {
         Board newBoard = default;
 
@@ -703,10 +575,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackBishop_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -714,11 +583,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackBishop_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftBlackRook(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackRookNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -729,10 +599,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackRook_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -740,11 +607,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackRook_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftBlackQueen(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackQueenNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -756,10 +624,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackQueen_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -767,11 +632,12 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackQueen_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 
-    public static void PerftBlackKing(ref Board board, ref Summary summary, int depth, int index)
+    private static void GenerateBlackKingNodes(ref Board board, ref Span<Board> boards, ref int moveIndex, int depth, int index)
     {
         Board newBoard = default;
 
@@ -782,10 +648,7 @@ public static unsafe class Perft
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_Capture(index, captureMoves.PopLSB());
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
-            {
-                if (depth == 1) summary.AddCapture();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         var emptyMoves = potentialMoves & ~board.Occupancy;
@@ -793,7 +656,8 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_Move(index, emptyMoves.PopLSB());
-            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos)) PerftWhite(ref newBoard, ref summary, depth - 1);
+            if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
+                GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         if (index != 60 || board.IsAttackedByWhite(board.BlackKingPos))
@@ -809,11 +673,7 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_KingSideCastle();
-            if (!newBoard.IsAttackedByWhite(62))
-            {
-                if (depth == 1) summary.AddCastle();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+            if (!newBoard.IsAttackedByWhite(62)) GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
         // Queen Side Castle
@@ -825,11 +685,7 @@ public static unsafe class Perft
         {
             board.CloneTo(ref newBoard);
             newBoard.BlackKing_QueenSideCastle();
-            if (!newBoard.IsAttackedByWhite(58))
-            {
-                if (depth == 1) summary.AddCastle();
-                PerftWhite(ref newBoard, ref summary, depth - 1);
-            }
+            if (!newBoard.IsAttackedByWhite(58)) GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
     }
 }
