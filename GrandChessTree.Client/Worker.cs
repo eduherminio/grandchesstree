@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using GrandChessTree.Shared;
 
 namespace GrandChessTree.Client;
 
@@ -19,10 +20,14 @@ public class AggregateResultResult
     public ulong Enpassant;
     public ulong Castles;
     public ulong Promotions;
-    public ulong Checks;
-    public ulong DiscoveredChecks;
-    public ulong DoubleChecks;
-    public ulong CheckMates;
+    public ulong DirectCheck;
+    public ulong SingleDiscoveredCheck;
+    public ulong DirectDiscoveredCheck;
+    public ulong DoubleDiscoveredCheck;
+    public ulong DirectCheckmate;
+    public ulong SingleDiscoveredCheckmate;
+    public ulong DirectDiscoverdCheckmate;
+    public ulong DoubleDiscoverdCheckmate;
     public void Add(WorkerResult result)
     {
         Nps += result.Nps;
@@ -31,10 +36,14 @@ public class AggregateResultResult
         Enpassant += result.Enpassant;
         Castles += result.Castles;
         Promotions += result.Promotions;
-        Checks += result.Checks;
-        DiscoveredChecks += result.DiscoveredChecks;
-        DoubleChecks += result.DoubleChecks;
-        CheckMates += result.CheckMates;
+        DirectCheck += result.DirectCheck;
+        SingleDiscoveredCheck += result.SingleDiscoveredCheck;
+        DirectDiscoveredCheck += result.DirectDiscoveredCheck;
+        DoubleDiscoveredCheck += result.DoubleDiscoveredCheck;
+        DirectCheckmate += result.DirectCheckmate;
+        SingleDiscoveredCheckmate += result.SingleDiscoveredCheckmate;
+        DirectDiscoverdCheckmate += result.DirectDiscoverdCheckmate;
+        DoubleDiscoverdCheckmate += result.DoubleDiscoverdCheckmate;
     }
     
     public void Print()
@@ -44,10 +53,17 @@ public class AggregateResultResult
         Console.WriteLine($"enpassants:{Enpassant}");
         Console.WriteLine($"castles:{Castles}");
         Console.WriteLine($"promotions:{Promotions}");
-        Console.WriteLine($"checks:{Checks}");
-        Console.WriteLine($"discovered_checks:{DiscoveredChecks}");
-        Console.WriteLine($"double_checks:{DoubleChecks}");
-        Console.WriteLine($"check_mates:{CheckMates}");
+        Console.WriteLine($"direct_checks:{DirectCheck}");
+        Console.WriteLine($"single_discovered_checks:{SingleDiscoveredCheck}");
+        Console.WriteLine($"direct_discovered_checks:{DirectDiscoveredCheck}");
+        Console.WriteLine($"double_discovered_check:{DoubleDiscoveredCheck}");
+        Console.WriteLine($"total_checks:{DirectCheck + SingleDiscoveredCheck + DirectDiscoveredCheck + DoubleDiscoveredCheck}");
+
+        Console.WriteLine($"direct_mates:{DirectCheckmate}");
+        Console.WriteLine($"single_discovered_mates:{SingleDiscoveredCheckmate}");
+        Console.WriteLine($"direct_discoverd_mates:{DirectDiscoverdCheckmate}");
+        Console.WriteLine($"double_discoverd_mates:{DoubleDiscoverdCheckmate}");
+        Console.WriteLine($"total_mates:{DirectCheckmate + SingleDiscoveredCheckmate + DirectDiscoverdCheckmate + DoubleDiscoverdCheckmate}");
     }
 }
 
@@ -59,10 +75,14 @@ public struct WorkerResult
     public ulong Enpassant;
     public ulong Castles;
     public ulong Promotions;
-    public ulong Checks;
-    public ulong DiscoveredChecks;
-    public ulong DoubleChecks;
-    public ulong CheckMates;
+    public ulong DirectCheck;
+    public ulong SingleDiscoveredCheck;
+    public ulong DirectDiscoveredCheck;
+    public ulong DoubleDiscoveredCheck;
+    public ulong DirectCheckmate;
+    public ulong SingleDiscoveredCheckmate;
+    public ulong DirectDiscoverdCheckmate;
+    public ulong DoubleDiscoverdCheckmate;
     public string Fen;
     public ulong Hash;
 }
@@ -78,17 +98,21 @@ public static class WorkerResultExtensions
         result.Enpassant = outputLogs.GetULongOutputProperty("enpassants") ?? 0;
         result.Castles = outputLogs.GetULongOutputProperty("castles") ?? 0;
         result.Promotions = outputLogs.GetULongOutputProperty("promotions") ?? 0;
-        result.Checks = outputLogs.GetULongOutputProperty("checks") ?? 0;
-        result.DiscoveredChecks = outputLogs.GetULongOutputProperty("discovered_checks") ?? 0;
-        result.DoubleChecks = outputLogs.GetULongOutputProperty("double_checks") ?? 0;
-        result.CheckMates = outputLogs.GetULongOutputProperty("check_mates") ?? 0;
+        result.DirectCheck = outputLogs.GetULongOutputProperty("direct_checks") ?? 0;
+        result.SingleDiscoveredCheck = outputLogs.GetULongOutputProperty("single_discovered_checks") ?? 0;
+        result.DirectDiscoveredCheck = outputLogs.GetULongOutputProperty("direct_discovered_checks") ?? 0;
+        result.DoubleDiscoveredCheck = outputLogs.GetULongOutputProperty("double_discovered_check") ?? 0;
+        result.DirectCheckmate = outputLogs.GetULongOutputProperty("direct_mates") ?? 0;
+        result.SingleDiscoveredCheckmate = outputLogs.GetULongOutputProperty("single_discovered_mates") ?? 0;
+        result.DirectDiscoverdCheckmate = outputLogs.GetULongOutputProperty("direct_discoverd_mates") ?? 0;
+        result.DoubleDiscoverdCheckmate = outputLogs.GetULongOutputProperty("double_discoverd_mates") ?? 0;
         result.Hash = outputLogs.GetULongOutputProperty("hash") ?? 0;
         result.Fen = outputLogs.GetStringOutputProperty("fen") ?? "";
         return result;
     }
     private static ulong? GetULongOutputProperty(this List<string> outputLogs, string propertyName)
     {
-        var propertyLine = outputLogs.FirstOrDefault(l => l.Contains(propertyName, StringComparison.CurrentCultureIgnoreCase));
+        var propertyLine = outputLogs.FirstOrDefault(l => l.StartsWith(propertyName, StringComparison.CurrentCultureIgnoreCase));
         if (string.IsNullOrEmpty(propertyLine)) return null;
         
         var lineParts = propertyLine.Split(":");

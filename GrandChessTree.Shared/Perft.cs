@@ -206,21 +206,31 @@ public static unsafe class Perft
             // Leaf node
             if (NumCheckers == 1)
             {
-                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
                 summary.Nodes++;
-                if (!MateChecker.WhiteCanEvadeCheck(ref board))
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+                var isMate = !MateChecker.WhiteCanEvadeCheck(ref board);
+                var isDiscovered = (Checkers & (1UL << prevDestination)) == 0;
+                if (isMate)
                 {
-                    summary.AddMate();
-                    return;
-                }
-
-                if ((Checkers & (1UL << prevDestination)) == 0)
-                {
-                    summary.AddDiscoveredCheck();
+                    if (isDiscovered)
+                    {
+                        summary.SingleDiscoveredCheckmate++;
+                    }
+                    else
+                    {
+                        summary.DirectCheckmate++;
+                    }
                 }
                 else
                 {
-                    summary.AddCheck();
+                    if (isDiscovered)
+                    {
+                        summary.SingleDiscoveredCheck++;
+                    }
+                    else
+                    {
+                        summary.DirectCheck++;
+                    }
                 }
 
                 return;
@@ -228,19 +238,29 @@ public static unsafe class Perft
             else if (NumCheckers > 1)
             {
                 summary.Nodes++;
-                if (!MateChecker.CanWhiteKingMove(ref board))
+                var isMate = !MateChecker.CanWhiteKingMove(ref board);
+                var isDiscovered = (Checkers & (1UL << prevDestination)) == 0;
+                if (isMate)
                 {
-                    summary.AddMate();
-                    return;
-                }
-
-                if ((Checkers & (1UL << prevDestination)) == 0)
-                {
-                    summary.AddDoubleDiscoveredCheck();
+                    if (isDiscovered)
+                    {
+                        summary.DoubleDiscoverdCheckmate++;
+                    }
+                    else
+                    {
+                        summary.DirectDiscoverdCheckmate++;
+                    }
                 }
                 else
                 {
-                    summary.AddDoubleCheck();
+                    if (isDiscovered)
+                    {
+                        summary.DoubleDiscoveredCheck++;
+                    }
+                    else
+                    {
+                        summary.DirectDiscoveredCheck++;
+                    }
                 }
 
                 return;
@@ -323,55 +343,71 @@ public static unsafe class Perft
         *ptr = hashEntry;
     }
 
-    public static ulong hashcnt = 0;
     private static void AccumulateBlackMoves(ref Board board, ref Summary summary, int depth, int prevDestination)
     {
-
         var Checkers = board.WhiteCheckers();
         var NumCheckers = (byte)ulong.PopCount(Checkers);
         if (depth == 0)
         {
             if (NumCheckers == 1)
             {
-                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
                 summary.Nodes++;
-                if (!MateChecker.BlackCanEvadeSingleCheck(ref board))
+                board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+                var isMate = !MateChecker.BlackCanEvadeSingleCheck(ref board);
+                var isDiscovered = (Checkers & (1UL << prevDestination)) == 0;
+                if (isMate)
                 {
-                    summary.AddMate();
-                    return;
-                }
-
-
-                if ((Checkers & (1UL << prevDestination)) == 0)
-                {
-                    summary.AddDiscoveredCheck();
+                    if (isDiscovered)
+                    {
+                        summary.SingleDiscoveredCheckmate++;
+                    }
+                    else
+                    {
+                        summary.DirectCheckmate++;
+                    }
                 }
                 else
                 {
-                    summary.AddCheck();
+                    if (isDiscovered)
+                    {
+                        summary.SingleDiscoveredCheck++;
+                    }
+                    else
+                    {
+                        summary.DirectCheck++;
+                    }
                 }
-        
+
                 return;
             }
             else if (NumCheckers > 1)
             {
                 summary.Nodes++;
-
-                if (!MateChecker.CanBlackKingMove(ref board))
+                var isMate = !MateChecker.CanBlackKingMove(ref board);
+                var isDiscovered = (Checkers & (1UL << prevDestination)) == 0;
+                if (isMate)
                 {
-                    summary.AddMate();
-                    return;
-                }
-
-                if ((Checkers & (1UL << prevDestination)) == 0)
-                {
-                    summary.AddDoubleDiscoveredCheck();
+                    if (isDiscovered)
+                    {
+                        summary.DoubleDiscoverdCheckmate++;
+                    }
+                    else
+                    {
+                        summary.DirectDiscoverdCheckmate++;
+                    }
                 }
                 else
                 {
-                    summary.AddDoubleCheck();
+                    if (isDiscovered)
+                    {
+                        summary.DoubleDiscoveredCheck++;
+                    }
+                    else
+                    {
+                        summary.DirectDiscoveredCheck++;
+                    }
                 }
-                
+
                 return;
             }
 

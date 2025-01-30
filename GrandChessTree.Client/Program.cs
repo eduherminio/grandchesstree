@@ -7,7 +7,7 @@ Console.WriteLine("-----TheGreatChessTree-----");
 var config = new Config()
 {
     WorkerCount = 32,
-    Depth = 8,
+    Depth = 10,
 };
 
 var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -16,10 +16,14 @@ var runner = new Runner(config);
 
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 _ = Task.Run(ReadCommands);
-await runner.Run(fen);
 
-//var results = new List<AggregateResultResult>();
-//for (int i = 4; i < 9; i++)
+var results = new List<AggregateResultResult>();
+
+await runner.Run(fen);
+results.Add(runner.result);
+
+var startDepth = 10;
+//for (int i = startDepth; i <= 8; i++)
 //{
 //    config.Depth = i;
 //    await runner.Run(fen);
@@ -29,22 +33,28 @@ await runner.Run(fen);
 //    await Task.Delay(500);
 //}
 
-//var table = new ConsoleTable("depth", "nodes", "captures", "enpassants", "castles", "promotions", "checks", "discovered_checks", "double_checks", "check_mates");
-//for (int i = 0; i < results.Count; i++)
-//{
-//    var result = results[i];
-//    table.AddRow(i + 4, result.Nodes, result.Captures, result.Enpassant, result.Castles, result.Promotions, result.Checks, result.DiscoveredChecks, result.DoubleChecks, result.CheckMates);
-//}
+var table = new ConsoleTable("depth", "nodes", "captures", "enpassants", "castles", "promotions",
+    "direct_checks", "single_discovered_checks", "direct_discovered_checks", "double_discovered_check",
+    "total_checks", "direct_mates", "single_discovered_mates", "direct_discoverd_mates", "double_discoverd_mates", "total_mates");
+for (int i = 0; i < results.Count; i++)
+{
+    var result = results[i];
+    table.AddRow(i + startDepth, 
+        result.Nodes, result.Captures, result.Enpassant, result.Castles, result.Promotions, 
+        result.DirectCheck, result.SingleDiscoveredCheck, result.DirectDiscoveredCheck, result.DoubleDiscoveredCheck, (result.DirectCheck + result.SingleDiscoveredCheck + result.DirectDiscoveredCheck + result.DoubleDiscoveredCheck),
+        result.DirectCheckmate, result.SingleDiscoveredCheckmate, result.DirectDiscoverdCheckmate, result.DoubleDiscoverdCheckmate,(result.DirectCheckmate + result.SingleDiscoveredCheckmate + result.DirectDiscoverdCheckmate + result.DoubleDiscoverdCheckmate)
+        );
+}
 
-//table.Configure((c) =>
-//{
-//    c.EnableCount = false;
-//});
+table.Configure((c) =>
+{
+    c.EnableCount = false;
+});
 
-//Console.Clear();
-//table.Write();
+Console.Clear();
+table.Write(Format.MarkDown);
 
-//Console.ReadLine();
+Console.ReadLine();
 
 void CurrentDomain_ProcessExit(object? sender, EventArgs e)
 {
