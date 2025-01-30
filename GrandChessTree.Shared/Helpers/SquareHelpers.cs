@@ -1,15 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace GrandChessTree.Shared;
+namespace GrandChessTree.Shared.Helpers;
 
 public static class SquareHelpers
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool CanEnPassant(this int enpassantFile)
-    {
-        return enpassantFile < 8;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetFileIndex(this int square)
     {
@@ -23,36 +17,7 @@ public static class SquareHelpers
         // Rank is obtained by shifting right by 3 bits
         return square >> 3; // Equivalent to square / 8
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint GetFileIndex(this uint square)
-    {
-        // File is the last 3 bits of the square index
-        return square & 7; // Equivalent to square % 8
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsMirroredSide(this int square)
-    {
-        return (square & 7) >= 4;
-    }
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint GetRankIndex(this uint square)
-    {
-        // Rank is obtained by shifting right by 3 bits
-        return square >> 3; // Equivalent to square / 8
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort GetRankIndex(this ushort square)
-    {
-        // Rank is obtained by shifting right by 3 bits
-        return (ushort)(square >> 3); // Equivalent to square / 8
-    }
-
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSecondRank(this int rankIndex)
     {
@@ -87,18 +52,6 @@ public static class SquareHelpers
     public static int ShiftDown(this int board)
     {
         return board - 8;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ShiftLeft(this int board)
-    {
-        return board - 1;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ShiftRight(this int board)
-    {
-        return board + 1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

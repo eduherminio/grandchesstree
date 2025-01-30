@@ -1,17 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
+using GrandChessTree.Shared.Helpers;
 
-namespace GrandChessTree.Shared.Tables;
-
-public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Position, ulong[] Moves)
-{
-    public ulong GetMoves(ulong blockers)
-    {
-        return Moves[((MovementMask & blockers) * MagicNumber) >> Position];
-    }
-}
-
+namespace GrandChessTree.Shared.Precomputed;
 public static unsafe class AttackTables
 {
     public static readonly ulong* RookAttackRays;
@@ -140,34 +132,32 @@ public static unsafe class AttackTables
             }
 
             // Pawn Enpassant attacks
-            for(int EnPassantFile = 0; EnPassantFile <= 8; EnPassantFile++)
+            for(var enPassantFile = 0; enPassantFile <= 8; enPassantFile++)
             {
                 var rankIndex = square.GetRankIndex();
 
-                if (EnPassantFile <= 8 &&
-                    rankIndex.IsWhiteEnPassantRankIndex() &&
-                    Math.Abs(square.GetFileIndex() - EnPassantFile) == 1)
+                if (rankIndex.IsWhiteEnPassantRankIndex() &&
+                    Math.Abs(square.GetFileIndex() - enPassantFile) == 1)
                 {
-                    var toSquare = Board.WhiteEnpassantOffset + EnPassantFile;
-                    WhitePawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks | (1ul << toSquare);
+                    var toSquare = Constants.WhiteEnpassantOffset + enPassantFile;
+                    WhitePawnCaptureTable[square * 64 + enPassantFile] = whitePawnAttacks | (1ul << toSquare);
                 }
                 else
                 {
                     // No enpassant
-                    WhitePawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks;
+                    WhitePawnCaptureTable[square * 64 + enPassantFile] = whitePawnAttacks;
                 }
 
-                if (EnPassantFile <= 8 &&
-                      rankIndex.IsBlackEnPassantRankIndex() &&
-                      Math.Abs(square.GetFileIndex() - EnPassantFile) == 1)
+                if (rankIndex.IsBlackEnPassantRankIndex() &&
+                      Math.Abs(square.GetFileIndex() - enPassantFile) == 1)
                 {
-                    var toSquare = Board.blackEnpassantOffset + EnPassantFile;
-                    BlackPawnCaptureTable[square * 64 + EnPassantFile] = whitePawnAttacks | (1ul << toSquare);
+                    var toSquare = Constants.BlackEnpassantOffset + enPassantFile;
+                    BlackPawnCaptureTable[square * 64 + enPassantFile] = whitePawnAttacks | (1ul << toSquare);
                 }
                 else
                 {
                     // No enpassant
-                    BlackPawnCaptureTable[square * 64 + EnPassantFile] = blackPawnAttacks;
+                    BlackPawnCaptureTable[square * 64 + enPassantFile] = blackPawnAttacks;
                 }
             }
 
@@ -224,7 +214,7 @@ public static unsafe class AttackTables
         }
     }
 
-    public static T* Allocate<T>(int count) where T : unmanaged
+    private static T* Allocate<T>(int count) where T : unmanaged
     {
         const nuint alignment = 64;
         var size = sizeof(T) * count;
@@ -235,14 +225,14 @@ public static unsafe class AttackTables
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetFileIndex(this int square)
+    private static int GetFileIndex(this int square)
     {
         // File is the last 3 bits of the square index
         return square & 7; // Equivalent to square % 8
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetRankIndex(this int square)
+    private static int GetRankIndex(this int square)
     {
         // Rank is obtained by shifting right by 3 bits
         return square >> 3; // Equivalent to square / 8
@@ -886,121 +876,9 @@ public static unsafe class AttackTables
                  *(BishopPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(BishopAttackRays + square)));
     }
 
+ 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAttackedByWhite(this ref Board board, int index)
-    {
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.WhiteBishop | board.WhiteQueen)) != 0 ||
-               (PextRookAttacks(board.Occupancy, index) & (board.WhiteRook | board.WhiteQueen)) !=
-               0 ||
-               (*(KnightAttackTable + index) & board.WhiteKnight) != 0 ||
-               (*(BlackPawnAttackTable + index) & board.WhitePawn) != 0 ||
-               (*(KingAttackTable + index) & (1ul << board.WhiteKingPos)) != 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAttackedByBlack(this ref Board board, int index)
-    {
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.BlackBishop | board.BlackQueen)) != 0 ||
-               (PextRookAttacks(board.Occupancy, index) & (board.BlackRook | board.BlackQueen)) !=
-               0 ||
-               (*(KnightAttackTable + index) & board.BlackKnight) != 0 ||
-               (*(WhitePawnAttackTable + index) & board.BlackPawn) != 0 ||
-               (*(KingAttackTable + index) & (1ul << board.BlackKingPos)) != 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong WhiteCheckers(this ref Board board)
-    {
-        var index = board.BlackKingPos;
-        return (PextBishopAttacks(board.Occupancy, index) &  (board.WhiteBishop | board.WhiteQueen)) |
-               (PextRookAttacks(board.Occupancy, index) & (board.WhiteRook | board.WhiteQueen)) |
-               (*(KnightAttackTable + index) & board.WhiteKnight) |
-               (*(BlackPawnAttackTable + index) & board.WhitePawn);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong BlackCheckers(this ref Board board)
-    {
-        var index = board.WhiteKingPos;
-        return (PextBishopAttacks(board.Occupancy, index) &
-                (board.BlackBishop | board.BlackQueen)) |
-               (PextRookAttacks(board.Occupancy, index) & (board.BlackRook | board.BlackQueen)) |
-               (*(KnightAttackTable + index) & board.BlackKnight) |
-               (*(WhitePawnAttackTable + index) & board.BlackPawn);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong WhiteKingDangerSquares(this ref Board board)
-    {
-        var attackers = 0ul;
-
-        var occupancy = board.Occupancy ^ (1ul << board.WhiteKingPos);
-
-        var positions = board.BlackPawn;
-        while (positions != 0) attackers |= *(BlackPawnAttackTable + positions.PopLSB());
-
-        positions = board.BlackKnight;
-        while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
-
-        positions = board.BlackBishop | board.BlackQueen;
-        while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
-
-        positions = board.BlackRook | board.BlackQueen;
-        while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
-
-        attackers |= *(KingAttackTable + board.BlackKingPos);
-
-        return attackers;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong BlackKingDangerSquares(this ref Board board)
-    {
-        var attackers = 0ul;
-
-        var occupancy = board.Occupancy ^ (1ul << board.BlackKingPos);
-
-        var positions = board.WhitePawn;
-        while (positions != 0) attackers |= *(WhitePawnAttackTable + positions.PopLSB());
-
-        positions = board.WhiteKnight;
-        while (positions != 0) attackers |= *(KnightAttackTable + positions.PopLSB());
-
-        positions = board.WhiteBishop | board.WhiteQueen;
-        while (positions != 0) attackers |= PextBishopAttacks(occupancy, positions.PopLSB());
-
-        positions = board.WhiteRook | board.WhiteQueen;
-        while (positions != 0) attackers |= PextRookAttacks(occupancy, positions.PopLSB());
-
-        attackers |= *(KingAttackTable + board.WhiteKingPos);
-
-        return attackers;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong WhiteKingPinnedRay(this ref Board board)
-    {
-        var occupancy = board.Occupancy;
-        int kingPos = board.WhiteKingPos;
-
-        return DetectPinsDiagonal(kingPos, (board.BlackBishop | board.BlackQueen), occupancy) | 
-               DetectPinsStraight(kingPos, (board.BlackRook | board.BlackQueen), occupancy);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong BlackKingPinnedRay(this ref Board board)
-    {
-        var occupancy = board.Occupancy;
-        int kingPos = board.BlackKingPos;
-        
-        return DetectPinsDiagonal(kingPos, (board.WhiteBishop | board.WhiteQueen), occupancy) | 
-               DetectPinsStraight(kingPos, (board.WhiteRook | board.WhiteQueen), occupancy);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ulong DetectPinsStraight(int kingPos, ulong enemySlidingPieces, ulong occupancy)
+    public static ulong DetectPinsStraight(int kingPos, ulong enemySlidingPieces, ulong occupancy)
     {
         var pinned = 0ul;
 
@@ -1021,7 +899,7 @@ public static unsafe class AttackTables
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ulong DetectPinsDiagonal(int kingPos, ulong enemySlidingPieces, ulong occupancy)
+    public static ulong DetectPinsDiagonal(int kingPos, ulong enemySlidingPieces, ulong occupancy)
     {
         var pinned = 0ul;
 
@@ -1051,5 +929,13 @@ public static unsafe class AttackTables
     public static ulong GetRayToEdgeDiagonal(int from, int to)
     {
         return *(AttackTables.LineBitBoardsDiagonalToEdge + from * 64 + to);
+    }
+}
+
+public sealed record MagicBitBoard(ulong MagicNumber, ulong MovementMask, int Position, ulong[] Moves)
+{
+    public ulong GetMoves(ulong blockers)
+    {
+        return Moves[((MovementMask & blockers) * MagicNumber) >> Position];
     }
 }

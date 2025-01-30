@@ -1,4 +1,5 @@
 using GrandChessTree.Shared;
+using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client.Tests
 {
@@ -18,17 +19,27 @@ namespace GrandChessTree.Client.Tests
 
             // When
             Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
-
+ 
             // Then
             Assert.Equal(nodes, summary.Nodes);
             Assert.Equal(captures, summary.Captures);
             Assert.Equal(enpassant, summary.Enpassant);
             Assert.Equal(castles, summary.Castles);
             Assert.Equal(promotions, summary.Promotions);
-            Assert.Equal(checks, summary.Checks);
-            Assert.Equal(discoveryChecks, summary.DiscoveryChecks);
-            Assert.Equal(doubleChecks, summary.DoubleChecks);
-            Assert.Equal(checkMates, summary.CheckMates);
+            Assert.Equal(checks, summary.DirectCheck + 
+                                 summary.SingleDiscoveredCheck + 
+                                 summary.DirectDiscoveredCheck +
+                                 summary.DoubleDiscoveredCheck +
+                                 summary.DirectCheckmate +
+                                 summary.SingleDiscoveredCheckmate +
+                                 summary.DirectDiscoverdCheckmate +
+                                 summary.DoubleDiscoverdCheckmate);
+            Assert.Equal(discoveryChecks, summary.SingleDiscoveredCheck);
+            Assert.Equal(doubleChecks, summary.DirectDiscoveredCheck + summary.DoubleDiscoveredCheck);
+            Assert.Equal(checkMates, summary.DirectCheckmate +
+                                     summary.SingleDiscoveredCheckmate +
+                                     summary.DirectDiscoverdCheckmate +
+                                     summary.DoubleDiscoverdCheckmate);
         }
 
         [Theory]
@@ -51,10 +62,20 @@ namespace GrandChessTree.Client.Tests
             Assert.Equal(enpassant, summary.Enpassant);
             Assert.Equal(castles, summary.Castles);
             Assert.Equal(promotions, summary.Promotions);
-            Assert.Equal(checks, summary.Checks);
-            Assert.Equal(discoveryChecks, summary.DiscoveryChecks);
-            Assert.Equal(doubleChecks, summary.DoubleChecks);
-            Assert.Equal(checkMates, summary.CheckMates);
+            Assert.Equal(checks, summary.DirectCheck + 
+                                 summary.SingleDiscoveredCheck + 
+                                 summary.DirectDiscoveredCheck +
+                                 summary.DoubleDiscoveredCheck +
+                                 summary.DirectCheckmate +
+                                 summary.SingleDiscoveredCheckmate +
+                                 summary.DirectDiscoverdCheckmate +
+                                 summary.DoubleDiscoverdCheckmate);
+            Assert.Equal(discoveryChecks, summary.SingleDiscoveredCheck);
+            Assert.Equal(doubleChecks, summary.DirectDiscoveredCheck + summary.DoubleDiscoveredCheck);
+            Assert.Equal(checkMates, summary.DirectCheckmate +
+                                     summary.SingleDiscoveredCheckmate +
+                                     summary.DirectDiscoverdCheckmate +
+                                     summary.DoubleDiscoverdCheckmate);
         }
 
         [Theory]
@@ -79,10 +100,20 @@ namespace GrandChessTree.Client.Tests
             Assert.Equal(enpassant, summary.Enpassant);
             Assert.Equal(castles, summary.Castles);
             Assert.Equal(promotions, summary.Promotions);
-            Assert.Equal(checks, summary.Checks);
-            Assert.Equal(discoveryChecks, summary.DiscoveryChecks);
-            Assert.Equal(doubleChecks, summary.DoubleChecks);
-            Assert.Equal(checkMates, summary.CheckMates);
+            Assert.Equal(checks, summary.DirectCheck + 
+                                 summary.SingleDiscoveredCheck + 
+                                 summary.DirectDiscoveredCheck +
+                                 summary.DoubleDiscoveredCheck +
+                                 summary.DirectCheckmate +
+                                 summary.SingleDiscoveredCheckmate +
+                                 summary.DirectDiscoverdCheckmate +
+                                 summary.DoubleDiscoverdCheckmate);
+            Assert.Equal(discoveryChecks, summary.SingleDiscoveredCheck);
+            Assert.Equal(doubleChecks, summary.DirectDiscoveredCheck + summary.DoubleDiscoveredCheck);
+            Assert.Equal(checkMates, summary.DirectCheckmate +
+                                     summary.SingleDiscoveredCheckmate +
+                                     summary.DirectDiscoverdCheckmate +
+                                     summary.DoubleDiscoverdCheckmate);
         }
 
         [Theory]
@@ -105,10 +136,20 @@ namespace GrandChessTree.Client.Tests
             Assert.Equal(enpassant, summary.Enpassant);
             Assert.Equal(castles, summary.Castles);
             Assert.Equal(promotions, summary.Promotions);
-            Assert.Equal(checks, summary.Checks);
-            Assert.Equal(discoveryChecks, summary.DiscoveryChecks);
-            Assert.Equal(doubleChecks, summary.DoubleChecks);
-            Assert.Equal(checkMates, summary.CheckMates);
+            Assert.Equal(checks, summary.DirectCheck + 
+                                 summary.SingleDiscoveredCheck + 
+                                 summary.DirectDiscoveredCheck +
+                                 summary.DoubleDiscoveredCheck +
+                                 summary.DirectCheckmate +
+                                 summary.SingleDiscoveredCheckmate +
+                                 summary.DirectDiscoverdCheckmate +
+                                 summary.DoubleDiscoverdCheckmate);
+            Assert.Equal(discoveryChecks, summary.SingleDiscoveredCheck);
+            Assert.Equal(doubleChecks, summary.DirectDiscoveredCheck + summary.DoubleDiscoveredCheck);
+            Assert.Equal(checkMates, summary.DirectCheckmate +
+                                     summary.SingleDiscoveredCheckmate +
+                                     summary.DirectDiscoverdCheckmate +
+                                     summary.DoubleDiscoverdCheckmate);
         }
         
         [Theory]

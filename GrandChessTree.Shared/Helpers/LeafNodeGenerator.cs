@@ -1,19 +1,9 @@
-﻿using GrandChessTree.Shared.Tables;
+﻿using GrandChessTree.Shared.Precomputed;
 
-namespace GrandChessTree.Shared;
+namespace GrandChessTree.Shared.Helpers;
 
 public static unsafe class LeafNodeGenerator
 {
-    public const ulong BlackKingSideCastleRookPosition = 1UL << 63;
-    public const ulong BlackKingSideCastleEmptyPositions = (1UL << 61) | (1UL << 62);
-    public const ulong BlackQueenSideCastleRookPosition = 1UL << 56;
-    public const ulong BlackQueenSideCastleEmptyPositions = (1UL << 57) | (1UL << 58) | (1UL << 59);
-
-    public const ulong WhiteKingSideCastleRookPosition = 1UL << 7;
-    public const ulong WhiteKingSideCastleEmptyPositions = (1UL << 6) | (1UL << 5);
-    public const ulong WhiteQueenSideCastleRookPosition = 1UL;
-    public const ulong WhiteQueenSideCastleEmptyPositions = (1UL << 1) | (1UL << 2) | (1UL << 3);
-
     public static Board[] GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
     {
         var summary = Perft.PerftRoot(ref board, depth, whiteToMove);
@@ -134,7 +124,7 @@ public static unsafe class LeafNodeGenerator
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            toSquare = Board.WhiteEnpassantOffset + board.EnPassantFile;
+            toSquare = Constants.WhiteEnpassantOffset + board.EnPassantFile;
 
             newBoard.WhitePawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
@@ -380,8 +370,8 @@ public static unsafe class LeafNodeGenerator
             return;
 
         if ((board.CastleRights & CastleRights.WhiteKingSide) != 0 &&
-            (board.WhiteRook & WhiteKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & WhiteKingSideCastleEmptyPositions) == 0 &&
+            (board.WhiteRook & Constants.WhiteKingSideCastleRookPosition) > 0 &&
+            (board.Occupancy & Constants.WhiteKingSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByBlack(6) &&
             !board.IsAttackedByBlack(5))
         {
@@ -393,8 +383,8 @@ public static unsafe class LeafNodeGenerator
 
         // Queen Side Castle
         if ((board.CastleRights & CastleRights.WhiteQueenSide) != 0 &&
-            (board.WhiteRook & WhiteQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & WhiteQueenSideCastleEmptyPositions) == 0 &&
+            (board.WhiteRook & Constants.WhiteQueenSideCastleRookPosition) > 0 &&
+            (board.Occupancy & Constants.WhiteQueenSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByBlack(2) &&
             !board.IsAttackedByBlack(3))
         {
@@ -418,7 +408,7 @@ public static unsafe class LeafNodeGenerator
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             board.CloneTo(ref newBoard);
-            toSquare = Board.blackEnpassantOffset + board.EnPassantFile;
+            toSquare = Constants.BlackEnpassantOffset + board.EnPassantFile;
 
             newBoard.BlackPawn_Enpassant(index, toSquare);
             if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
@@ -666,8 +656,8 @@ public static unsafe class LeafNodeGenerator
 
         // King Side Castle
         if ((board.CastleRights & CastleRights.BlackKingSide) != 0 &&
-            (board.BlackRook & BlackKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & BlackKingSideCastleEmptyPositions) == 0 &&
+            (board.BlackRook & Constants.BlackKingSideCastleRookPosition) > 0 &&
+            (board.Occupancy & Constants.BlackKingSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByWhite(61) &&
             !board.IsAttackedByWhite(62))
         {
@@ -678,8 +668,8 @@ public static unsafe class LeafNodeGenerator
 
         // Queen Side Castle
         if ((board.CastleRights & CastleRights.BlackQueenSide) != 0 &&
-            (board.BlackRook & BlackQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & BlackQueenSideCastleEmptyPositions) == 0 &&
+            (board.BlackRook & Constants.BlackQueenSideCastleRookPosition) > 0 &&
+            (board.Occupancy & Constants.BlackQueenSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByWhite(58) &&
             !board.IsAttackedByWhite(59))
         {
