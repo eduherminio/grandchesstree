@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
 using ConsoleTables;
 using GrandChessTree.Shared;
+using GrandChessTree.Shared.Helpers;
+using GrandChessTree.Shared.Precomputed;
+using Board = GrandChessTree.Shared.Board;
 
 namespace GrandChessTree.Client
 {

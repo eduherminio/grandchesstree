@@ -1,4 +1,4 @@
-﻿namespace GrandChessTree.Shared;
+﻿namespace GrandChessTree.Shared.Helpers;
 
 public static class FenParser
 {

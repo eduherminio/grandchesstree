@@ -1,10 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace GrandChessTree.Shared;
+namespace GrandChessTree.Shared.Helpers;
 
 public static class BoardExtensions
 {
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe void CloneTo(this ref Board board, ref Board copy)
     {

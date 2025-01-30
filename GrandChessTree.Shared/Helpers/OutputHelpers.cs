@@ -2,9 +2,9 @@
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 
-namespace GrandChessTree.Shared;
+namespace GrandChessTree.Shared.Helpers;
 
-public static class Helpers
+public static class OutputHelpers
 {
     private const byte BlackPawn = 1;
     private const byte BlackKnight = 3;
@@ -19,16 +19,7 @@ public static class Helpers
     private const byte WhiteRook = 8;
     private const byte WhiteQueen = 10;
     private const byte WhiteKing = 12;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int PopLSB(this ref ulong b)
-    {
-        var i = (int)Bmi1.X64.TrailingZeroCount(b);
-        b &= b - 1;
-
-        return i;
-    }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte GetPiece(this ref Board board, int square)
     {
@@ -49,7 +40,7 @@ public static class Helpers
             ((((1ul << board.WhiteKingPos) >> square) & 1UL) << 12));
     }
 
-    public static string ConvertPosition(this int position)
+    private static string ConvertPosition(this int position)
     {
         var rank = position.GetRankIndex();
         var file = position.GetFileIndex();

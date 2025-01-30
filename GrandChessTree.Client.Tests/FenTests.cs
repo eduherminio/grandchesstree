@@ -1,4 +1,5 @@
 using GrandChessTree.Shared;
+using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client.Tests
 {

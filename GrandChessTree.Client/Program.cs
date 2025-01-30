@@ -16,7 +16,6 @@ var runner = new Runner(config);
 
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 _ = Task.Run(ReadCommands);
-
 var results = new List<AggregateResultResult>();
 
 await runner.Run(fen);

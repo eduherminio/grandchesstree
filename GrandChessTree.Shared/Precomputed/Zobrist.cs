@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
+using GrandChessTree.Shared.Helpers;
 
-namespace GrandChessTree.Shared;
+namespace GrandChessTree.Shared.Precomputed;
 
 public static unsafe class Zobrist
 {
