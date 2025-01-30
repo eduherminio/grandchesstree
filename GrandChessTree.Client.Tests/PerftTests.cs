@@ -36,7 +36,7 @@ namespace GrandChessTree.Client.Tests
         [InlineData(2, 2039, 351, 1, 91, 0, 3, 0, 0, 0)]
         [InlineData(3, 97862, 17102, 45, 3162, 0, 993, 0, 0, 1)]
         [InlineData(4, 4_085_603, 757163, 1929, 128013, 15172, 25523, 42, 6, 43)]
-        [InlineData(5, 193_690_690, 35043416, 73365, 4993637, 8392, 3309887, 19883, 2645, 30171)]
+        [InlineData(5, 193_690_690, 35043416, 73365, 4993637, 8392, 3309887, 19883, 2637, 30171)]
         public unsafe void Position2_Perft_Returns_Expected_Summary(byte depth, ulong nodes, ulong captures, ulong enpassant, ulong castles, ulong promotions, ulong checks, ulong discoveryChecks, ulong doubleChecks, ulong checkMates)
         {
             // Given

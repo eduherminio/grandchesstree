@@ -51,6 +51,39 @@ namespace GrandChessTree.Client
             result = new AggregateResultResult();
 
             var (initialBoard, initialWhiteToMove) = FenParser.Parse(rootFen);
+
+            if(_config.Depth <= 3)
+            {
+                var sw = Stopwatch.StartNew();
+                var summary = Perft.PerftRoot(ref initialBoard, _config.Depth, initialWhiteToMove);
+                var ms = sw.ElapsedMilliseconds;
+                var s = (float)ms / 1000;
+                var workerResult = new WorkerResult()
+                {
+                    Nps = (summary.Nodes / s),
+                    Nodes = summary.Nodes,
+                    Captures = summary.Captures,
+                    Enpassant = summary.Enpassant,
+                    Castles = summary.Castles,
+                    Promotions = summary.Promotions,
+                    DirectCheck = summary.DirectCheck,
+                    SingleDiscoveredCheck = summary.SingleDiscoveredCheck,
+                    DirectDiscoveredCheck = summary.DirectDiscoveredCheck,
+                    DoubleDiscoveredCheck = summary.DoubleDiscoveredCheck,
+                    DirectCheckmate = summary.DirectCheckmate,
+                    SingleDiscoveredCheckmate = summary.SingleDiscoveredCheckmate,
+                    DirectDiscoverdCheckmate = summary.DirectDiscoverdCheckmate,
+                    DoubleDiscoverdCheckmate = summary.DoubleDiscoverdCheckmate,
+                    Fen = rootFen,
+                    Hash = Zobrist.CalculateZobristKey(ref initialBoard, initialWhiteToMove),
+                };
+
+                workerResults.Add(workerResult);
+                result.Add(workerResult);
+                PrintOutput();
+                return;
+            }
+
             boards = LeafNodeGenerator.GenerateLeafNodes(ref initialBoard, 2, initialWhiteToMove);
 
             Console.WriteLine($"Split search into {boards.Length} sub searches");
@@ -121,18 +154,24 @@ namespace GrandChessTree.Client
                 .AddRow("enpassants", result.Enpassant.FormatBigNumber())
                 .AddRow("castles", result.Castles.FormatBigNumber())
                 .AddRow("promotions", result.Promotions.FormatBigNumber())
-                .AddRow("checks", result.Checks.FormatBigNumber())
-                .AddRow("discovered_checks", result.DiscoveredChecks.FormatBigNumber())
-                .AddRow("double_checks", result.DoubleChecks.FormatBigNumber())
-                .AddRow("check_mates", result.CheckMates.FormatBigNumber());
+                .AddRow("direct_checks", result.DirectCheck.FormatBigNumber())
+                .AddRow("single_discovered_checks", result.SingleDiscoveredCheck.FormatBigNumber())
+                .AddRow("direct_discovered_checks", result.DirectDiscoveredCheck.FormatBigNumber())
+                .AddRow("double_discovered_check", result.DoubleDiscoveredCheck.FormatBigNumber())
+                .AddRow("total_checks", (result.DirectCheck + result.SingleDiscoveredCheck + result.DirectDiscoveredCheck + result.DoubleDiscoveredCheck).FormatBigNumber())
+                .AddRow("direct_mates", result.DirectCheckmate.FormatBigNumber())
+                .AddRow("single_discovered_mates", result.SingleDiscoveredCheckmate.FormatBigNumber())
+                .AddRow("direct_discoverd_mates", result.DirectDiscoverdCheckmate.FormatBigNumber())
+                .AddRow("double_discoverd_mates", result.DoubleDiscoverdCheckmate.FormatBigNumber())
+                .AddRow("total_mates", (result.DirectCheckmate + result.SingleDiscoveredCheckmate + result.DirectDiscoverdCheckmate + result.DoubleDiscoverdCheckmate).FormatBigNumber());
 
             table.Configure((c) =>
             {
                 c.EnableCount = false;
             });
 
-            Console.SetCursorPosition(0, 0);
-            table.Write();
+            Console.Clear();
+            table.Write(Format.MarkDown);
         }
 
 

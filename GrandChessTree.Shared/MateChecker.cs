@@ -10,53 +10,89 @@ public static unsafe class MateChecker
         if (CanWhiteKingMove(ref board))
             return true;
 
-        var PinMask = board.WhiteKingPinnedRay();
+        var pinMask = board.WhiteKingPinnedRay();
 
         var positions = board.WhiteKnight;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if((PinMask & (1ul << index)) != 0){
+            if ((pinMask & (1ul << index)) != 0)
+            {
                 continue;
             }
 
-            if (CanWhiteKnightMove(ref board, index))
+            var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.White) != 0)
+            {
                 return true;
+            }
         }
+
 
         positions = board.WhiteBishop;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanWhiteBishopMove(ref board, index, (PinMask & (1ul << index)) != 0))
+
+            var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
+            }
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.White) != 0)
+            {
                 return true;
+            }
         }
 
         positions = board.WhiteRook;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanWhiteRookMove(ref board, index, (PinMask & (1ul << index)) != 0))
+
+            var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
+            }
+
+            if ((potentialMoves & ~board.White) != 0)
+            {
                 return true;
+            }
         }
 
         positions = board.WhiteQueen;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanWhiteQueenMove(ref board, index, (PinMask & (1ul << index)) != 0))
-                return true;
 
+            var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
+                     AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
+            }
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.White) != 0)
+            {
+                return true;
+            }
         }
 
         positions = board.WhitePawn;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanWhitePawnMove(ref board, index, (PinMask & (1ul << index)) != 0))
+            if (CanWhitePawnMove(ref board, index, (pinMask & (1ul << index)) != 0))
                 return true;
         }
-        
+
         return false;
     }
 
@@ -65,18 +101,23 @@ public static unsafe class MateChecker
         if (CanBlackKingMove(ref board))
             return true;
 
-        var PinMask = board.BlackKingPinnedRay();
+        var pinMask = board.BlackKingPinnedRay();
 
         var positions = board.BlackKnight;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if ((PinMask & (1ul << index)) != 0)
+            if ((pinMask & (1ul << index)) != 0)
             {
                 continue;
             }
-            if (CanBlackKnightMove(ref board, index))
+
+            var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.Black) != 0)
+            {
                 return true;
+            }
         }
 
 
@@ -84,31 +125,62 @@ public static unsafe class MateChecker
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanBlackBishopMove(ref board, index, (PinMask & (1ul << index)) != 0))
+
+            var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
+            }
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.Black) != 0)
+            {
                 return true;
+            }
         }
 
         positions = board.BlackRook;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanBlackRookMove(ref board, index, (PinMask & (1ul << index)) != 0))
+
+            var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
+            }
+
+            if ((potentialMoves & ~board.Black) != 0)
+            {
                 return true;
+            }
         }
 
         positions = board.BlackQueen;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanBlackQueenMove(ref board, index, (PinMask & (1ul << index)) != 0))
+
+            var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
+                     AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
+
+            if ((pinMask & (1ul << index)) != 0)
+            {
+                potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
+            }
+            // Return true if there are any valid capture or push moves available.
+            if ((potentialMoves & ~board.Black) != 0)
+            {
                 return true;
+            }
         }
-        
+
         positions = board.BlackPawn;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if (CanBlackPawnMove(ref board, index, (PinMask & (1ul << index)) != 0))
+            if (CanBlackPawnMove(ref board, index, (pinMask & (1ul << index)) != 0))
                 return true;
         }
 
@@ -135,12 +207,30 @@ public static unsafe class MateChecker
         {
             validMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
         }
-        if (validMoves != 0)
+
+        var rankIndex = index.GetRankIndex();
+        while (validMoves != 0)
         {
-            return true;
+            var toSquare = validMoves.PopLSB();
+
+            if (rankIndex.IsSecondRank() && toSquare.GetRankIndex() == 3)
+            {
+                // Double push: Check intermediate square
+                var intermediateSquare = (index + toSquare) / 2; // Midpoint between start and destination
+                if ((board.Occupancy & (1UL << intermediateSquare)) != 0)
+                {
+                    continue; // Intermediate square is blocked, skip this move
+                }
+                return true;
+            }
+            else
+            {
+                // single push
+                return true;
+            }
         }
 
-        if (board.EnPassantFile != 8 && index.GetRankIndex().IsWhiteEnPassantRankIndex() &&
+        if (board.EnPassantFile != 8 && rankIndex.IsWhiteEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             Board newBoard = default;
@@ -153,55 +243,8 @@ public static unsafe class MateChecker
                 return true;
             }
         }
+
         return false;
-    }
-
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanWhiteKnightMove(ref Board board, int index)
-    {
-        var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.White) != 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanWhiteBishopMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index);
-        }
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.White) != 0;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanWhiteRookMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
-        }
-
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.White) != 0;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanWhiteQueenMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index);
-        }
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.White) != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -230,12 +273,31 @@ public static unsafe class MateChecker
         {
             validMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
         }
-        if (validMoves != 0)
+        var rankIndex = index.GetRankIndex();
+
+        while (validMoves != 0)
         {
-            return true;
+            var toSquare = validMoves.PopLSB();
+
+            if (rankIndex.IsSeventhRank() && toSquare.GetRankIndex() == 4)
+            {
+                // Double push: Check intermediate square
+                var intermediateSquare = (index + toSquare) / 2; // Midpoint between start and destination
+                if ((board.Occupancy & (1UL << intermediateSquare)) != 0)
+                {
+                    continue; // Intermediate square is blocked, skip this move
+                }
+
+                return true;
+            }
+            else
+            {
+                // single push
+                return true;
+            }
         }
 
-        if (board.EnPassantFile != 8 && index.GetRankIndex().IsBlackEnPassantRankIndex() &&
+        if (board.EnPassantFile != 8 && rankIndex.IsBlackEnPassantRankIndex() &&
             Math.Abs(index.GetFileIndex() - board.EnPassantFile) == 1)
         {
             Board newBoard = default;
@@ -252,53 +314,6 @@ public static unsafe class MateChecker
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanBlackKnightMove(ref Board board, int index)
-    {
-        var potentialMoves = *(AttackTables.KnightAttackTable + index) & board.MoveMask;
-
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.Black) != 0;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanBlackBishopMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index);
-        }
-
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.Black) != 0;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanBlackRookMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
-        }
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.Black) != 0;
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanBlackQueenMove(ref Board board, int index, bool isPinned)
-    {
-        var potentialMoves = (AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index)) & board.MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index);
-        }
-
-        // Return true if there are any valid capture or push moves available.
-        return (potentialMoves & ~board.Black) != 0;
-    }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool CanBlackKingMove(ref Board board)
     {
