@@ -1,5 +1,4 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
@@ -208,6 +207,13 @@ public static unsafe class Perft
             if (NumCheckers == 1)
             {
                 board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+                summary.Nodes++;
+                if (!MateChecker.WhiteCanEvadeCheck(ref board))
+                {
+                    summary.AddMate();
+                    return;
+                }
+
                 if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDiscoveredCheck();
@@ -217,15 +223,17 @@ public static unsafe class Perft
                     summary.AddCheck();
                 }
 
-                summary.Nodes++;
-                if (MateChecker.WhiteCanEvadeCheck(ref board)){
-                    return;
-                }
-                summary.AddMate();
                 return;
             }
             else if (NumCheckers > 1)
             {
+                summary.Nodes++;
+                if (!MateChecker.CanWhiteKingMove(ref board))
+                {
+                    summary.AddMate();
+                    return;
+                }
+
                 if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDoubleDiscoveredCheck();
@@ -235,11 +243,6 @@ public static unsafe class Perft
                     summary.AddDoubleCheck();
                 }
 
-                summary.Nodes++;
-                if (MateChecker.CanWhiteKingMove(ref board)){
-                    return;
-                }
-                summary.AddMate();
                 return;
             }
 
@@ -331,6 +334,13 @@ public static unsafe class Perft
             if (NumCheckers == 1)
             {
                 board.MoveMask = Checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(Checkers));
+                summary.Nodes++;
+                if (!MateChecker.BlackCanEvadeSingleCheck(ref board))
+                {
+                    summary.AddMate();
+                    return;
+                }
+
 
                 if ((Checkers & (1UL << prevDestination)) == 0)
                 {
@@ -340,17 +350,19 @@ public static unsafe class Perft
                 {
                     summary.AddCheck();
                 }
-                summary.Nodes++;
-
-                if (MateChecker.BlackCanEvadeSingleCheck(ref board))
-                {
-                    return;
-                }
-                summary.AddMate();
+        
                 return;
             }
             else if (NumCheckers > 1)
             {
+                summary.Nodes++;
+
+                if (!MateChecker.CanBlackKingMove(ref board))
+                {
+                    summary.AddMate();
+                    return;
+                }
+
                 if ((Checkers & (1UL << prevDestination)) == 0)
                 {
                     summary.AddDoubleDiscoveredCheck();
@@ -359,12 +371,7 @@ public static unsafe class Perft
                 {
                     summary.AddDoubleCheck();
                 }
-
-                summary.Nodes++;
-                if (MateChecker.CanBlackKingMove(ref board)){
-                    return;
-                }
-                summary.AddMate();
+                
                 return;
             }
 

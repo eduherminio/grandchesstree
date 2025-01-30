@@ -7,7 +7,7 @@ Console.WriteLine("-----TheGreatChessTree-----");
 var config = new Config()
 {
     WorkerCount = 32,
-    Depth = 9,
+    Depth = 8,
 };
 
 var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

@@ -1,4 +1,5 @@
 ﻿
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace GrandChessTree.Shared;
@@ -17,6 +18,7 @@ public struct Summary
     public ulong CheckMates;
     public ulong FullHash;
     public byte Depth;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Accumulate(ref Summary summary)
     {
         Nodes += summary.Nodes;
@@ -42,62 +44,74 @@ public struct Summary
         Console.WriteLine($"double_checks:{DoubleChecks}");
         Console.WriteLine($"check_mates:{CheckMates}");
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddCapture()
     {
         Captures++;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddCastle()
     {
         Castles++;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddCheck()
     {
         Checks++;
-    }    
-    
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     internal void AddDoubleCheck()
     {
         Checks++;
         DoubleChecks++;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddDiscoveredCheck()
     {
         Checks++;
         DiscoveryChecks++;
     }
-    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     internal void AddDoubleDiscoveredCheck()
     {
         Checks++;
         DoubleChecks++;
         DiscoveryChecks++;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddMate()
     {
+        Checks++;
         CheckMates++;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddEnpassant()
     {
         Enpassant++;
         Captures++;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddPromotion()
     {
         Promotions+=4;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void AddPromotionCapture()
     {
         Promotions+=4;
         Captures+=4;
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
     internal void Update(Summary summary)
     {

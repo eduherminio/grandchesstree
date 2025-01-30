@@ -17,15 +17,13 @@ RuntimeHelpers.RunClassConstructor(typeof(Perft).TypeHandle);
 //var (board, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 ////var (board, whiteToMove) = FenParser.Parse("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 //var sw = Stopwatch.StartNew();
-//var summary = Perft.PerftRoot(ref board, 4, whiteToMove);
+//var summary = Perft.PerftRoot(ref board, 7, whiteToMove);
 //var ms = sw.ElapsedMilliseconds;
 //var s = (float)ms / 1000;
 //Console.WriteLine($"fen:{board.ToFen(whiteToMove)}");
 //Console.WriteLine($"nps:{(summary.Nodes / s).FormatBigNumber()}");
 //Console.WriteLine($"time:{s}");
 //summary.Print();
-//Console.WriteLine("done" + Perft.hashcnt
-//);
 //// test
 //return;
 
