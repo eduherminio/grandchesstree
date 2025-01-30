@@ -1,5 +1,7 @@
 # The Grand Chess Tree
-The grand chess tree is a public distributed effort to traverse the depths of the game of chess.
+The grand chess tree is a public distributed effort to traverse the depths of the game of chess. The project started as a result of the enjoyment I found in the early days of working on [Saplings](https://github.com/Timmoth/Sapling) move generator. 
+
+
 ```
 | depth | nodes         | captures     | enpassants | castles    | promotions | direct_checks | single_discovered_checks | direct_discovered_checks | double_discovered_check | total_checks | direct_mates | single_discovered_mates | direct_discoverd_mates | double_discoverd_mates | total_mates |
 |-------|---------------|--------------|------------|------------|------------|---------------|--------------------------|--------------------------|-------------------------|--------------|--------------|-------------------------|------------------------|------------------------|-------------|
@@ -15,7 +17,10 @@ The grand chess tree is a public distributed effort to traverse the depths of th
 | 9     | 2439530234167 | 125208536153 | 319496827  | 1784356000 | 17334376   | 35653060996   | 37101713                 | 5547221                  | 10                      | 35695709940  | 399421379    | 1869                    | 768715                 | 0                      | 400191963   |
 
  ```
+## Get involved
+The project is still in it's infancy but I'm hoping to attract others to get involved, either through collaboration by working with me on the default move generator or through competition by writing your own move generator that out performs this one! 
 
+The webapp is still in active development but when it's ready you'll be able to contribute to the search efforts by running the client locally.
 
 ## Client
 The client project pulls work from the api and then distributes it to a number of workers running on the local machine. I'm currently generating ~6bnps accross all 32 threads, whilst this may sound like a lot, it's peanuts compared to the insane size of the chess tree. A GPU client worker will be necessary to reach new depths.
