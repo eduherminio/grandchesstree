@@ -14,38 +14,38 @@ public static unsafe class LeafNodeGenerator
 
         if (whiteToMove)
         {
-            var positions = board.WhitePawn;
+            var positions = board.White & board.Pawn;
             while (positions != 0) GenerateWhitePawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteKnight;
+            positions = board.White & board.Knight;
             while (positions != 0) GenerateWhiteKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteBishop;
+            positions = board.White & board.Bishop;
             while (positions != 0) GenerateWhiteBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteRook;
+            positions = board.White & board.Rook;
             while (positions != 0) GenerateWhiteRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.WhiteQueen;
+            positions = board.White & board.Queen;
             while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
         }
         else
         {
-            var positions = board.BlackPawn;
+            var positions = board.Black & board.Pawn;
             while (positions != 0) GenerateBlackPawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackKnight;
+            positions = board.Black & board.Knight;
             while (positions != 0) GenerateBlackKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackBishop;
+            positions = board.Black & board.Bishop;
             while (positions != 0) GenerateBlackBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackRook;
+            positions = board.Black & board.Rook;
             while (positions != 0) GenerateBlackRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-            positions = board.BlackQueen;
+            positions = board.Black & board.Queen;
             while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
             GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
@@ -68,19 +68,19 @@ public static unsafe class LeafNodeGenerator
             return;
         }
 
-        var positions = board.WhitePawn;
+        var positions = board.White & board.Pawn;
         while (positions != 0) GenerateWhitePawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteKnight;
+        positions = board.White & board.Knight;
         while (positions != 0) GenerateWhiteKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteBishop;
+        positions = board.White & board.Bishop;
         while (positions != 0) GenerateWhiteBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteRook;
+        positions = board.White & board.Rook;
         while (positions != 0) GenerateWhiteRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.WhiteQueen;
+        positions = board.White & board.Queen;
         while (positions != 0) GenerateWhiteQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
         GenerateWhiteKingNodes(ref board, ref boards, ref moveIndex, depth, board.WhiteKingPos);
@@ -94,19 +94,19 @@ public static unsafe class LeafNodeGenerator
             return;
         }
 
-        var positions = board.BlackPawn;
+        var positions = board.Black & board.Pawn;
         while (positions != 0) GenerateBlackPawnNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackKnight;
+        positions = board.Black & board.Knight;
         while (positions != 0) GenerateBlackKnightNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackBishop;
+        positions = board.Black & board.Bishop;
         while (positions != 0) GenerateBlackBishopNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackRook;
+        positions = board.Black & board.Rook;
         while (positions != 0) GenerateBlackRookNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
-        positions = board.BlackQueen;
+        positions = board.Black & board.Queen;
         while (positions != 0) GenerateBlackQueenNodes(ref board, ref boards, ref moveIndex, depth, positions.PopLSB());
 
        GenerateBlackKingNodes(ref board, ref boards, ref moveIndex, depth, board.BlackKingPos);
@@ -201,7 +201,7 @@ public static unsafe class LeafNodeGenerator
 
         // Move up
         target = posEncoded.ShiftUp();
-        if ((board.Occupancy & target) > 0)
+        if (((board.White | board.Black) & target) > 0)
             // Blocked from moving down
             return;
 
@@ -232,7 +232,7 @@ public static unsafe class LeafNodeGenerator
         if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
             GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         target = target.ShiftUp();
-        if (rankIndex.IsSecondRank() && (board.Occupancy & target) == 0)
+        if (rankIndex.IsSecondRank() && ((board.White | board.Black) & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
@@ -257,7 +257,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -272,7 +272,7 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextBishopAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
@@ -282,7 +282,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -296,7 +296,7 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextRookAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
@@ -306,7 +306,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -320,8 +320,8 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextBishopAttacks(board.White | board.Black, index) |
+                             AttackTables.PextRookAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.Black;
         while (captureMoves != 0)
         {
@@ -331,7 +331,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -356,7 +356,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateBlackNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -370,8 +370,8 @@ public static unsafe class LeafNodeGenerator
             return;
 
         if ((board.CastleRights & CastleRights.WhiteKingSide) != 0 &&
-            (board.WhiteRook & Constants.WhiteKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & Constants.WhiteKingSideCastleEmptyPositions) == 0 &&
+            ((board.White & board.Rook) & Constants.WhiteKingSideCastleRookPosition) > 0 &&
+            ((board.White | board.Black) & Constants.WhiteKingSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByBlack(6) &&
             !board.IsAttackedByBlack(5))
         {
@@ -383,8 +383,8 @@ public static unsafe class LeafNodeGenerator
 
         // Queen Side Castle
         if ((board.CastleRights & CastleRights.WhiteQueenSide) != 0 &&
-            (board.WhiteRook & Constants.WhiteQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & Constants.WhiteQueenSideCastleEmptyPositions) == 0 &&
+            ((board.White & board.Rook) & Constants.WhiteQueenSideCastleRookPosition) > 0 &&
+            ((board.White | board.Black) & Constants.WhiteQueenSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByBlack(2) &&
             !board.IsAttackedByBlack(3))
         {
@@ -486,7 +486,7 @@ public static unsafe class LeafNodeGenerator
 
         // Vertical moves
         target = posEncoded.ShiftDown();
-        if ((board.Occupancy & target) > 0)
+        if (((board.White | board.Black) & target) > 0)
             // Blocked from moving down
             return;
 
@@ -518,7 +518,7 @@ public static unsafe class LeafNodeGenerator
         if (!newBoard.IsAttackedByWhite(newBoard.BlackKingPos))
             GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         target = target.ShiftDown();
-        if (rankIndex.IsSeventhRank() && (board.Occupancy & target) == 0)
+        if (rankIndex.IsSeventhRank() && ((board.White | board.Black) & target) == 0)
         {
             // Double push
             board.CloneTo(ref newBoard);
@@ -543,7 +543,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -558,7 +558,7 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextBishopAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
@@ -568,7 +568,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -582,7 +582,7 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextRookAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextRookAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
@@ -592,7 +592,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -606,8 +606,8 @@ public static unsafe class LeafNodeGenerator
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(board.Occupancy, index) |
-                             AttackTables.PextRookAttacks(board.Occupancy, index);
+        var potentialMoves = AttackTables.PextBishopAttacks(board.White | board.Black, index) |
+                             AttackTables.PextRookAttacks(board.White | board.Black, index);
         var captureMoves = potentialMoves & board.White;
         while (captureMoves != 0)
         {
@@ -617,7 +617,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -641,7 +641,7 @@ public static unsafe class LeafNodeGenerator
                 GenerateWhiteNodes(ref newBoard, ref boards, ref moveIndex, depth - 1);
         }
 
-        var emptyMoves = potentialMoves & ~board.Occupancy;
+        var emptyMoves = potentialMoves & ~(board.White | board.Black);
         while (emptyMoves != 0)
         {
             board.CloneTo(ref newBoard);
@@ -656,8 +656,8 @@ public static unsafe class LeafNodeGenerator
 
         // King Side Castle
         if ((board.CastleRights & CastleRights.BlackKingSide) != 0 &&
-            (board.BlackRook & Constants.BlackKingSideCastleRookPosition) > 0 &&
-            (board.Occupancy & Constants.BlackKingSideCastleEmptyPositions) == 0 &&
+            ((board.Black & board.Rook) & Constants.BlackKingSideCastleRookPosition) > 0 &&
+            ((board.White | board.Black) & Constants.BlackKingSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByWhite(61) &&
             !board.IsAttackedByWhite(62))
         {
@@ -668,8 +668,8 @@ public static unsafe class LeafNodeGenerator
 
         // Queen Side Castle
         if ((board.CastleRights & CastleRights.BlackQueenSide) != 0 &&
-            (board.BlackRook & Constants.BlackQueenSideCastleRookPosition) > 0 &&
-            (board.Occupancy & Constants.BlackQueenSideCastleEmptyPositions) == 0 &&
+            ((board.Black & board.Rook) & Constants.BlackQueenSideCastleRookPosition) > 0 &&
+            ((board.White | board.Black) & Constants.BlackQueenSideCastleEmptyPositions) == 0 &&
             !board.IsAttackedByWhite(58) &&
             !board.IsAttackedByWhite(59))
         {

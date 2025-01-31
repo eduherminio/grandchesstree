@@ -23,19 +23,19 @@ public static class OutputHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte GetPiece(this ref Board board, int square)
     {
-        if ((board.Occupancy & (1UL << square)) == 0) return 0;
+        if (((board.White | board.Black) & (1UL << square)) == 0) return 0;
 
         return (byte)Bmi1.X64.TrailingZeroCount(
-            (((board.BlackPawn >> square) & 1UL) << 1) |
-            (((board.WhitePawn >> square) & 1UL) << 2) |
-            (((board.BlackKnight >> square) & 1UL) << 3) |
-            (((board.WhiteKnight >> square) & 1UL) << 4) |
-            (((board.BlackBishop >> square) & 1UL) << 5) |
-            (((board.WhiteBishop >> square) & 1UL) << 6) |
-            (((board.BlackRook >> square) & 1UL) << 7) |
-            (((board.WhiteRook >> square) & 1UL) << 8) |
-            (((board.BlackQueen >> square) & 1UL) << 9) |
-            (((board.WhiteQueen >> square) & 1UL) << 10) |
+            ((((board.Black & board.Pawn) >> square) & 1UL) << 1) |
+            ((((board.White & board.Pawn) >> square) & 1UL) << 2) |
+            ((((board.Black & board.Knight) >> square) & 1UL) << 3) |
+            ((((board.White & board.Knight) >> square) & 1UL) << 4) |
+            ((((board.Black & board.Bishop) >> square) & 1UL) << 5) |
+            ((((board.White & board.Bishop) >> square) & 1UL) << 6) |
+            ((((board.Black & board.Rook) >> square) & 1UL) << 7) |
+            ((((board.White & board.Rook) >> square) & 1UL) << 8) |
+            ((((board.Black & board.Queen) >> square) & 1UL) << 9) |
+            ((((board.White & board.Queen) >> square) & 1UL) << 10) |
             ((((1ul << board.BlackKingPos) >> square) & 1UL) << 11) |
             ((((1ul << board.WhiteKingPos) >> square) & 1UL) << 12));
     }

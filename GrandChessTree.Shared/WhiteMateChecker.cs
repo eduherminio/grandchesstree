@@ -13,7 +13,7 @@ public partial struct Board
 
         var pinMask = WhiteKingPinnedRay();
 
-        var positions = WhiteKnight;
+        var positions = White & Knight;
         while (positions != 0)
         {
             var index = positions.PopLSB();
@@ -31,12 +31,12 @@ public partial struct Board
         }
 
 
-        positions = WhiteBishop;
+        positions = White & Bishop;
         while (positions != 0)
         {
             var index = positions.PopLSB();
 
-            var potentialMoves = AttackTables.PextBishopAttacks(Occupancy, index) & MoveMask;
+            var potentialMoves = AttackTables.PextBishopAttacks(White | Black, index) & MoveMask;
 
             if ((pinMask & (1ul << index)) != 0)
             {
@@ -49,12 +49,12 @@ public partial struct Board
             }
         }
 
-        positions = WhiteRook;
+        positions = White & Rook;
         while (positions != 0)
         {
             var index = positions.PopLSB();
 
-            var potentialMoves = AttackTables.PextRookAttacks(Occupancy, index) & MoveMask;
+            var potentialMoves = AttackTables.PextRookAttacks(White | Black, index) & MoveMask;
 
             if ((pinMask & (1ul << index)) != 0)
             {
@@ -67,13 +67,13 @@ public partial struct Board
             }
         }
 
-        positions = WhiteQueen;
+        positions = White & Queen;
         while (positions != 0)
         {
             var index = positions.PopLSB();
 
-            var potentialMoves = (AttackTables.PextBishopAttacks(Occupancy, index) |
-                     AttackTables.PextRookAttacks(Occupancy, index)) & MoveMask;
+            var potentialMoves = (AttackTables.PextBishopAttacks(White | Black, index) |
+                     AttackTables.PextRookAttacks(White | Black, index)) & MoveMask;
 
             if ((pinMask & (1ul << index)) != 0)
             {
@@ -86,7 +86,7 @@ public partial struct Board
             }
         }
 
-        positions = WhitePawn;
+        positions = White & Pawn;
         while (positions != 0)
         {
             var index = positions.PopLSB();
@@ -111,7 +111,7 @@ public partial struct Board
             return true;
         }
 
-        validMoves = *(AttackTables.WhitePawnPushTable+index) & MoveMask & ~Occupancy;
+        validMoves = *(AttackTables.WhitePawnPushTable+index) & MoveMask & ~(White | Black);
         if (isPinned)
         {
             validMoves &= AttackTables.GetRayToEdgeStraight(WhiteKingPos, index);
@@ -126,7 +126,7 @@ public partial struct Board
             {
                 // Double push: Check intermediate square
                 var intermediateSquare = (index + toSquare) / 2; // Midpoint between start and destination
-                if ((Occupancy & (1UL << intermediateSquare)) != 0)
+                if (((White | Black) & (1UL << intermediateSquare)) != 0)
                 {
                     continue; // Intermediate square is blocked, skip this move
                 }

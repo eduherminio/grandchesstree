@@ -55,7 +55,7 @@ public static unsafe class Perft
     public static Summary PerftRoot(ref Board board, int depth, bool whiteToMove)
     {
         Summary summary = default;
-        summary.FullHash = board.Hash ^ board.Occupancy;
+        summary.FullHash = board.Hash ^ (board.White | board.Black);
         summary.Depth = (byte)depth;
         if (depth == 0)
         {
@@ -68,17 +68,26 @@ public static unsafe class Perft
         {
             var checkers = board.BlackCheckers();
             var numCheckers = (byte)ulong.PopCount(checkers);
+
+            board.AccumulateWhiteKingMoves(ref summary, depth, numCheckers > 0);
+
+            if (numCheckers > 1)
+            {
+                // Only a king move can evade double check
+                return summary;
+            }
+
             board.MoveMask = numCheckers == 0 ? 0xFFFFFFFFFFFFFFFF: checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
             var pinMask = board.WhiteKingPinnedRay();
 
-            var positions = board.WhitePawn;
+            var positions = board.White & board.Pawn;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateWhitePawnMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.WhiteKnight;
+            positions = board.White & board.Knight;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
@@ -90,34 +99,43 @@ public static unsafe class Perft
                 board.AccumulateWhiteKnightMoves(ref summary, depth, index);
             }
 
-            positions = board.WhiteBishop;
+            positions = board.White & board.Bishop;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateWhiteBishopMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.WhiteRook;
+            positions = board.White & board.Rook;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateWhiteRookMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.WhiteQueen;
+            positions = board.White & board.Queen;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateWhiteQueenMoves( ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            board.AccumulateWhiteKingMoves(ref summary, depth, numCheckers > 0);
             return summary;
         }
         else
         {
             var checkers = board.WhiteCheckers();
             var numCheckers = (byte)ulong.PopCount(checkers);
+
+            board.AccumulateBlackKingMoves(ref summary, depth, numCheckers > 0);
+
+            if (numCheckers > 1)
+            {
+                // Only a king move can evade double check
+                return summary;
+            }
+
+
             board.MoveMask = 0xFFFFFFFFFFFFFFFF;
             if (numCheckers == 1)
             {
@@ -125,14 +143,14 @@ public static unsafe class Perft
             }
             var pinMask = board.BlackKingPinnedRay();
 
-            var positions = board.BlackPawn;
+            var positions = board.Black & board.Pawn;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateBlackPawnMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.BlackKnight;
+            positions = board.Black & board.Knight;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
@@ -145,21 +163,21 @@ public static unsafe class Perft
                 board.AccumulateBlackKnightMoves(ref summary, depth, index);
             }
 
-            positions = board.BlackBishop;
+            positions = board.Black & board.Bishop;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateBlackBishopMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.BlackRook;
+            positions = board.Black & board.Rook;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
                 board.AccumulateBlackRookMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            positions = board.BlackQueen;
+            positions = board.Black & board.Queen;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
@@ -167,7 +185,6 @@ public static unsafe class Perft
             }
 
 
-            board.AccumulateBlackKingMoves(ref summary, depth, board.BlackKingPos, numCheckers > 0);
             return summary;
         }
     }

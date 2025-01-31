@@ -23,43 +23,41 @@ public static class FenParser
                 }
                 else
                 {
-                    switch (c)
+                    if (char.IsUpper(c))
                     {
-                        case 'P':
-                            board.WhitePawn |= 1UL << index;
-                            break;
-                        case 'N':
-                            board.WhiteKnight |= 1UL << index;
-                            break;
-                        case 'B':
-                            board.WhiteBishop |= 1UL << index;
-                            break;
-                        case 'R':
-                            board.WhiteRook |= 1UL << index;
-                            break;
-                        case 'Q':
-                            board.WhiteQueen |= 1UL << index;
-                            break;
-                        case 'K':
-                            board.WhiteKingPos = (byte)index;
-                            break;
+                        board.White |= 1UL << index;
+                    }
+                    else
+                    {
+                        board.Black |= 1UL << index;
+                    }
+
+                    switch (char.ToLower(c))
+                    {
                         case 'p':
-                            board.BlackPawn |= 1UL << index;
+                            board.Pawn |= 1UL << index;
                             break;
                         case 'n':
-                            board.BlackKnight |= 1UL << index;
+                            board.Knight |= 1UL << index;
                             break;
                         case 'b':
-                            board.BlackBishop |= 1UL << index;
+                            board.Bishop |= 1UL << index;
                             break;
                         case 'r':
-                            board.BlackRook |= 1UL << index;
+                            board.Rook |= 1UL << index;
                             break;
                         case 'q':
-                            board.BlackQueen |= 1UL << index;
+                            board.Queen |= 1UL << index;
                             break;
                         case 'k':
-                            board.BlackKingPos = (byte)index;
+                            if (char.IsUpper(c))
+                            {
+                                board.WhiteKingPos = (byte)index;
+                            }
+                            else
+                            {
+                                board.BlackKingPos = (byte)index;
+                            }
                             break;
                         default:
                             throw new Exception($"invalid piece '{c}'");
@@ -69,7 +67,6 @@ public static class FenParser
                 }
         }
 
-        board.UpdateOccupancy();
         board.CastleRights = ParseCastleRights(castleRights);
 
         if (enPassantTarget == "-")

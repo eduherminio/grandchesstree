@@ -173,7 +173,12 @@ namespace GrandChessTree.Client
                 c.EnableCount = false;
             });
 
-            Console.Clear();
+            Console.CursorVisible = false;
+            Console.SetCursorPosition(0, 0);
+            for (int y = 0; y < Console.WindowHeight; y++)
+                Console.Write(new string(' ', Console.WindowWidth));
+            Console.SetCursorPosition(0, 0);
+            
             table.Write(Format.MarkDown);
         }
 
