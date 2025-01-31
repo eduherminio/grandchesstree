@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using GrandChessTree.Shared.Helpers;
 using GrandChessTree.Shared.Precomputed;
@@ -18,10 +16,10 @@ public partial struct Board
             {
                 summary.Nodes++;
                 MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
-                var isMate = !BlackCanEvadeSingleCheck();
                 var isDiscovered = (checkers & (1UL << prevDestination)) == 0;
-                if (isMate)
+                if (!BlackCanEvadeSingleCheck())
                 {
+                    // Mate
                     if (isDiscovered)
                     {
                         summary.SingleDiscoveredCheckmate++;
@@ -33,6 +31,7 @@ public partial struct Board
                 }
                 else
                 {
+                    // Check
                     if (isDiscovered)
                     {
                         summary.SingleDiscoveredCheck++;
@@ -49,10 +48,10 @@ public partial struct Board
             if (numCheckers > 1)
             {
                 summary.Nodes++;
-                var isMate = !CanBlackKingMove();
                 var isDiscovered = (checkers & (1UL << prevDestination)) == 0;
-                if (isMate)
+                if (!CanBlackKingMove())
                 {
+                    // Mate
                     if (isDiscovered)
                     {
                         summary.DoubleDiscoverdCheckmate++;
@@ -64,6 +63,7 @@ public partial struct Board
                 }
                 else
                 {
+                    // Check
                     if (isDiscovered)
                     {
                         summary.DoubleDiscoveredCheck++;
@@ -83,16 +83,16 @@ public partial struct Board
     
         var ptr = (Perft.HashTable + (Hash & Perft.HashTableMask));
         var hashEntry = Unsafe.Read<Summary>(ptr);
-        if (hashEntry.FullHash == (Hash ^  Occupancy) && depth == hashEntry.Depth)
+        if (hashEntry.FullHash == (Hash ^  (White | Black)) && depth == hashEntry.Depth)
         {
             summary.Accumulate(ref hashEntry);
             return;
         }
 
         hashEntry = default;
-        hashEntry.FullHash = Hash ^  Occupancy;
+        hashEntry.FullHash = Hash ^  (White | Black);
         hashEntry.Depth = (byte)depth;
-        AccumulateBlackKingMoves(ref hashEntry, depth, BlackKingPos, numCheckers > 0);
+        AccumulateBlackKingMoves(ref hashEntry, depth, numCheckers > 0);
 
         if (numCheckers > 1)
         {
@@ -109,14 +109,14 @@ public partial struct Board
         }
         var pinMask = BlackKingPinnedRay();
 
-        var positions = BlackPawn;
+        var positions = Black & Pawn;
         while (positions != 0)
         {
             var index = positions.PopLSB();
             AccumulateBlackPawnMoves( ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
         }
 
-        positions = BlackKnight;
+        positions = Black & Knight;
         while (positions != 0)
         {
             var index = positions.PopLSB();
@@ -129,21 +129,21 @@ public partial struct Board
             AccumulateBlackKnightMoves( ref hashEntry, depth, index);
         }
         
-        positions = BlackBishop;
+        positions = Black & Bishop;
         while (positions != 0)
         {
             var index = positions.PopLSB();
             AccumulateBlackBishopMoves(ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
         }
         
-        positions = BlackRook;
+        positions = Black & Rook;
         while (positions != 0)
         {
             var index = positions.PopLSB();
             AccumulateBlackRookMoves( ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
         }
         
-        positions = BlackQueen;
+        positions = Black & Queen;
         while (positions != 0)
         {
             var index = positions.PopLSB();
@@ -190,7 +190,7 @@ public partial struct Board
                 newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~Occupancy;
+            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black);
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
@@ -252,7 +252,7 @@ public partial struct Board
                 }
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~Occupancy;
+            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black);
             if (isPinned)
             {
                 validMoves &= AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
@@ -267,7 +267,7 @@ public partial struct Board
                 {
                     // Double push: Check intermediate square
                     var intermediateSquare = (index + toSquare) / 2; // Midpoint between start and destination
-                    if ((Occupancy & (1UL << intermediateSquare)) != 0)
+                    if (((White | Black) & (1UL << intermediateSquare)) != 0)
                     {
                         continue; // Intermediate square is blocked, skip this move
                     }
@@ -303,7 +303,7 @@ public partial struct Board
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        var emptyMoves = potentialMoves & ~Occupancy;
+        var emptyMoves = potentialMoves & ~(White | Black);
         while (emptyMoves != 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
@@ -319,7 +319,7 @@ public partial struct Board
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(Occupancy, index) & MoveMask;
+        var potentialMoves = AttackTables.PextBishopAttacks(White | Black, index) & MoveMask;
 
         if (isPinned)
         {
@@ -340,7 +340,7 @@ public partial struct Board
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        var emptyMoves = potentialMoves & ~Occupancy;
+        var emptyMoves = potentialMoves & ~(White | Black);
         while (emptyMoves != 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
@@ -356,7 +356,7 @@ public partial struct Board
     {
         Board newBoard = default;
 
-        var potentialMoves = AttackTables.PextRookAttacks(Occupancy, index) & MoveMask;
+        var potentialMoves = AttackTables.PextRookAttacks(White | Black, index) & MoveMask;
 
         if (isPinned)
         {
@@ -376,7 +376,7 @@ public partial struct Board
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        var emptyMoves = potentialMoves & ~Occupancy;
+        var emptyMoves = potentialMoves & ~(White | Black);
         while (emptyMoves != 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
@@ -392,8 +392,8 @@ public partial struct Board
     {
         Board newBoard = default;
 
-        var potentialMoves = (AttackTables.PextBishopAttacks(Occupancy, index) |
-                             AttackTables.PextRookAttacks(Occupancy, index)) & MoveMask;
+        var potentialMoves = (AttackTables.PextBishopAttacks(White | Black, index) |
+                             AttackTables.PextRookAttacks(White | Black, index)) & MoveMask;
 
         if (isPinned)
         {
@@ -413,7 +413,7 @@ public partial struct Board
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        var emptyMoves = potentialMoves & ~Occupancy;
+        var emptyMoves = potentialMoves & ~(White | Black);
         while (emptyMoves != 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
@@ -425,12 +425,12 @@ public partial struct Board
         }
     }
 
-    public unsafe void AccumulateBlackKingMoves(ref Summary summary, int depth, int index, bool inCheck)
+    public unsafe void AccumulateBlackKingMoves(ref Summary summary, int depth, bool inCheck)
     {
-        var attackedSquares = this.BlackKingDangerSquares();
+        var attackedSquares = BlackKingDangerSquares();
         Board newBoard = default;
 
-        var potentialMoves = *(AttackTables.KingAttackTable + index) & ~attackedSquares;
+        var potentialMoves = *(AttackTables.KingAttackTable + BlackKingPos) & ~attackedSquares;
         int toSquare;
 
         var captureMoves = potentialMoves & White;
@@ -439,30 +439,30 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
 
             toSquare = captureMoves.PopLSB();
-            newBoard.BlackKing_Capture(index, toSquare);
+            newBoard.BlackKing_Capture(BlackKingPos, toSquare);
             if (depth == 1) summary.AddCapture();
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        var emptyMoves = potentialMoves & ~Occupancy;
+        var emptyMoves = potentialMoves & ~(White | Black);
         while (emptyMoves != 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
 
             toSquare = emptyMoves.PopLSB();
 
-            newBoard.BlackKing_Move(index, toSquare);
+            newBoard.BlackKing_Move(BlackKingPos, toSquare);
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
         }
 
-        if (index != 60 || inCheck)
+        if (BlackKingPos != 60 || inCheck)
             // Can't castle if king is attacked or not on the starting position
             return;
 
         // King Side Castle
         if ((CastleRights & CastleRights.BlackKingSide) != 0 &&
-            (BlackRook & Constants.BlackKingSideCastleRookPosition) > 0 &&
-            (Occupancy & Constants.BlackKingSideCastleEmptyPositions) == 0 &&
+            (Black & Rook & Constants.BlackKingSideCastleRookPosition) > 0 &&
+            ((White | Black)& Constants.BlackKingSideCastleEmptyPositions) == 0 &&
             (attackedSquares & (1ul << 61)) == 0 &&
             (attackedSquares & (1ul << 62)) == 0)
         {
@@ -475,13 +475,12 @@ public partial struct Board
 
         // Queen Side Castle
         if ((CastleRights & CastleRights.BlackQueenSide) != 0 &&
-            (BlackRook & Constants.BlackQueenSideCastleRookPosition) > 0 &&
-            (Occupancy & Constants.BlackQueenSideCastleEmptyPositions) == 0 &&
+            (Black & Rook & Constants.BlackQueenSideCastleRookPosition) > 0 &&
+            ((White | Black) & Constants.BlackQueenSideCastleEmptyPositions) == 0 &&
             (attackedSquares & (1ul << 58)) == 0 &&
             (attackedSquares & (1ul << 59)) == 0)
         {
             newBoard = Unsafe.As<Board, Board>(ref this);
-
             newBoard.BlackKing_QueenSideCastle();
             if (depth == 1) summary.AddCastle();
             newBoard.AccumulateWhiteMoves(ref summary, depth - 1, 59);

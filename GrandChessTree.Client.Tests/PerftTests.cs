@@ -189,5 +189,6 @@ namespace GrandChessTree.Client.Tests
             // Then
             Assert.Equal(nodes, summary.Nodes);
         }
+
     }
 }

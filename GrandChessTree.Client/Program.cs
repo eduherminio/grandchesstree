@@ -7,7 +7,7 @@ Console.WriteLine("-----TheGreatChessTree-----");
 var config = new Config()
 {
     WorkerCount = 32,
-    Depth = 10,
+    Depth = 9,
 };
 
 var fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -21,7 +21,7 @@ var results = new List<AggregateResultResult>();
 await runner.Run(fen);
 results.Add(runner.result);
 
-var startDepth = 10;
+var startDepth = 9;
 //for (int i = startDepth; i <= 8; i++)
 //{
 //    config.Depth = i;
