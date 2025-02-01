@@ -8,4 +8,7 @@ public class D10SearchTaskResponse
 
     [JsonPropertyName("search_item_id")]
     public ulong SearchItemId { get; set; }
+
+    [JsonPropertyName("depth")]
+    public int Depth { get; set; }
 }

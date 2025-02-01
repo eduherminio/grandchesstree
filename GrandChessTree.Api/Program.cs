@@ -1,6 +1,8 @@
 
 using GrandChessTree.Api.Database;
+using GrandChessTree.Api.Middleware;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Console;
 
 namespace GrandChessTree.Api
 {
@@ -25,8 +27,19 @@ namespace GrandChessTree.Api
             services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
+            services.AddLogging(b =>
+            {
+                b.SetMinimumLevel(LogLevel.Information);
+                b.AddSimpleConsole(c =>
+                {
+                    c.IncludeScopes = false;
+                    c.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
+                    c.ColorBehavior = LoggerColorBehavior.Enabled;
+                });
+            });
 
             var app = builder.Build();
+            app.UseMiddleware<RequestTimingMiddleware>();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

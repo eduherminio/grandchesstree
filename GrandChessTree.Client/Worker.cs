@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using GrandChessTree.Shared;
+using GrandChessTree.Shared.Api;
 
 namespace GrandChessTree.Client;
 
@@ -44,10 +45,28 @@ public class AggregateResultResult
         SingleDiscoveredCheckmate += result.SingleDiscoveredCheckmate;
         DirectDiscoverdCheckmate += result.DirectDiscoverdCheckmate;
         DoubleDiscoverdCheckmate += result.DoubleDiscoverdCheckmate;
+    }   
+    
+    public void Add(SearchTaskResults result)
+    {
+        Nodes += result.Nodes;
+        Captures += result.Captures;
+        Enpassant += result.Enpassant;
+        Castles += result.Castles;
+        Promotions += result.Promotions;
+        DirectCheck += result.DirectCheck;
+        SingleDiscoveredCheck += result.SingleDiscoveredCheck;
+        DirectDiscoveredCheck += result.DirectDiscoveredCheck;
+        DoubleDiscoveredCheck += result.DoubleDiscoveredCheck;
+        DirectCheckmate += result.DirectCheckmate;
+        SingleDiscoveredCheckmate += result.SingleDiscoveredCheckmate;
+        DirectDiscoverdCheckmate += result.DirectDiscoverdCheckmate;
+        DoubleDiscoverdCheckmate += result.DoubleDiscoverdCheckmate;
     }
     
     public void Print()
     {
+        Console.Clear();
         Console.WriteLine($"nodes:{Nodes}");
         Console.WriteLine($"captures:{Captures}");
         Console.WriteLine($"enpassants:{Enpassant}");

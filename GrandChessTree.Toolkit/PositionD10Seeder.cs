@@ -16,14 +16,15 @@ namespace GrandChessTree.Toolkit
             Console.WriteLine($"Starting bulk insert of {PositionsD4.Dict.Count} rows...");
 
             // Use COPY for bulk insert
-            await using var writer = await conn.BeginTextImportAsync("COPY d10_search_items (id, available_at, pass_count, confirmed) FROM STDIN (FORMAT csv)");
+            await using var writer = await conn.BeginTextImportAsync("COPY d10_search_items (id, available_at, pass_count, confirmed, occurrences) FROM STDIN (FORMAT csv)");
 
             try
             {
                 // Iterate over the dictionary and write each row to the COPY stream
                 foreach (var (id, _) in PositionsD4.Dict)
                 {
-                    await writer.WriteLineAsync($"{id},0,0,false"); // CSV format: id, available_at, pass_count
+                    DuplicatesD4.Dict.TryGetValue(id, out var occurrences);
+                    await writer.WriteLineAsync($"{id},0,0,false,{occurrences}");
                 }
 
                 Console.WriteLine("Bulk insert completed successfully.");

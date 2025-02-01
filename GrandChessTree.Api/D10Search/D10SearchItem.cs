@@ -19,6 +19,9 @@ namespace GrandChessTree.Api.D10Search
         [Column("confirmed")]
         public bool Confirmed { get; set; }
 
+        [Column("occurrences")]
+        public int Occurrences { get; set; }
+
         public virtual List<D10SearchTask> SearchTasks { get; set; } = new();
     }
 }

@@ -36,6 +36,10 @@ namespace GrandChessTree.Api.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("confirmed");
 
+                    b.Property<int>("Occurrences")
+                        .HasColumnType("integer")
+                        .HasColumnName("occurrences");
+
                     b.Property<long>("PassCount")
                         .HasColumnType("bigint")
                         .HasColumnName("pass_count");

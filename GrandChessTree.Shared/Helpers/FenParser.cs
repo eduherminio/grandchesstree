@@ -1,4 +1,6 @@
-﻿namespace GrandChessTree.Shared.Helpers;
+﻿using GrandChessTree.Shared.Precomputed;
+
+namespace GrandChessTree.Shared.Helpers;
 
 public static class FenParser
 {
@@ -74,6 +76,7 @@ public static class FenParser
         else
             board.EnPassantFile = (byte)"abcdefgh".IndexOf(enPassantTarget[0]);
 
+        board.Hash = Zobrist.CalculateZobristKey(ref board, turn == "w");
         return (board, turn == "w");
     }
 

@@ -21,35 +21,57 @@ namespace GrandChessTree.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateNewTask(CancellationToken cancellationToken)
+        public async Task<IActionResult> CreateNewTaskBatch(CancellationToken cancellationToken)
         {
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
             var currentTimestamp = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
 
-            var searchItem = await _dbContext.D10SearchItems.Where(i => i.AvailableAt <= currentTimestamp && !i.Confirmed).OrderBy(i => i.PassCount).FirstOrDefaultAsync(cancellationToken);
+            // Select and lock 400 available search items (Prevents duplicates)
+            var searchItems = await _dbContext.D10SearchItems
+                .FromSqlInterpolated($@"
+                    SELECT * FROM public.d10_search_items 
+                    WHERE NOT confirmed AND available_at = 0 
+                    ORDER BY available_at, pass_count 
+                    LIMIT 400 FOR UPDATE SKIP LOCKED")
+                .ToListAsync(cancellationToken);
 
-            if(searchItem == null)
+            if (!searchItems.Any())
             {
                 return Conflict();
             }
 
-            // Becomes available again in 1 hour
-            searchItem.AvailableAt = currentTimestamp + 60 * 60;
-
-            var searchTask = new D10SearchTask()
+            // Prepare search tasks
+            var searchTasks = searchItems.Select(searchItem => new D10SearchTask
             {
                 SearchItemId = searchItem.Id,
-                StartedAt = currentTimestamp,
-            };
+                StartedAt = currentTimestamp
+            }).ToList();
 
-            _dbContext.D10SearchTasks.Add(searchTask);
+            await _dbContext.D10SearchTasks.AddRangeAsync(searchTasks, cancellationToken);
+
+            // Update search items to prevent immediate reprocessing
+            foreach (var item in searchItems)
+            {
+                item.AvailableAt = currentTimestamp + 3600; // Becomes available again in 1 hour
+            }
+
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            return Ok(new D10SearchTaskResponse()
+            // Commit transaction to finalize changes
+            await transaction.CommitAsync(cancellationToken);
+
+            // Prepare response
+            var response = searchTasks.Select(task => new D10SearchTaskResponse
             {
-                SearchItemId = searchItem.Id,
-                Id = searchTask.Id
-            });
+                SearchItemId = task.SearchItemId,
+                Id = task.Id,
+                Depth = 3
+            }).ToArray();
+
+            return Ok(response);
         }
+
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
@@ -85,38 +107,67 @@ namespace GrandChessTree.Api.Controllers
         }
 
 
-        [HttpPost("{id}/result")]
-        public async Task<IActionResult> SubmitResult(int id, [FromBody] SubmitSearchTaskResultRequest request, CancellationToken cancellationToken)
+        [HttpPost("results")]
+        public async Task<IActionResult> SubmitResults(
+           [FromBody] SearchTaskResultBatch request,
+           CancellationToken cancellationToken)
         {
             var currentTimestamp = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
 
-            var searchTask = await _dbContext.D10SearchTasks.Include(s => s.SearchItem).FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+            // Extract IDs to fetch all tasks in one query
+            var taskIds = request.Results.Select(r => r.Id).ToList();
 
-            searchTask.SearchItem.PassCount++;
-            searchTask.SearchItem.AvailableAt = currentTimestamp;
+            // Fetch all tasks with related SearchItem in a single batch query
+            var searchTasks = await _dbContext.D10SearchTasks
+                .Include(s => s.SearchItem)
+                .Where(t => taskIds.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, cancellationToken);
 
-            var duration = (ulong)(currentTimestamp - searchTask.StartedAt);
-            if(duration > 0)
+            if (searchTasks.Count == 0)
             {
-                searchTask.Nps = request.Nodes / duration;
+                return NotFound();
             }
-            searchTask.FinishedAt = currentTimestamp;
-            searchTask.Nodes = request.Nodes;
-            searchTask.Captures = request.Captures;
-            searchTask.Enpassant = request.Enpassant;
-            searchTask.Castles = request.Castles;
-            searchTask.Promotions = request.Promotions;
-            searchTask.DirectCheck = request.DirectCheck;
-            searchTask.SingleDiscoveredCheck = request.SingleDiscoveredCheck;
-            searchTask.DirectDiscoveredCheck = request.DirectDiscoveredCheck;
-            searchTask.DoubleDiscoveredCheck = request.DoubleDiscoveredCheck;
-            searchTask.DirectCheckmate = request.DirectCheckmate;
-            searchTask.SingleDiscoveredCheckmate = request.SingleDiscoveredCheckmate;
-            searchTask.DirectDiscoverdCheckmate = request.DirectDiscoverdCheckmate;
-            searchTask.DoubleDiscoverdCheckmate = request.DoubleDiscoverdCheckmate;
 
+            // Process each request and update the corresponding task
+            foreach (var result in request.Results)
+            {
+                if (!searchTasks.TryGetValue(result.Id, out var searchTask))
+                {
+                    continue; // Skip if task not found (shouldn't happen)
+                }
+
+                // Update the search item (parent)
+                searchTask.SearchItem.PassCount++;
+                searchTask.SearchItem.AvailableAt = currentTimestamp;
+
+                // Update search task properties
+                var duration = (ulong)(currentTimestamp - searchTask.StartedAt);
+                if (duration > 0)
+                {
+                    searchTask.Nps = result.Nodes / duration;
+                }
+
+                searchTask.FinishedAt = currentTimestamp;
+                searchTask.Nodes = result.Nodes;
+                searchTask.Captures = result.Captures;
+                searchTask.Enpassant = result.Enpassant;
+                searchTask.Castles = result.Castles;
+                searchTask.Promotions = result.Promotions;
+                searchTask.DirectCheck = result.DirectCheck;
+                searchTask.SingleDiscoveredCheck = result.SingleDiscoveredCheck;
+                searchTask.DirectDiscoveredCheck = result.DirectDiscoveredCheck;
+                searchTask.DoubleDiscoveredCheck = result.DoubleDiscoveredCheck;
+                searchTask.DirectCheckmate = result.DirectCheckmate;
+                searchTask.SingleDiscoveredCheckmate = result.SingleDiscoveredCheckmate;
+                searchTask.DirectDiscoverdCheckmate = result.DirectDiscoverdCheckmate;
+                searchTask.DoubleDiscoverdCheckmate = result.DoubleDiscoverdCheckmate;
+            }
+
+            // Bulk save changes in one transaction
             await _dbContext.SaveChangesAsync(cancellationToken);
+
             return Ok();
         }
+
     }
 }

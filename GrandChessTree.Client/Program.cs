@@ -3,15 +3,13 @@
 Console.WriteLine("-----TheGreatChessTree-----");
 
 
-Console.WriteLine("Enter the api url:");
-var apiUrl = Console.ReadLine();
-while (string.IsNullOrEmpty(apiUrl))
-{
-    Console.WriteLine("Please enter a valid url");
-}
+var apiUrl = "http://localhost:5032/";
+Console.WriteLine("Hit enter to start");
+Console.ReadLine();
 
 
-var networkClient = new NetworkClient(apiUrl, 6, 30);
+var searchOrchastrator = new SearchItemOrchistrator(apiUrl);
+var networkClient = new NetworkClient(searchOrchastrator, 30);
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 _ = Task.Run(ReadCommands);
 
