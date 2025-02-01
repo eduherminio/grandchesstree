@@ -57,27 +57,33 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse(fen);
 
             // When
-            Summary d1Summary = Perft.PerftRoot(ref board, 1, whiteToMove);
+            Summary d1Summary = default;
+            Perft.PerftRoot(ref board, ref d1Summary,1, whiteToMove);
             (board, whiteToMove) = FenParser.Parse(fen);
             Perft.ClearTable();
 
-            Summary d2Summary = Perft.PerftRoot(ref board, 2, whiteToMove);
+            Summary d2Summary = default;
+            Perft.PerftRoot(ref board, ref d2Summary,2, whiteToMove);
             (board, whiteToMove) = FenParser.Parse(fen);
             Perft.ClearTable();
 
-            Summary d3Summary = Perft.PerftRoot(ref board, 3, whiteToMove);
+            Summary d3Summary = default;
+            Perft.PerftRoot(ref board, ref d3Summary,3, whiteToMove);
             (board, whiteToMove) = FenParser.Parse(fen);
             Perft.ClearTable();
 
-            Summary d4Summary = Perft.PerftRoot(ref board, 4, whiteToMove);
+            Summary d4Summary = default;
+            Perft.PerftRoot(ref board, ref d4Summary,4, whiteToMove);
             (board, whiteToMove) = FenParser.Parse(fen);
             Perft.ClearTable();
 
-            Summary d5Summary = Perft.PerftRoot(ref board, 5, whiteToMove);
+            Summary d5Summary = default;
+            Perft.PerftRoot(ref board, ref d5Summary,5, whiteToMove);
             (board, whiteToMove) = FenParser.Parse(fen);
             Perft.ClearTable();
 
-            Summary d6Summary = Perft.PerftRoot(ref board, 6, whiteToMove);
+            Summary d6Summary =default;
+            Perft.PerftRoot(ref board, ref d6Summary, 6, whiteToMove);
 
             // Then
             d1Summary.Nodes.ShouldBe(d1, $"d1 differed by {d1Summary.Nodes - d1} for {fen}");

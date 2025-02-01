@@ -109,63 +109,81 @@ public partial struct Board
         }
         var pinMask = BlackKingPinnedRay();
 
-        var positions = Black & Pawn;
+        var positions = Black & Pawn & pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateBlackPawnMoves( ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
+            AccumulateBlackPawnMoves(ref hashEntry, depth, index, AttackTables.GetRayToEdgeStraight(BlackKingPos, index), AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index));
+        }
+        
+        positions = Black & Pawn & ~pinMask;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackPawnMoves(ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
         }
 
-        positions = Black & Knight;
+        positions = Black & Knight & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            if((pinMask & (1ul << index)) != 0)
-            {
-                // Pinned knight can't move
-                continue;
-            }
+            AccumulateBlackKnightMoves(ref hashEntry, depth, index);
+        }
 
-            AccumulateBlackKnightMoves( ref hashEntry, depth, index);
-        }
-        
-        positions = Black & Bishop;
+        positions = Black & Bishop & pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateBlackBishopMoves(ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
+            AccumulateBlackBishopMoves(ref hashEntry, depth, index, AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index));
         }
         
-        positions = Black & Rook;
+        positions = Black & Bishop & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateBlackRookMoves( ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
+            AccumulateBlackBishopMoves(ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
         }
         
-        positions = Black & Queen;
+        positions = Black & Rook& pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateBlackQueenMoves(ref hashEntry, depth, index, (pinMask & (1ul << index)) != 0);
+            AccumulateBlackRookMoves( ref hashEntry, depth, index, AttackTables.GetRayToEdgeStraight(BlackKingPos, index));
+        }
+        
+        positions = Black & Rook & ~pinMask;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackRookMoves( ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
+        }
+        
+        positions = Black & Queen & pinMask;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackQueenMoves(ref hashEntry, depth, index,  AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(BlackKingPos, index));
+        }
+        
+        positions = Black & Queen & ~pinMask;
+        while (positions != 0)
+        {
+            var index = positions.PopLSB();
+            AccumulateBlackQueenMoves(ref hashEntry, depth, index,  0xFFFFFFFFFFFFFFFF);
         }
         
         summary.Accumulate(ref hashEntry);
         *ptr = hashEntry;
     }
-    public unsafe void AccumulateBlackPawnMoves(ref Summary summary, int depth, int index, bool isPinned)
+    public unsafe void AccumulateBlackPawnMoves(ref Summary summary, int depth, int index, ulong pushPinMask, ulong capturePinMask)
     {
-        Board newBoard = default;
-        var rankIndex = SquareHelpers.GetRankIndex(index);
+        Board newBoard;
+        var rankIndex = index.GetRankIndex();
         int toSquare;
         if (rankIndex.IsSecondRank())
         {
             // Promoting moves
-            var validMoves = *(AttackTables.BlackPawnAttackTable + index) & MoveMask & White;
-            if (isPinned)
-            {
-                validMoves &= AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index);
-            }
+            var validMoves = *(AttackTables.BlackPawnAttackTable + index) & MoveMask & White & capturePinMask;
 
             while (validMoves != 0)
             {
@@ -190,11 +208,7 @@ public partial struct Board
                 newBoard.AccumulateWhiteMoves(ref summary, depth - 1, toSquare);
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black);
-            if (isPinned)
-            {
-                validMoves &= AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
-            }
+            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black) & pushPinMask;
             while (validMoves != 0)
             {
                 if (depth == 1) summary.AddPromotion();
@@ -220,12 +234,7 @@ public partial struct Board
         }
         else
         {
-            var validMoves = *(AttackTables.BlackPawnAttackTable + index) & MoveMask & White;
-            if (isPinned)
-            {
-                validMoves &= AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index);
-            }
-
+            var validMoves = *(AttackTables.BlackPawnAttackTable + index) & MoveMask & White & capturePinMask;
             while (validMoves != 0)
             {
                 if (depth == 1) summary.AddCapture();
@@ -238,7 +247,7 @@ public partial struct Board
             }
 
             if (EnPassantFile != 8 && rankIndex.IsBlackEnPassantRankIndex() &&
-                Math.Abs(SquareHelpers.GetFileIndex(index) - EnPassantFile) == 1)
+                Math.Abs(index.GetFileIndex() - EnPassantFile) == 1)
             {
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
@@ -252,18 +261,14 @@ public partial struct Board
                 }
             }
 
-            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black);
-            if (isPinned)
-            {
-                validMoves &= AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
-            }
+            validMoves = AttackTables.BlackPawnPushTable[index] & MoveMask & ~(White | Black) & pushPinMask;
             while (validMoves != 0)
             {
                 toSquare = validMoves.PopLSB();
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
 
-                if (rankIndex.IsSeventhRank() && SquareHelpers.GetRankIndex(toSquare) == 4)
+                if (rankIndex.IsSeventhRank() && toSquare.GetRankIndex() == 4)
                 {
                     // Double push: Check intermediate square
                     var intermediateSquare = (index + toSquare) / 2; // Midpoint between start and destination
@@ -287,7 +292,7 @@ public partial struct Board
 
     public unsafe void AccumulateBlackKnightMoves(ref Summary summary, int depth, int index)
     {
-        Board newBoard = default;
+        Board newBoard;
         int toSquare;
 
         var potentialMoves = *(AttackTables.KnightAttackTable + index) & MoveMask;
@@ -315,16 +320,11 @@ public partial struct Board
         }
     }
 
-    public unsafe void AccumulateBlackBishopMoves(ref Summary summary, int depth, int index, bool isPinned)
+    public void AccumulateBlackBishopMoves(ref Summary summary, int depth, int index, ulong pinMask)
     {
-        Board newBoard = default;
+        Board newBoard;
 
-        var potentialMoves = AttackTables.PextBishopAttacks(White | Black, index) & MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index);
-        }
+        var potentialMoves = AttackTables.PextBishopAttacks(White | Black, index) & MoveMask & pinMask;
 
         int toSquare;
 
@@ -352,16 +352,11 @@ public partial struct Board
         }
     }
 
-    public unsafe void AccumulateBlackRookMoves(ref Summary summary, int depth, int index, bool isPinned)
+    public void AccumulateBlackRookMoves(ref Summary summary, int depth, int index, ulong pinMask)
     {
-        Board newBoard = default;
+        Board newBoard;
 
-        var potentialMoves = AttackTables.PextRookAttacks(White | Black, index) & MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
-        }
+        var potentialMoves = AttackTables.PextRookAttacks(White | Black, index) & MoveMask & pinMask;
         int toSquare;
 
         var captureMoves = potentialMoves & White;
@@ -388,17 +383,12 @@ public partial struct Board
         }
     }
 
-    public unsafe void AccumulateBlackQueenMoves(ref Summary summary, int depth, int index, bool isPinned)
+    public void AccumulateBlackQueenMoves(ref Summary summary, int depth, int index, ulong pinMask)
     {
-        Board newBoard = default;
+        Board newBoard;
 
         var potentialMoves = (AttackTables.PextBishopAttacks(White | Black, index) |
-                             AttackTables.PextRookAttacks(White | Black, index)) & MoveMask;
-
-        if (isPinned)
-        {
-            potentialMoves &= AttackTables.GetRayToEdgeDiagonal(BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(BlackKingPos, index);
-        }
+                             AttackTables.PextRookAttacks(White | Black, index)) & MoveMask & pinMask;
         int toSquare;
 
         var captureMoves = potentialMoves & White;
@@ -428,7 +418,7 @@ public partial struct Board
     public unsafe void AccumulateBlackKingMoves(ref Summary summary, int depth, bool inCheck)
     {
         var attackedSquares = BlackKingDangerSquares();
-        Board newBoard = default;
+        Board newBoard;
 
         var potentialMoves = *(AttackTables.KingAttackTable + BlackKingPos) & ~attackedSquares;
         int toSquare;

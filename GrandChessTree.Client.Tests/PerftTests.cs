@@ -18,7 +18,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board,ref summary, depth, whiteToMove);
  
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -54,7 +55,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board,ref summary, depth, whiteToMove);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -92,7 +94,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -");
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board,ref summary, depth, whiteToMove);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -128,7 +131,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1");
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board, ref summary,depth, whiteToMove);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -165,7 +169,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse("rnbq1b1r/ppppkppp/4pn2/8/1Q6/2PP4/PP2PPPP/RNB1KBNR b KQ - 2 4");
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board,ref summary, depth, whiteToMove);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);
@@ -184,7 +189,8 @@ namespace GrandChessTree.Client.Tests
             var (board, whiteToMove) = FenParser.Parse(fen);
 
             // When
-            Summary summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+            Summary summary = default;
+            Perft.PerftRoot(ref board, ref summary, depth, whiteToMove);
 
             // Then
             Assert.Equal(nodes, summary.Nodes);

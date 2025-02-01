@@ -11,7 +11,6 @@ public static unsafe class Perft
     #region HashTable
     public static readonly Summary* HashTable;
     public static readonly uint HashTableMask;   
-   
 
     static Perft()
     {
@@ -77,47 +76,66 @@ public static unsafe class Perft
             board.MoveMask = numCheckers == 0 ? 0xFFFFFFFFFFFFFFFF: checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
             var pinMask = board.WhiteKingPinnedRay();
 
-            var positions = board.White & board.Pawn;
+            var positions = board.White & board.Pawn & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhitePawnMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateWhitePawnMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
             }
-
-            positions = board.White & board.Knight;
+        
+            positions =board. White &board. Pawn & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                if ((pinMask & (1ul << index)) != 0)
-                {
-                    // Pinned knight can't move
-                    continue;
-                }
-                board.AccumulateWhiteKnightMoves(ref summary, depth, index);
+                board. AccumulateWhitePawnMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
             }
 
-            positions = board.White & board.Bishop;
+            positions = board.White & board.Knight & ~pinMask;
+            while (positions != 0)
+            {
+                board.AccumulateWhiteKnightMoves(ref summary, depth, positions.PopLSB());
+            }
+
+            positions = board.White & board.Bishop & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteBishopMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateWhiteBishopMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
             }
-
-            positions = board.White & board.Rook;
+        
+            positions = board.White & board.Bishop & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteRookMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateWhiteBishopMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
-            positions = board.White & board.Queen;
+            positions = board.White & board.Rook & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteQueenMoves( ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateWhiteRookMoves(ref summary, depth, index,  AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
+            }
+            positions = board.White & board.Rook & ~pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board. AccumulateWhiteRookMoves(ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
             }
 
-            return;
+            positions = board.White & board.Queen & pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateWhiteQueenMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
+            }     
+        
+            positions = board.White & board.Queen & ~pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateWhiteQueenMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
+            }
         }
         else
         {
@@ -130,10 +148,8 @@ public static unsafe class Perft
             {
                 // Only a king move can evade double check
                 return;
-
             }
-
-
+            
             board.MoveMask = 0xFFFFFFFFFFFFFFFF;
             if (numCheckers == 1)
             {
@@ -141,48 +157,68 @@ public static unsafe class Perft
             }
             var pinMask = board.BlackKingPinnedRay();
 
-            var positions = board.Black & board.Pawn;
+            var positions = board.Black & board.Pawn & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackPawnMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateBlackPawnMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
+            }
+        
+            positions = board.Black & board.Pawn & ~pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateBlackPawnMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
             }
 
-            positions = board.Black & board.Knight;
+            positions = board.Black & board.Knight & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                if ((pinMask & (1ul << index)) != 0)
-                {
-                    // Pinned knight can't move
-                    continue;
-                }
-
                 board.AccumulateBlackKnightMoves(ref summary, depth, index);
             }
 
-            positions = board.Black & board.Bishop;
+            positions = board.Black & board.Bishop & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackBishopMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateBlackBishopMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
             }
-
-            positions = board.Black & board.Rook;
+        
+            positions = board.Black & board.Bishop & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackRookMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateBlackBishopMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
-            positions = board.Black & board.Queen;
+            positions = board.Black & board.Rook & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackQueenMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
+                board.AccumulateBlackRookMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
+            }
+        
+            positions = board.Black & board.Rook & ~pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateBlackRookMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
-            return;
+            positions = board.Black & board.Queen & pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateBlackQueenMoves(ref summary, depth, index,  AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
+            }
+        
+            positions = board.Black & board.Queen & ~pinMask;
+            while (positions != 0)
+            {
+                var index = positions.PopLSB();
+                board.AccumulateBlackQueenMoves(ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
+            }
         }
     }
 
