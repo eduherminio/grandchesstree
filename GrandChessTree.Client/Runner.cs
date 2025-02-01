@@ -24,7 +24,6 @@ namespace GrandChessTree.Client
         private bool HasQuit { get; set; } = false;
         private readonly Stopwatch _stopwatch = new Stopwatch();
 
-        public AggregateResultResult result = new AggregateResultResult();
 
         private Board[] boards = [];
         public Runner(Config config) {
@@ -47,18 +46,19 @@ namespace GrandChessTree.Client
             }
         }
 
-        public async Task Run(string rootFen)
+        public AggregateResultResult Run(string rootFen)
         {
             commandList.Clear();
             workerResults.Clear();
-            result = new AggregateResultResult();
 
             var (initialBoard, initialWhiteToMove) = FenParser.Parse(rootFen);
-
-            if(_config.Depth <= 3)
+            var result = new AggregateResultResult();
+             
+            if(_config.Depth <= 6)
             {
                 var sw = Stopwatch.StartNew();
-                var summary = Perft.PerftRoot(ref initialBoard, _config.Depth, initialWhiteToMove);
+                Summary summary = default;
+                Perft.PerftRoot(ref initialBoard, ref summary, _config.Depth, initialWhiteToMove);
                 var ms = sw.ElapsedMilliseconds;
                 var s = (float)ms / 1000;
                 var workerResult = new WorkerResult()
@@ -83,8 +83,8 @@ namespace GrandChessTree.Client
 
                 workerResults.Add(workerResult);
                 result.Add(workerResult);
-                PrintOutput();
-                return;
+                PrintOutput(rootFen, result);
+                return result;
             }
 
             boards = LeafNodeGenerator.GenerateLeafNodes(ref initialBoard, 2, initialWhiteToMove);
@@ -92,7 +92,7 @@ namespace GrandChessTree.Client
             Console.WriteLine($"Split search into {boards.Length} sub searches");
             foreach (var board in boards)
             {
-                var fen = board.ToFen(!initialWhiteToMove);
+                var fen = board.ToFen(!initialWhiteToMove, 0, 1);
 
                 var commandString = $"begin:{_config.Depth - 2}:{fen}";
                 commandList.Enqueue(commandString);
@@ -125,12 +125,12 @@ namespace GrandChessTree.Client
                 Thread.Sleep(50);
                 if (iteration++ % 10 == 0)
                 {
-                    PrintReport();
+                    PrintReport(rootFen, result);
                 }
             }
 
-            //Console.WriteLine(workerResults.DistinctBy(w => w.Hash).Count() + " / " + workerResults.Count());
-            PrintOutput();
+            PrintOutput(rootFen, result);
+            return result;
         }
 
         public void ProcessErrors()
@@ -142,11 +142,12 @@ namespace GrandChessTree.Client
             }
         }
 
-        void PrintReport()
+        void PrintReport(string fen, AggregateResultResult result)
         {
             var nps = result.Nps / workerResults.Count;
             var table = new ConsoleTable("key", "value");
             table
+                .AddRow("fen", fen)
                 .AddRow("depth", _config.Depth)
                 .AddRow("workers", _config.WorkerCount)
                 .AddRow("processed", $"{workerResults.Count}/{boards.Length}")
@@ -183,7 +184,7 @@ namespace GrandChessTree.Client
         }
 
 
-        void PrintOutput()
+        void PrintOutput(string fen, AggregateResultResult result)
         {
             Console.Clear();
             var ms = _stopwatch.ElapsedMilliseconds;
@@ -200,7 +201,7 @@ namespace GrandChessTree.Client
             }
             Console.WriteLine("---------------");
             //Console.WriteLine($"fen:{initialBoard.ToFen(initialWhiteToMove)}");
-            Console.WriteLine($"nps:{(result.Nodes / s).FormatBigNumber()}");
+            Console.WriteLine($"fen:{fen}");
             Console.WriteLine($"nps:{(nps * workers.Count()).FormatBigNumber()}");
             result.Print();
             Console.WriteLine("---------------");

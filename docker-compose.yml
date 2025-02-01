@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  gct_postgres:
+    image: postgres:latest
+    container_name: gct_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: chessrulz
+      POSTGRES_DB: application
+    ports:
+      - '4675:5432'

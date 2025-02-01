@@ -47,7 +47,7 @@ public static class OutputHelpers
         return $"{(char)('a' + file)}{(char)('1' + rank)}";
     }  
     
-    public static string ToFen(this Board board, bool whiteToMove)
+    public static string ToFen(this Board board, bool whiteToMove, int hmc, int moves)
     {
         var fen = new StringBuilder();
 
@@ -105,12 +105,11 @@ public static class OutputHelpers
         {
             var enpassantTargetSquare = whiteToMove ? 5 * 8 + board.EnPassantFile : 2 * 8 + board.EnPassantFile;
             fen.Append((enpassantTargetSquare).ConvertPosition());
-            fen.Append(' ');
         }
-
-        //fen.Append(board.HalfMoveClock);
         fen.Append(' ');
-        //fen.Append(board.TurnCount);
+        fen.Append(hmc);
+        fen.Append(' ');
+        fen.Append(moves);
 
         return fen.ToString();
     }

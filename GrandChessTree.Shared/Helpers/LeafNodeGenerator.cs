@@ -6,7 +6,8 @@ public static unsafe class LeafNodeGenerator
 {
     public static Board[] GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
     {
-        var summary = Perft.PerftRoot(ref board, depth, whiteToMove);
+        Summary summary = default;
+        Perft.PerftRoot(ref board, ref summary, depth, whiteToMove);
 
         var output = new Board[summary.Nodes];
         var boards = new Span<Board>(output);

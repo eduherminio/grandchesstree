@@ -52,16 +52,13 @@ public static unsafe class Perft
 
     #endregion
     
-    public static Summary PerftRoot(ref Board board, int depth, bool whiteToMove)
+    public static void PerftRoot(ref Board board, ref Summary summary, int depth, bool whiteToMove)
     {
-        Summary summary = default;
-        summary.FullHash = board.Hash ^ (board.White | board.Black);
-        summary.Depth = (byte)depth;
         if (depth == 0)
         {
             // perft(0) = 1
             summary.Nodes++;
-            return summary;
+            return;
         }
 
         if (whiteToMove)
@@ -74,7 +71,7 @@ public static unsafe class Perft
             if (numCheckers > 1)
             {
                 // Only a king move can evade double check
-                return summary;
+                return;
             }
 
             board.MoveMask = numCheckers == 0 ? 0xFFFFFFFFFFFFFFFF: checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
@@ -120,7 +117,7 @@ public static unsafe class Perft
                 board.AccumulateWhiteQueenMoves( ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-            return summary;
+            return;
         }
         else
         {
@@ -132,7 +129,8 @@ public static unsafe class Perft
             if (numCheckers > 1)
             {
                 // Only a king move can evade double check
-                return summary;
+                return;
+
             }
 
 
@@ -184,8 +182,7 @@ public static unsafe class Perft
                 board.AccumulateBlackQueenMoves(ref summary, depth, index, (pinMask & (1ul << index)) != 0);
             }
 
-
-            return summary;
+            return;
         }
     }
 
