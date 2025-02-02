@@ -2,7 +2,6 @@
 using ConsoleTables;
 using GrandChessTree.Shared;
 using GrandChessTree.Shared.Helpers;
-using GrandChessTree.Shared.Precomputed;
 
 namespace GrandChessTree.Client
 {
@@ -21,25 +20,34 @@ namespace GrandChessTree.Client
             for(int i = 0; i < _workerReports.Length; i++) { _workerReports[i] = new WorkerReport(); }
         }
 
-        public async Task RunMultiple()
+        public void RunMultiple()
         {
-            var tasks = new List<Task>
-            {
-                OutputStatsPeriodically(),
-                SubmitResultsPeriodically()
-            };
+            Thread[] threads = new Thread[_workers + 3];
 
-            // Start the tasks concurrently
             for (int i = 0; i < _workers; i++)
             {
-                tasks.Add(Run(i));
+                var index = i;
+                threads[index] = new Thread(() => ThreadWork(index));
+                threads[index].Start();
             }
 
-            // Wait for all tasks to complete
-            await Task.WhenAll(tasks);
+            threads[_workers] = new Thread(OutputStatsPeriodically);
+            threads[_workers].Start();
+
+            threads[_workers + 1] = new Thread(GetTasksPeriodically);
+            threads[_workers + 1].Start();   
+            
+            threads[_workers + 2] = new Thread(SubmitResultsPeriodically);
+            threads[_workers + 2].Start();
+
+            // Wait for all threads to complete
+            foreach (Thread thread in threads)
+            {
+                thread.Join();
+            }
         }
 
-        private async Task OutputStatsPeriodically()
+        private void OutputStatsPeriodically()
         {
             while (IsRunning)
             {
@@ -86,64 +94,91 @@ namespace GrandChessTree.Client
                 {
                     Console.WriteLine(ex.ToString());
                 }
-                               
-                await Task.Delay(250);
+
+                Thread.Sleep(250);
 
             }
         }
 
-        private async Task SubmitResultsPeriodically()
+        public void GetTasksPeriodically()
         {
-            while (IsRunning)
+            Task.Run(async () =>
             {
-                try
+                while (IsRunning)
                 {
-                    await _searchItemOrchistrator.SubmitToApi();
+                    try
+                    {
+                        await _searchItemOrchistrator.TryLoadNewTasks();
+                        await Task.Delay(10);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-                }
-            }
+            });
         }
 
-        public async Task Run(int index)
+        public void SubmitResultsPeriodically()
+        {
+            Task.Run(async () =>
+            {
+                while (IsRunning)
+                {
+                    try
+                    {
+                        await _searchItemOrchistrator.SubmitToApi();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.ToString());
+                        await Task.Delay(TimeSpan.FromSeconds(1));
+                    }
+                    await Task.Delay(100);
+                }
+
+            });
+        }
+
+        private unsafe void ThreadWork(int index)
         {
             var sw = Stopwatch.StartNew();
-            var hashTable = new Summary[Perft.HashTableSize];
-
+            Perft.HashTable = Perft.AllocateHashTable();
 
             while (IsRunning)
             {
-                var searchItem = await _searchItemOrchistrator.GetSearchItem();
+                var searchItem = _searchItemOrchistrator.GetSearchItem();
                 if (searchItem == null)
                 {
-                    await Task.Delay(100);
+                    Thread.Sleep(10);
                     continue;
                 }
-                var span = hashTable.AsSpan();
                 while (IsRunning && searchItem.RemainingSubTasks.Any())
                 {
                     try
                     {
-                        var position = searchItem.GetNextSubTask();
-                        if(position == null)
+                        var subTask = searchItem.GetNextSubTask();
+                        if (subTask == null)
                         {
+                            Thread.Sleep(10);
                             continue;
                         }
+
+                        var (fen, occurrences) = subTask.Value;
+
                         _workerReports[index].BeginSubTask(searchItem);
 
-                        var (initialBoard, initialWhiteToMove) = FenParser.Parse(position);
+                        var (initialBoard, initialWhiteToMove) = FenParser.Parse(fen);
 
                         Summary summary = default;
                         sw.Restart();
-                        Perft.PerftRoot(span, ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
+                        Perft.PerftRoot(ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
                         var ms = sw.ElapsedMilliseconds;
                         var seconds = sw.ElapsedTicks / (float)Stopwatch.Frequency;
                         var result = new WorkerResult()
                         {
-                            Nps = seconds > 0 ? (summary.Nodes / seconds) : summary.Nodes,
+                            Nps = seconds > 0 ? (summary.Nodes * (ulong)occurrences / seconds) : 0,
                             Nodes = summary.Nodes,
                             Captures = summary.Captures,
                             Enpassant = summary.Enpassant,
@@ -157,11 +192,11 @@ namespace GrandChessTree.Client
                             SingleDiscoveredCheckmate = summary.SingleDiscoveredCheckmate,
                             DirectDiscoverdCheckmate = summary.DirectDiscoverdCheckmate,
                             DoubleDiscoverdCheckmate = summary.DoubleDiscoverdCheckmate,
-                            Fen = position,
+                            Fen = fen,
                             Hash = initialBoard.Hash,
                         };
 
-                        searchItem.CompleteSubTask(result);
+                        searchItem.CompleteSubTask(result, occurrences);
                         _workerReports[index].EndSubTask(searchItem, result.Nps);
 
                     }
@@ -174,7 +209,7 @@ namespace GrandChessTree.Client
                 if (searchItem.IsCompleted())
                 {
                     var submission = searchItem.ToSubmission();
-                    if(submission != null)
+                    if (submission != null)
                     {
                         _searchItemOrchistrator.Submit(submission);
                         _workerReports[index].CompleteTask(searchItem);
@@ -189,7 +224,8 @@ namespace GrandChessTree.Client
                     Console.Error.WriteLine($"Error: incompleted task...");
                 }
             }
+
             
         }
-}
+    }
  }

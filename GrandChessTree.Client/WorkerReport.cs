@@ -15,7 +15,7 @@
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t[0]);
+            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
         }
 
         public void EndSubTask(LocalSearchTask task, float nps)
@@ -24,7 +24,7 @@
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
             Nps = nps;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t[0]);
+            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
             TotalCompletedSubTasks++;
         }
 
@@ -33,7 +33,7 @@
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t[0]);
+            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
             TotalCompletedTasks++;
         }
     }

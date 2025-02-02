@@ -3,6 +3,7 @@ using GrandChessTree.Shared.Api;
 
 namespace GrandChessTree.Client
 {
+
     public class LocalSearchTask
     {
         [JsonPropertyName("id")]
@@ -21,18 +22,18 @@ namespace GrandChessTree.Client
         public int SubTaskCount { get; set; }
 
         [JsonPropertyName("remaining_sub_tasks")]
-        public List<string> RemainingSubTasks { get; set; } = new List<string>();
+        public List<(string fen, int occurrences)> RemainingSubTasks { get; set; } = new List<(string fen, int occurrences)>();
 
         [JsonPropertyName("completed_sub_tasks")]
-        public List<ulong[]> CompletedSubTaskResults { get; set; } = new List<ulong[]>();
+        public List<(ulong[] results, int occurences)> CompletedSubTaskResults { get; set; } = new List<(ulong[] results, int occurences)>();
 
-        public string? WorkingTask { get; set; }
+        public (string fen, int occurrences)? WorkingTask { get; set; }
         public bool IsCompleted()
         {
             return RemainingSubTasks.Count == 0 && SubTaskCount == CompletedSubTaskResults.Count;
         }
 
-        public string? GetNextSubTask()
+        public (string fen, int occurrences)? GetNextSubTask()
         {
             if(RemainingSubTasks.Count == 0) return null;
             WorkingTask = RemainingSubTasks[0];
@@ -40,12 +41,9 @@ namespace GrandChessTree.Client
             return WorkingTask;
         }
 
-        public bool CompleteSubTask(WorkerResult result)
+        public bool CompleteSubTask(WorkerResult result, int occurrences)
         {
-            WorkingTask = null;
-
-            CompletedSubTaskResults.Add(
-            [
+            CompletedSubTaskResults.Add(([
                 result.Nodes,
                 result.Captures,
                 result.Enpassant,
@@ -59,7 +57,8 @@ namespace GrandChessTree.Client
                 result.SingleDiscoveredCheckmate,
                 result.DirectDiscoverdCheckmate,
                 result.DoubleDiscoverdCheckmate,
-            ]);
+            ], occurrences));
+            WorkingTask = null;
 
             return true;
         }
@@ -90,26 +89,26 @@ namespace GrandChessTree.Client
                 DoubleDiscoverdCheckmate = 0,
             };
 
-            foreach(var subTaskResult in CompletedSubTaskResults)
+            foreach(var (results, occurrences) in CompletedSubTaskResults)
             {
-                if(subTaskResult.Length != 13)
+                if(results.Length != 13)
                 {
                     return null;
                 }
 
-                request.Nodes += subTaskResult[0];
-                request.Captures += subTaskResult[1];
-                request.Enpassant += subTaskResult[2];
-                request.Castles += subTaskResult[3];
-                request.Promotions += subTaskResult[4];
-                request.DirectCheck += subTaskResult[5];
-                request.SingleDiscoveredCheck += subTaskResult[6];
-                request.DirectDiscoveredCheck += subTaskResult[7];
-                request.DoubleDiscoveredCheck += subTaskResult[8];
-                request.DirectCheckmate += subTaskResult[9];
-                request.SingleDiscoveredCheckmate += subTaskResult[10];
-                request.DirectDiscoverdCheckmate += subTaskResult[11];
-                request.DoubleDiscoverdCheckmate += subTaskResult[12];
+                request.Nodes += results[0] * (ulong)occurrences;
+                request.Captures += results[1] * (ulong)occurrences;
+                request.Enpassant += results[2] * (ulong)occurrences;
+                request.Castles += results[3] * (ulong)occurrences;
+                request.Promotions += results[4] * (ulong)occurrences;
+                request.DirectCheck += results[5] * (ulong)occurrences;
+                request.SingleDiscoveredCheck += results[6] * (ulong)occurrences;
+                request.DirectDiscoveredCheck += results[7] * (ulong)occurrences;
+                request.DoubleDiscoveredCheck += results[8] * (ulong)occurrences;
+                request.DirectCheckmate += results[9] * (ulong)occurrences;
+                request.SingleDiscoveredCheckmate += results[10] * (ulong)occurrences;
+                request.DirectDiscoverdCheckmate += results[11] * (ulong)occurrences;
+                request.DoubleDiscoverdCheckmate += results[12] * (ulong)occurrences;
             }
 
             return request;

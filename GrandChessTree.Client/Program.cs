@@ -3,7 +3,7 @@
 Console.WriteLine("-----TheGreatChessTree-----");
 
 
-var apiUrl = "http://localhost:5032/";
+var apiUrl = "http://10.0.3.122:5032/";
 Console.WriteLine("Hit enter to start");
 Console.ReadLine();
 
@@ -13,7 +13,7 @@ var networkClient = new NetworkClient(searchOrchastrator, 30);
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 _ = Task.Run(ReadCommands);
 
-await networkClient.RunMultiple();
+networkClient.RunMultiple();
 
 void CurrentDomain_ProcessExit(object? sender, EventArgs e)
 {

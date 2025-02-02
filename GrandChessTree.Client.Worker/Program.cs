@@ -18,7 +18,7 @@ RuntimeHelpers.RunClassConstructor(typeof(Perft).TypeHandle);
 var (board, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 //var (board, whiteToMove) = FenParser.Parse("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
 Summary summary = default;
-Span<Summary> hashTable = new Span<Summary>(new Summary[Perft.HashTableSize]);
+Summary* hashTable = new Summary*(new Summary[Perft.HashTableSize]);
 var sw = Stopwatch.StartNew();
 
 Perft.PerftRoot(hashTable, ref board, ref summary, 7, whiteToMove);

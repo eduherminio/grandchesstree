@@ -66,7 +66,7 @@ namespace GrandChessTree.Api.Controllers
             {
                 SearchItemId = task.SearchItemId,
                 Id = task.Id,
-                Depth = 4
+                Depth = 6
             }).ToArray();
 
             return Ok(response);
@@ -85,10 +85,22 @@ namespace GrandChessTree.Api.Controllers
                 .GroupBy(i => 1)
                 .Select(g => new
                 {
-                    NodesPerMinute = g.Sum(i => i.Nps) / 60,
-                    TasksPerMinute = g.Count(i => i.FinishedAt > pastMinuteTimestamp)
+                    // Total nodes produced in the last minute
+                    TotalNodes = g.Sum(i => (float)i.Nps * (i.FinishedAt - i.StartedAt)),
+
+                    // Total time in seconds across all tasks
+                    TotalTimeSeconds = g.Sum(i => i.FinishedAt - i.StartedAt),
+
+                    // Number of tasks completed in the last minute
+                    TasksPerMinute = g.Count()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
+
+            float nps = 0;
+            if (stats?.TotalTimeSeconds > 0)
+            {
+                nps = (float)stats.TotalNodes / 60 ;
+            }
 
             if (stats == null)
             {
@@ -101,11 +113,45 @@ namespace GrandChessTree.Api.Controllers
 
             return Ok(new D10SearchTaskStatsResponse()
             {
-                Nps = stats.NodesPerMinute,
+                Nps = nps,
                 Tpm = stats.TasksPerMinute
             });
         }
 
+
+        [HttpGet("results")]
+        public async Task<IActionResult> GetResults(
+           CancellationToken cancellationToken)
+        {
+            var result = await _dbContext.Database
+                .SqlQueryRaw<SearchResult>($@"
+            SELECT 
+                SUM(t.nodes * i.occurrences) AS nodes,
+                SUM(t.captures * i.occurrences) AS captures,
+                SUM(t.enpassants * i.occurrences) AS enpassants,
+                SUM(t.castles * i.occurrences) AS castles,
+                SUM(t.promotions * i.occurrences) AS promotions,
+                SUM(t.direct_checks * i.occurrences) AS direct_checks,
+                SUM(t.single_discovered_check * i.occurrences) AS single_discovered_check,
+                SUM(t.direct_discovered_check * i.occurrences) AS direct_discovered_check,
+                SUM(t.double_discovered_check * i.occurrences) AS double_discovered_check,
+                SUM(t.direct_checkmate * i.occurrences) AS direct_checkmate,
+                SUM(t.single_discovered_checkmate * i.occurrences) AS single_discovered_checkmate,
+                SUM(t.direct_discoverd_checkmate * i.occurrences) AS direct_discoverd_checkmate,
+                SUM(t.double_discoverd_checkmate * i.occurrences) AS double_discoverd_checkmate
+            FROM public.d10_search_tasks t
+            JOIN public.d10_search_items i ON t.search_item_id = i.id
+        ")
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
+        }
 
         [HttpPost("results")]
         public async Task<IActionResult> SubmitResults(
@@ -114,7 +160,7 @@ namespace GrandChessTree.Api.Controllers
         {
             var currentTimestamp = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
 
-            // Extract IDs to fetch all tasks in one query
+                       // Extract IDs to fetch all tasks in one query
             var taskIds = request.Results.Select(r => r.Id).ToList();
 
             // Fetch all tasks with related SearchItem in a single batch query
@@ -140,14 +186,20 @@ namespace GrandChessTree.Api.Controllers
                 searchTask.SearchItem.PassCount++;
                 searchTask.SearchItem.AvailableAt = currentTimestamp;
 
+                var finishedAt = currentTimestamp == searchTask.StartedAt ? currentTimestamp + 1 : currentTimestamp;
+
                 // Update search task properties
-                var duration = (ulong)(currentTimestamp - searchTask.StartedAt);
+                var duration = (ulong)(finishedAt - searchTask.StartedAt);
                 if (duration > 0)
                 {
-                    searchTask.Nps = result.Nodes / duration;
+                    searchTask.Nps = result.Nodes * (ulong)searchTask.SearchItem.Occurrences / duration;
+                }
+                else
+                {
+                    searchTask.Nps = result.Nodes * (ulong)searchTask.SearchItem.Occurrences;
                 }
 
-                searchTask.FinishedAt = currentTimestamp;
+                searchTask.FinishedAt = finishedAt;
                 searchTask.Nodes = result.Nodes;
                 searchTask.Captures = result.Captures;
                 searchTask.Enpassant = result.Enpassant;

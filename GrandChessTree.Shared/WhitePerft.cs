@@ -6,7 +6,7 @@ using GrandChessTree.Shared.Precomputed;
 namespace GrandChessTree.Shared;
 public partial struct Board
 {
-    private unsafe void AccumulateWhiteMoves(Span<Summary> hashTable, ref Summary summary, int depth, int prevDestination)
+    private unsafe void AccumulateWhiteMoves( ref Summary summary, int depth, int prevDestination)
     {
         var checkers = BlackCheckers();
         var numCheckers = (byte)ulong.PopCount(checkers);
@@ -83,8 +83,8 @@ public partial struct Board
             return;
         }
 
-        var hashIndex = (int)((Hash & Perft.HashTableMask));
-        var hashEntry = hashTable[hashIndex];
+        var ptr = (Perft.HashTable + (Hash & Perft.HashTableMask));
+        var hashEntry = Unsafe.Read<Summary>(ptr);
         if (hashEntry.FullHash == (Hash ^ (White | Black)) && depth == hashEntry.Depth)
         {
             summary.Accumulate(ref hashEntry);
@@ -95,13 +95,13 @@ public partial struct Board
         hashEntry.FullHash = Hash ^ (White | Black);
         hashEntry.Depth = (byte)depth;
         
-        AccumulateWhiteKingMoves(hashTable, ref hashEntry, depth, numCheckers > 0);
+        AccumulateWhiteKingMoves( ref hashEntry, depth, numCheckers > 0);
 
         if (numCheckers > 1)
         {
             // Only a king move can evade double check
             summary.Accumulate(ref hashEntry);
-            hashTable[hashIndex] = hashEntry;
+            *ptr = hashEntry;
             return;
         }
 
@@ -116,67 +116,67 @@ public partial struct Board
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhitePawnMoves(hashTable, ref hashEntry, depth, index, AttackTables.GetRayToEdgeStraight(WhiteKingPos, index), AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index));
+            AccumulateWhitePawnMoves( ref hashEntry, depth, index, AttackTables.GetRayToEdgeStraight(WhiteKingPos, index), AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index));
         }
         
         positions = White & Pawn & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhitePawnMoves(hashTable, ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+            AccumulateWhitePawnMoves( ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
         }
 
         positions = White & Knight & ~pinMask;
         while (positions != 0)
         {
-            AccumulateWhiteKnightMoves(hashTable, ref hashEntry, depth, positions.PopLSB());
+            AccumulateWhiteKnightMoves( ref hashEntry, depth, positions.PopLSB());
         }
 
         positions = White & Bishop & pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteBishopMoves(hashTable, ref hashEntry, depth, index, AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index));
+            AccumulateWhiteBishopMoves( ref hashEntry, depth, index, AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index));
         }
         
         positions = White & Bishop & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteBishopMoves(hashTable, ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
+            AccumulateWhiteBishopMoves( ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
         }
 
         positions = White & Rook & pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteRookMoves(hashTable, ref hashEntry, depth, index,  AttackTables.GetRayToEdgeStraight(WhiteKingPos, index));
+            AccumulateWhiteRookMoves( ref hashEntry, depth, index,  AttackTables.GetRayToEdgeStraight(WhiteKingPos, index));
         }
         positions = White & Rook & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteRookMoves(hashTable, ref hashEntry, depth, index,  0xFFFFFFFFFFFFFFFF);
+            AccumulateWhiteRookMoves( ref hashEntry, depth, index,  0xFFFFFFFFFFFFFFFF);
         }
 
         positions = White & Queen & pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteQueenMoves(hashTable, ref hashEntry, depth, index, AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(WhiteKingPos, index));
+            AccumulateWhiteQueenMoves( ref hashEntry, depth, index, AttackTables.GetRayToEdgeDiagonal(WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(WhiteKingPos, index));
         }     
         
         positions = White & Queen & ~pinMask;
         while (positions != 0)
         {
             var index = positions.PopLSB();
-            AccumulateWhiteQueenMoves(hashTable, ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
+            AccumulateWhiteQueenMoves( ref hashEntry, depth, index, 0xFFFFFFFFFFFFFFFF);
         }
 
         summary.Accumulate(ref hashEntry);
-        hashTable[hashIndex] = hashEntry;
+        *ptr = hashEntry;
     }
-    public unsafe void AccumulateWhitePawnMoves(Span<Summary> hashTable, ref Summary summary, int depth, int index, ulong pushPinMask, ulong capturePinMask)
+    public unsafe void AccumulateWhitePawnMoves( ref Summary summary, int depth, int index, ulong pushPinMask, ulong capturePinMask)
     {
         Board newBoard ;
         var rankIndex = index.GetRankIndex();
@@ -194,19 +194,19 @@ public partial struct Board
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_Capture_KnightPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_Capture_BishopPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_Capture_RookPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_Capture_QueenPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
             }
 
             validMoves = *(AttackTables.WhitePawnPushTable + index) & MoveMask & ~(White | Black) & pushPinMask;
@@ -218,19 +218,19 @@ public partial struct Board
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_KnightPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_BishopPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_RookPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_QueenPromotion(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
             }
         }
         else
@@ -245,7 +245,7 @@ public partial struct Board
                 newBoard = Unsafe.As<Board, Board>(ref this);
 
                 newBoard.WhitePawn_Capture(index, toSquare);
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
             }
 
             if (EnPassantFile != 8 && rankIndex.IsWhiteEnPassantRankIndex() &&
@@ -259,7 +259,7 @@ public partial struct Board
                 if (!newBoard.IsAttackedByBlack(newBoard.WhiteKingPos))
                 {
                     if (depth == 1) summary.AddEnpassant();
-                    newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                    newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
                 }
             }
 
@@ -286,13 +286,13 @@ public partial struct Board
                     newBoard.WhitePawn_Move(index, toSquare);
                 }
 
-                newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+                newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
             }
         }
      
     }
 
-    public unsafe void AccumulateWhiteKnightMoves(Span<Summary> hashTable, ref Summary summary, int depth, int index)
+    public unsafe void AccumulateWhiteKnightMoves( ref Summary summary, int depth, int index)
     {
         int toSquare;
         Board newBoard;
@@ -305,7 +305,7 @@ public partial struct Board
             toSquare = captureMoves.PopLSB();
             newBoard.WhiteKnight_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~(White | Black);
@@ -314,11 +314,11 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             toSquare = emptyMoves.PopLSB();
             newBoard.WhiteKnight_Move(index, toSquare);
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
     }
 
-    public unsafe void AccumulateWhiteBishopMoves(Span<Summary> hashTable, ref Summary summary, int depth, int index, ulong pinMask)
+    public unsafe void AccumulateWhiteBishopMoves( ref Summary summary, int depth, int index, ulong pinMask)
     {
         Board newBoard;
         var potentialMoves = AttackTables.PextBishopAttacks(White | Black, index) & MoveMask & pinMask;
@@ -331,7 +331,7 @@ public partial struct Board
             toSquare = captureMoves.PopLSB();
             newBoard.WhiteBishop_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~(White | Black);
@@ -340,11 +340,11 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             toSquare = emptyMoves.PopLSB();
             newBoard.WhiteBishop_Move(index, toSquare);
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
     }
 
-    public unsafe void AccumulateWhiteRookMoves(Span<Summary> hashTable, ref Summary summary, int depth, int index, ulong pinMask)
+    public unsafe void AccumulateWhiteRookMoves( ref Summary summary, int depth, int index, ulong pinMask)
     {
         Board newBoard;
         var potentialMoves = AttackTables.PextRookAttacks(White | Black, index) & MoveMask & pinMask;
@@ -356,7 +356,7 @@ public partial struct Board
             toSquare = captureMoves.PopLSB();
             newBoard.WhiteRook_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~(White | Black);
@@ -365,11 +365,11 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             toSquare = emptyMoves.PopLSB();
             newBoard.WhiteRook_Move(index, toSquare);
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
     }
 
-    public unsafe void AccumulateWhiteQueenMoves(Span<Summary> hashTable, ref Summary summary, int depth, int index, ulong pinMask)
+    public unsafe void AccumulateWhiteQueenMoves( ref Summary summary, int depth, int index, ulong pinMask)
     {
         Board newBoard;
 
@@ -384,7 +384,7 @@ public partial struct Board
             toSquare = captureMoves.PopLSB();
             newBoard.WhiteQueen_Capture(index, toSquare);
             if (depth == 1) summary.AddCapture();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~(White | Black);
@@ -393,11 +393,11 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             toSquare = emptyMoves.PopLSB();
             newBoard.WhiteQueen_Move(index, toSquare);
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
     }
 
-    public unsafe void AccumulateWhiteKingMoves(Span<Summary> hashTable, ref Summary summary, int depth, bool inCheck)
+    public unsafe void AccumulateWhiteKingMoves( ref Summary summary, int depth, bool inCheck)
     {
         Board newBoard;
         var attackedSquares = WhiteKingDangerSquares();
@@ -411,7 +411,7 @@ public partial struct Board
             toSquare = captureMoves.PopLSB();
             newBoard.WhiteKing_Capture(WhiteKingPos, toSquare);
             if (depth == 1) summary.AddCapture();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         var emptyMoves = potentialMoves & ~(White | Black);
@@ -420,7 +420,7 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             toSquare = emptyMoves.PopLSB();
             newBoard.WhiteKing_Move(WhiteKingPos, toSquare);
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, toSquare);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, toSquare);
         }
 
         if (WhiteKingPos != 4 || inCheck)
@@ -436,7 +436,7 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             newBoard.WhiteKing_KingSideCastle();
             if (depth == 1) summary.AddCastle();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, 5);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, 5);
         }
 
         // Queen Side Castle
@@ -449,7 +449,7 @@ public partial struct Board
             newBoard = Unsafe.As<Board, Board>(ref this);
             newBoard.WhiteKing_QueenSideCastle();
             if (depth == 1) summary.AddCastle();
-            newBoard.AccumulateBlackMoves(hashTable, ref summary, depth - 1, 3);
+            newBoard.AccumulateBlackMoves( ref summary, depth - 1, 3);
         }
     }
 }
