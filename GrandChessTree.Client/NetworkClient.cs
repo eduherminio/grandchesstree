@@ -111,6 +111,8 @@ namespace GrandChessTree.Client
         public async Task Run(int index)
         {
             var sw = Stopwatch.StartNew();
+            var hashTable = new Summary[Perft.HashTableSize];
+
 
             while (IsRunning)
             {
@@ -120,7 +122,7 @@ namespace GrandChessTree.Client
                     await Task.Delay(100);
                     continue;
                 }
-
+                var span = hashTable.AsSpan();
                 while (IsRunning && searchItem.RemainingSubTasks.Any())
                 {
                     try
@@ -136,7 +138,7 @@ namespace GrandChessTree.Client
 
                         Summary summary = default;
                         sw.Restart();
-                        Perft.PerftRoot(ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
+                        Perft.PerftRoot(span, ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
                         var ms = sw.ElapsedMilliseconds;
                         var seconds = sw.ElapsedTicks / (float)Stopwatch.Frequency;
                         var result = new WorkerResult()

@@ -4,10 +4,10 @@ namespace GrandChessTree.Shared.Helpers;
 
 public static unsafe class LeafNodeGenerator
 {
-    public static Board[] GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
+    public static Board[] GenerateLeafNodes(Span<Summary> hashTable, ref Board board, int depth, bool whiteToMove)
     {
         Summary summary = default;
-        Perft.PerftRoot(ref board, ref summary, depth, whiteToMove);
+        Perft.PerftRoot(hashTable, ref board, ref summary, depth, whiteToMove);
 
         var output = new Board[summary.Nodes];
         var boards = new Span<Board>(output);

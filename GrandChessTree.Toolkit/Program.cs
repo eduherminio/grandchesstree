@@ -11,9 +11,9 @@ namespace GrandChessTree.Toolkit
         static async Task Main(string[] args)
         {
             Console.WriteLine("----The Grand Chess Tree Toolkit----");
-            Test();
+            //Test();
             //await PositionD10Seeder.SeedD10();
-            //PositionsD4Generator.GenerateD4HashFenDictionaryValues("out.cs");
+            PositionsD4Generator.GenerateD4HashFenDictionaryValues("out.cs");
         }
 
         public static void Test()
@@ -26,6 +26,7 @@ namespace GrandChessTree.Toolkit
 
             var (hashes, duplicates) = PositionsD4Generator.GenerateD4HashFenDictionaryValues("sd");
             var collisionCount = 0;
+            var hashTable = new Summary[Perft.HashTableSize];
 
             var cnt = 0;
             foreach (var kvp in PositionsD4.Dict)
@@ -33,7 +34,7 @@ namespace GrandChessTree.Toolkit
                 Summary summary = default;
                 var (b, initialWhiteToMove) = FenParser.Parse(kvp.Value);
 
-                Perft.PerftRoot(ref b, ref summary, 2, initialWhiteToMove);
+                Perft.PerftRoot(hashTable, ref b, ref summary, 2, initialWhiteToMove);
                 nodes += summary.Nodes * (ulong)DuplicatesD4.Dict[kvp.Key];
                 Console.WriteLine($"total: {nodes} {cnt++}");
             }

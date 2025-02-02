@@ -66,7 +66,7 @@ namespace GrandChessTree.Api.Controllers
             {
                 SearchItemId = task.SearchItemId,
                 Id = task.Id,
-                Depth = 3
+                Depth = 4
             }).ToArray();
 
             return Ok(response);

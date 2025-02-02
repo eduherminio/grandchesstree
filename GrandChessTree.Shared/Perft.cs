@@ -9,14 +9,13 @@ namespace GrandChessTree.Shared;
 public static unsafe class Perft
 {
     #region HashTable
-    public static readonly Summary* HashTable;
     public static readonly uint HashTableMask;   
+    public static readonly int HashTableSize;   
 
     static Perft()
     {
-        var hashTableSize = (int)CalculateHashTableEntries(1024);
-        HashTable = AllocateHashTable((nuint)hashTableSize);
-        HashTableMask = (uint)hashTableSize - 1;
+        HashTableSize = (int)CalculateHashTableEntries(256);
+        HashTableMask = (uint)HashTableSize - 1;
     }
     private static uint CalculateHashTableEntries(int sizeInMb)
     {
@@ -34,24 +33,24 @@ public static unsafe class Perft
         return (uint)transpositionCount;
     }
 
-    private static Summary* AllocateHashTable(nuint items)
+    public static Summary* AllocateHashTable()
     {
         const nuint alignment = 64;
 
-        var bytes = ((nuint)sizeof(Summary) * items);
+        var bytes = ((nuint)sizeof(Summary) * (nuint)HashTableSize);
         var block = NativeMemory.AlignedAlloc(bytes, alignment);
         NativeMemory.Clear(block, bytes);
 
         return (Summary*)block;
     }
-    public static void ClearTable()
+    public static void ClearTable(Summary* HashTable)
     {
         Unsafe.InitBlock(HashTable, 0, (uint)(sizeof(Summary) * (HashTableMask + 1)));
     }
 
     #endregion
     
-    public static void PerftRoot(ref Board board, ref Summary summary, int depth, bool whiteToMove)
+    public static void PerftRoot(Span<Summary> hashTable, ref Board board, ref Summary summary, int depth, bool whiteToMove)
     {
         if (depth == 0)
         {
@@ -65,7 +64,7 @@ public static unsafe class Perft
             var checkers = board.BlackCheckers();
             var numCheckers = (byte)ulong.PopCount(checkers);
 
-            board.AccumulateWhiteKingMoves(ref summary, depth, numCheckers > 0);
+            board.AccumulateWhiteKingMoves(hashTable, ref summary, depth, numCheckers > 0);
 
             if (numCheckers > 1)
             {
@@ -80,61 +79,61 @@ public static unsafe class Perft
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhitePawnMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
+                board.AccumulateWhitePawnMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
             }
         
             positions =board. White &board. Pawn & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board. AccumulateWhitePawnMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+                board. AccumulateWhitePawnMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.White & board.Knight & ~pinMask;
             while (positions != 0)
             {
-                board.AccumulateWhiteKnightMoves(ref summary, depth, positions.PopLSB());
+                board.AccumulateWhiteKnightMoves(hashTable, ref summary, depth, positions.PopLSB());
             }
 
             positions = board.White & board.Bishop & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteBishopMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
+                board.AccumulateWhiteBishopMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index));
             }
         
             positions = board.White & board.Bishop & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteBishopMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
+                board.AccumulateWhiteBishopMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.White & board.Rook & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteRookMoves(ref summary, depth, index,  AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
+                board.AccumulateWhiteRookMoves(hashTable, ref summary, depth, index,  AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
             }
             positions = board.White & board.Rook & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board. AccumulateWhiteRookMoves(ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
+                board. AccumulateWhiteRookMoves(hashTable, ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.White & board.Queen & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteQueenMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
+                board.AccumulateWhiteQueenMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.WhiteKingPos, index) | AttackTables.GetRayToEdgeStraight(board.WhiteKingPos, index));
             }     
         
             positions = board.White & board.Queen & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateWhiteQueenMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
+                board.AccumulateWhiteQueenMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
         }
         else
@@ -142,7 +141,7 @@ public static unsafe class Perft
             var checkers = board.WhiteCheckers();
             var numCheckers = (byte)ulong.PopCount(checkers);
 
-            board.AccumulateBlackKingMoves(ref summary, depth, numCheckers > 0);
+            board.AccumulateBlackKingMoves(hashTable, ref summary, depth, numCheckers > 0);
 
             if (numCheckers > 1)
             {
@@ -161,63 +160,63 @@ public static unsafe class Perft
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackPawnMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
+                board.AccumulateBlackPawnMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index), AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
             }
         
             positions = board.Black & board.Pawn & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackPawnMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+                board.AccumulateBlackPawnMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.Black & board.Knight & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackKnightMoves(ref summary, depth, index);
+                board.AccumulateBlackKnightMoves(hashTable, ref summary, depth, index);
             }
 
             positions = board.Black & board.Bishop & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackBishopMoves(ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
+                board.AccumulateBlackBishopMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index));
             }
         
             positions = board.Black & board.Bishop & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackBishopMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
+                board.AccumulateBlackBishopMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.Black & board.Rook & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackRookMoves(ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
+                board.AccumulateBlackRookMoves(hashTable, ref summary, depth, index, AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
             }
         
             positions = board.Black & board.Rook & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackRookMoves(ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
+                board.AccumulateBlackRookMoves(hashTable, ref summary, depth, index, 0xFFFFFFFFFFFFFFFF);
             }
 
             positions = board.Black & board.Queen & pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackQueenMoves(ref summary, depth, index,  AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
+                board.AccumulateBlackQueenMoves(hashTable, ref summary, depth, index,  AttackTables.GetRayToEdgeDiagonal(board.BlackKingPos, index) | AttackTables.GetRayToEdgeStraight(board.BlackKingPos, index));
             }
         
             positions = board.Black & board.Queen & ~pinMask;
             while (positions != 0)
             {
                 var index = positions.PopLSB();
-                board.AccumulateBlackQueenMoves(ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
+                board.AccumulateBlackQueenMoves(hashTable, ref summary, depth, index,  0xFFFFFFFFFFFFFFFF);
             }
         }
     }

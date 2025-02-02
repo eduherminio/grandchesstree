@@ -1,4 +1,5 @@
-﻿using GrandChessTree.Shared.Helpers;
+﻿using GrandChessTree.Shared;
+using GrandChessTree.Shared.Helpers;
 using GrandChessTree.Shared.Precomputed;
 
 namespace GrandChessTree.Toolkit
@@ -9,7 +10,9 @@ namespace GrandChessTree.Toolkit
         public static (Dictionary<ulong, string>, Dictionary<ulong, int>) GenerateD4HashFenDictionaryValues(string fileName)
         {
             var (initialBoard, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            var boards = LeafNodeGenerator.GenerateLeafNodes(ref initialBoard, 4, whiteToMove);
+            var hashTable = new Summary[Perft.HashTableSize];
+
+            var boards = LeafNodeGenerator.GenerateLeafNodes(hashTable, ref initialBoard, 4, whiteToMove);
 
             var hashes = new Dictionary<ulong, string>();
             var duplicates = new Dictionary<ulong, int>();
