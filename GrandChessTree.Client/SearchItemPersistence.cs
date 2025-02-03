@@ -13,19 +13,19 @@ namespace GrandChessTree.Client
             Directory.CreateDirectory(StoragePath);
         }
 
-        public static async Task<LocalSearchTask?> LoadSearchTask(int id)
+        public static async Task<PerftTask?> LoadSearchTask(long id)
         {
             string filePath = GetFilePath(id);
             if (!File.Exists(filePath))
                 return null;
 
             byte[] data = await File.ReadAllBytesAsync(filePath);
-            return JsonSerializer.Deserialize<LocalSearchTask>(Encoding.UTF8.GetString(data));
+            return JsonSerializer.Deserialize<PerftTask>(Encoding.UTF8.GetString(data));
         }
 
-        public static async Task Save(LocalSearchTask task)
+        public static async Task Save(PerftTask task)
         {
-            string filePath = GetFilePath(task.Id); // Ensure ID is numeric
+            string filePath = GetFilePath(task.PerftTaskId);
 
             string json = JsonSerializer.Serialize(task, new JsonSerializerOptions
             {
@@ -36,6 +36,6 @@ namespace GrandChessTree.Client
             await File.WriteAllBytesAsync(filePath, data);
         }
 
-        private static string GetFilePath(int id) => Path.Combine(StoragePath, $"{id}.json");
+        private static string GetFilePath(long id) => Path.Combine(StoragePath, $"{id}.json");
     }
  }

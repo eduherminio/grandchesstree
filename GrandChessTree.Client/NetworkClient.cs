@@ -5,18 +5,17 @@ using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client
 {
-
     public class NetworkClient
-{
+    {
         private readonly int _workers;
         private readonly SearchItemOrchistrator _searchItemOrchistrator;
         public bool IsRunning { get; set; } = true;
         public WorkerReport[] _workerReports;
-        public NetworkClient(SearchItemOrchistrator searchItemOrchistrator, int workers)
+        public NetworkClient(SearchItemOrchistrator searchItemOrchistrator, Config config)
         {
             _searchItemOrchistrator = searchItemOrchistrator;
-            _workers = workers;
-            _workerReports = new WorkerReport[workers];
+            _workers = config.Workers;
+            _workerReports = new WorkerReport[_workers];
             for(int i = 0; i < _workerReports.Length; i++) { _workerReports[i] = new WorkerReport(); }
         }
 
@@ -176,28 +175,10 @@ namespace GrandChessTree.Client
                         Perft.PerftRoot(ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
                         var ms = sw.ElapsedMilliseconds;
                         var seconds = sw.ElapsedTicks / (float)Stopwatch.Frequency;
-                        var result = new WorkerResult()
-                        {
-                            Nps = seconds > 0 ? (summary.Nodes * (ulong)occurrences / seconds) : 0,
-                            Nodes = summary.Nodes,
-                            Captures = summary.Captures,
-                            Enpassant = summary.Enpassant,
-                            Castles = summary.Castles,
-                            Promotions = summary.Promotions,
-                            DirectCheck = summary.DirectCheck,
-                            SingleDiscoveredCheck = summary.SingleDiscoveredCheck,
-                            DirectDiscoveredCheck = summary.DirectDiscoveredCheck,
-                            DoubleDiscoveredCheck = summary.DoubleDiscoveredCheck,
-                            DirectCheckmate = summary.DirectCheckmate,
-                            SingleDiscoveredCheckmate = summary.SingleDiscoveredCheckmate,
-                            DirectDiscoverdCheckmate = summary.DirectDiscoverdCheckmate,
-                            DoubleDiscoverdCheckmate = summary.DoubleDiscoverdCheckmate,
-                            Fen = fen,
-                            Hash = initialBoard.Hash,
-                        };
-
-                        searchItem.CompleteSubTask(result, occurrences);
-                        _workerReports[index].EndSubTask(searchItem, result.Nps);
+                        var nps = seconds > 0 ? (summary.Nodes * (ulong)occurrences / seconds) : 0;
+                       
+                        searchItem.CompleteSubTask(summary, occurrences);
+                        _workerReports[index].EndSubTask(searchItem, nps);
 
                     }
                     catch (Exception ex)

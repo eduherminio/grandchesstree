@@ -1,8 +1,9 @@
-
+using GrandChessTree.Api.ApiKeys;
 using GrandChessTree.Api.Database;
 using GrandChessTree.Api.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.OpenApi.Models;
 
 namespace GrandChessTree.Api
 {
@@ -19,15 +20,45 @@ namespace GrandChessTree.Api
             // Add services to the container.
             var services = builder.Services;
             services.AddSingleton<TimeProvider>(TimeProvider.System);
+            services.AddScoped<ApiKeyAuthenticator>();
 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            services.AddControllers();
+            services.AddMemoryCache();
+            services.AddControllers(o =>
+            {
+            }).AddJsonOptions(c => { });
+            services.AddResponseCaching();
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen();
-            services.AddLogging(b =>
+            services.AddSwaggerGen(c =>
+            {
+                // Define a security scheme for the API key
+                c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header, // API key will be in the header
+                    Name = "X-API-Key", // The name of the header where the API key is expected
+                    Description = "API Key needed to access the endpoints"
+                });
+
+                // Enforce that the API key is required for all endpoints
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "ApiKey" // This should match the name of the defined security scheme
+                    }
+                },
+                new string[] {}
+            }
+        });
+            }); services.AddLogging(b =>
             {
                 b.SetMinimumLevel(LogLevel.Information);
                 b.AddSimpleConsole(c =>
@@ -36,6 +67,14 @@ namespace GrandChessTree.Api
                     c.TimestampFormat = "yyyy-MM-dd HH:mm:ss ";
                     c.ColorBehavior = LoggerColorBehavior.Enabled;
                 });
+            });
+            
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(b =>
+                    b.WithOrigins("*")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
             });
 
             var app = builder.Build();
@@ -47,7 +86,8 @@ namespace GrandChessTree.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors();
+            app.UseResponseCaching();
             app.UseHttpsRedirection();
 
             app.UseAuthorization();

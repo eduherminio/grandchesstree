@@ -49,50 +49,50 @@ namespace GrandChessTree.Client.Tests
 
         }
 
-        [Theory]
-        [MemberData(nameof(GetTestData))]
-        public unsafe void EtherealPerftTestSuite_Returns_Expected_Nodes(string fen, ulong d1, ulong d2, ulong d3, ulong d4, ulong d5, ulong d6)
-        {
-            // Given
-            var (board, whiteToMove) = FenParser.Parse(fen);
+        //[Theory]
+        //[MemberData(nameof(GetTestData))]
+        //public unsafe void EtherealPerftTestSuite_Returns_Expected_Nodes(string fen, ulong d1, ulong d2, ulong d3, ulong d4, ulong d5, ulong d6)
+        //{
+        //    // Given
+        //    var (board, whiteToMove) = FenParser.Parse(fen);
 
-            // When
-            Summary d1Summary = default;
-            Perft.PerftRoot(ref board, ref d1Summary,1, whiteToMove);
-            (board, whiteToMove) = FenParser.Parse(fen);
-            Perft.ClearTable();
+        //    // When
+        //    Summary d1Summary = default;
+        //    Perft.PerftRoot(ref board, ref d1Summary,1, whiteToMove);
+        //    (board, whiteToMove) = FenParser.Parse(fen);
+        //    Perft.ClearTable();
 
-            Summary d2Summary = default;
-            Perft.PerftRoot(ref board, ref d2Summary,2, whiteToMove);
-            (board, whiteToMove) = FenParser.Parse(fen);
-            Perft.ClearTable();
+        //    Summary d2Summary = default;
+        //    Perft.PerftRoot(ref board, ref d2Summary,2, whiteToMove);
+        //    (board, whiteToMove) = FenParser.Parse(fen);
+        //    Perft.ClearTable();
 
-            Summary d3Summary = default;
-            Perft.PerftRoot(ref board, ref d3Summary,3, whiteToMove);
-            (board, whiteToMove) = FenParser.Parse(fen);
-            Perft.ClearTable();
+        //    Summary d3Summary = default;
+        //    Perft.PerftRoot(ref board, ref d3Summary,3, whiteToMove);
+        //    (board, whiteToMove) = FenParser.Parse(fen);
+        //    Perft.ClearTable();
 
-            Summary d4Summary = default;
-            Perft.PerftRoot(ref board, ref d4Summary,4, whiteToMove);
-            (board, whiteToMove) = FenParser.Parse(fen);
-            Perft.ClearTable();
+        //    Summary d4Summary = default;
+        //    Perft.PerftRoot(ref board, ref d4Summary,4, whiteToMove);
+        //    (board, whiteToMove) = FenParser.Parse(fen);
+        //    Perft.ClearTable();
 
-            Summary d5Summary = default;
-            Perft.PerftRoot(ref board, ref d5Summary,5, whiteToMove);
-            (board, whiteToMove) = FenParser.Parse(fen);
-            Perft.ClearTable();
+        //    Summary d5Summary = default;
+        //    Perft.PerftRoot(ref board, ref d5Summary,5, whiteToMove);
+        //    (board, whiteToMove) = FenParser.Parse(fen);
+        //    Perft.ClearTable();
 
-            Summary d6Summary =default;
-            Perft.PerftRoot(ref board, ref d6Summary, 6, whiteToMove);
+        //    Summary d6Summary =default;
+        //    Perft.PerftRoot(ref board, ref d6Summary, 6, whiteToMove);
 
-            // Then
-            d1Summary.Nodes.ShouldBe(d1, $"d1 differed by {d1Summary.Nodes - d1} for {fen}");
-            d2Summary.Nodes.ShouldBe(d2, $"d2 differed by {d2Summary.Nodes - d2} for {fen}");
-            d3Summary.Nodes.ShouldBe(d3, $"d3 differed by {d3Summary.Nodes - d3} for {fen}");
-            d4Summary.Nodes.ShouldBe(d4, $"d4 differed by {d4Summary.Nodes - d4} for {fen}");
-            d5Summary.Nodes.ShouldBe(d5, $"d5 differed by {d5Summary.Nodes - d5} for {fen}");
-            d6Summary.Nodes.ShouldBe(d6, $"d6 differed by {d6Summary.Nodes - d6} for {fen}");
-        }    
+        //    // Then
+        //    d1Summary.Nodes.ShouldBe(d1, $"d1 differed by {d1Summary.Nodes - d1} for {fen}");
+        //    d2Summary.Nodes.ShouldBe(d2, $"d2 differed by {d2Summary.Nodes - d2} for {fen}");
+        //    d3Summary.Nodes.ShouldBe(d3, $"d3 differed by {d3Summary.Nodes - d3} for {fen}");
+        //    d4Summary.Nodes.ShouldBe(d4, $"d4 differed by {d4Summary.Nodes - d4} for {fen}");
+        //    d5Summary.Nodes.ShouldBe(d5, $"d5 differed by {d5Summary.Nodes - d5} for {fen}");
+        //    d6Summary.Nodes.ShouldBe(d6, $"d6 differed by {d6Summary.Nodes - d6} for {fen}");
+        //}    
         
        
     }

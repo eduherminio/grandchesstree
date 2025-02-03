@@ -10,7 +10,7 @@
         public int TotalCompletedTasks { get; set; }
         public int TotalCompletedSubTasks { get; set; }
 
-        public void BeginSubTask(LocalSearchTask task)
+        public void BeginSubTask(PerftTask task)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
@@ -18,7 +18,7 @@
             Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
         }
 
-        public void EndSubTask(LocalSearchTask task, float nps)
+        public void EndSubTask(PerftTask task, float nps)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
@@ -28,7 +28,7 @@
             TotalCompletedSubTasks++;
         }
 
-        public void CompleteTask(LocalSearchTask task)
+        public void CompleteTask(PerftTask task)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
