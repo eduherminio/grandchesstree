@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: src/GrandChessTree.Client
+        working-directory: GrandChessTree.Client
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
 
       # Get the version from the .csproj file
       - name: Get .NET application version
-        working-directory: src/GrandChessTree.Client
+        working-directory: GrandChessTree.Client
         id: get_version
         run: |
           VERSION=0.0.1
@@ -70,6 +70,6 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
-            ${{ github.workspace }}/src/output/GrandChessTree_win_x64.exe
-            ${{ github.workspace }}/src/output/GrandChessTree_linux_x64
-            ${{ github.workspace }}/src/output/GrandChessTree_osx_x64
+            ${{ github.workspace }}/output/GrandChessTree_win_x64.exe
+            ${{ github.workspace }}/output/GrandChessTree_linux_x64
+            ${{ github.workspace }}/output/GrandChessTree_osx_x64
