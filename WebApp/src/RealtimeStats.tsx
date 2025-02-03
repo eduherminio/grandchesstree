@@ -17,7 +17,7 @@ const RealtimeStats: React.FC = () => {
     // Fetch the leaderboard data from the API
     const fetchLeaderboard = async () => {
       try {
-        const resp = await fetch("http://localhost:5032/api/v1/perft/9/stats");
+        const resp = await fetch("https://api.grandchesstree.com/api/v1/perft/11/stats");
         if (!resp.ok) {
           throw new Error('Failed to fetch data');
         }
@@ -42,7 +42,22 @@ const formatBigNumber = (num: number): string => {
   return num.toString(); // Return as is if it's less than 1000
 };
 
-
+const formatTime = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${seconds}s`; // Less than 1 minute
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`; // Less than 1 hour
+  } else if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const remainingMinutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${remainingMinutes}m`; // Less than 1 day
+  } else {
+    const days = Math.floor(seconds / 86400);
+    return `${days}d`; // More than 1 day
+  }
+};
 
   if (loading) {
     return <p>Loading...</p>;
@@ -54,19 +69,42 @@ const formatBigNumber = (num: number): string => {
 
   return (
     <>
-    <div className='m-4 flex flex-col space-y-2'>
-      <p>nodes per second: {leaderboardData && formatBigNumber(leaderboardData?.nps)}</p>
-      <p>tasks per minute: {leaderboardData && formatBigNumber(leaderboardData?.tpm)}</p>
-      <p>completed tasks: {leaderboardData && leaderboardData?.completed_tasks}/101240</p>
+    <div className="space-y-4 p-4 bg-gray-100 rounded-lg text-gray-700">
+    <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Perft Depth</span>
+        <span className="text-xl font-bold">11</span>
+    </div>
 
-      <div
+    <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Nodes / Second</span>
+        <span className="text-xl font-bold">{leaderboardData && formatBigNumber(leaderboardData?.nps)}</span>
+    </div>
+    <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Tasks / Minute</span>
+        <span className="text-xl font-bold">{leaderboardData && formatBigNumber(leaderboardData?.tpm)}</span>
+    </div>
+
+    <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Completed Tasks</span>
+        <span className="text-xl font-bold">{leaderboardData && leaderboardData?.completed_tasks} / 101240</span>
+    </div>
+
+    <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Progress</span>
+        <div
   className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
   style={{ width: `${leaderboardData?.percent_completed_tasks}%` }}
 >
   {leaderboardData && Math.round(leaderboardData?.percent_completed_tasks)}%
-</div>
+</div>  
 
+
+  </div>
+  <div className="flex justify-between items-center space-x-4">
+        <span className="text-md font-semibold">Time Remaining</span>
+        <span className="text-xl font-bold">{leaderboardData && formatTime((101240 - leaderboardData?.completed_tasks) / leaderboardData?.tpm * 60)}</span>
     </div>
+</div>
     </>
   );
 };

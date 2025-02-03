@@ -12,10 +12,6 @@ namespace GrandChessTree.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.WebHost.ConfigureKestrel(options =>
-            {
-                options.ListenAnyIP(5032); // Listens on all available network interfaces on port 5032
-            });
 
             // Add services to the container.
             var services = builder.Services;

@@ -17,7 +17,7 @@ const Leaderboard: React.FC = () => {
     // Fetch the leaderboard data from the API
     const fetchLeaderboard = async () => {
       try {
-        const resp = await fetch("http://localhost:5032/api/v1/perft/9/leaderboard");
+        const resp = await fetch("https://api.grandchesstree.com/api/v1/perft/11/leaderboard");
         if (!resp.ok) {
           throw new Error('Failed to fetch data');
         }
@@ -72,9 +72,10 @@ const formatBigNumber = (num: number): string => {
 
   return (
     <>
-<div className="relative overflow-x-auto">
-    <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+<div className="relative overflow-x-auto bg-gray-100 rounded-lg p-4 flex flex-col justify-between items-center">
+<span className="text-md font-bold m-2 text-gray-700">Top contributors</span>
+  <table className="w-full text-sm text-left rtl:text-right text-gray-500">
+        <thead className="text-xs text-gray-700 uppercase">
             <tr>
                 <th scope="col" className="px-6 py-3">
                     Name
@@ -91,24 +92,17 @@ const formatBigNumber = (num: number): string => {
             </tr>
         </thead>
         <tbody>
-        {leaderboardData.map((item, index) => (
-           <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200">
-           <td className="px-6 py-4">
-           {item.account_name}
-           </td>
-           <td className="px-6 py-4">
-           {formatBigNumber(item.total_nodes)}
-           </td>
-           <td className="px-6 py-4">
-               {formatTime(item.compute_time_seconds)}
-           </td>
-           <td className="px-6 py-4">
-           {formatBigNumber(item.completed_tasks)}
-           </td>
-       </tr>
-          ))}
-
-           
+        {leaderboardData
+  .sort((a, b) => b.total_nodes - a.total_nodes) // Sort by total_nodes in descending order
+  .map((item, index) => (
+    <tr key={index} className="bg-white border-b border-gray-200">
+      <td className="px-6 py-4">{item.account_name}</td>
+      <td className="px-6 py-4">{formatBigNumber(item.total_nodes)}</td>
+      <td className="px-6 py-4">{formatTime(item.compute_time_seconds)}</td>
+      <td className="px-6 py-4">{formatBigNumber(item.completed_tasks)}</td>
+    </tr>
+  ))}
+          
         </tbody>
     </table>
 </div>
