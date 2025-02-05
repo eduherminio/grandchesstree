@@ -19,27 +19,29 @@ RuntimeHelpers.RunClassConstructor(typeof(Perft).TypeHandle);
 
 var (board, whiteToMove) = FenParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 Summary summary = default;
+unsafe
+{
+    Perft.HashTable = Perft.AllocateHashTable();
+}
+
 var sw = Stopwatch.StartNew();
 
+//var fens = LeafNodeGenerator.GenerateLeafNodes(ref board, 6, whiteToMove);
 
-var fens = LeafNodeGenerator.GenerateLeafNodes(ref board, 6, whiteToMove);
+//var ordered = fens.OrderByDescending(f => f.occurrences);
 
-var ordered = fens.OrderByDescending(f => f.occurrences);
+//var top1000avg = ordered.Take(1000).Average(c => c.occurrences);
+//var top10000avg = ordered.Take(10000).Average(c => c.occurrences);
+//var top100000avg = ordered.Take(100000).Average(c => c.occurrences);
 
-var top1000avg = ordered.Take(1000).Average(c => c.occurrences);
-var top10000avg = ordered.Take(10000).Average(c => c.occurrences);
-var top100000avg = ordered.Take(100000).Average(c => c.occurrences);
+//Console.WriteLine("av1k: " + top1000avg);
+//Console.WriteLine("av10k: " + top10000avg);
+//Console.WriteLine("av100k: " + top100000avg);
 
-Console.WriteLine("av1k: " + top1000avg);
-Console.WriteLine("av10k: " + top10000avg);
-Console.WriteLine("av100k: " + top100000avg);
-
-//Perft.PerftRoot(ref board, ref summary, 7, whiteToMove);
+Perft.PerftRoot(ref board, ref summary, 7, whiteToMove);
 
 var ms = sw.ElapsedMilliseconds;
 var s = (float)ms / 1000;
-
-Console.WriteLine("Fens: " + fens.Count());
 
 Console.WriteLine($"fen:{board.ToFen(whiteToMove, 0, 1)}");
 Console.WriteLine($"nps:{(summary.Nodes / s).FormatBigNumber()}");

@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace GrandChessTree.Shared.Helpers;
 
@@ -8,12 +8,12 @@ public static class BitboardHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int PopLSB(this ref ulong b)
     {
-        var i = (int)Bmi1.X64.TrailingZeroCount(b);
+        var i = BitOperations.TrailingZeroCount(b);
         b &= b - 1;
 
         return i;
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong ShiftUp(this ulong board)
     {

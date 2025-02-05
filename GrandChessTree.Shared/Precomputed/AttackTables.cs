@@ -177,28 +177,31 @@ public static unsafe class AttackTables
             KingAttackTable[square] = kingAttacks;
         }
 
-        ulong pextAttackIndex = 0;
-        for (var square = 0; square < 64; square++)
+        if (Bmi2.X64.IsSupported)
         {
-            BishopPextOffset[square] = pextAttackIndex;
-            var bishopAttackMask = BishopAttackRays[square];
-            var patterns = 1UL << (byte)Popcnt.X64.PopCount(bishopAttackMask);
-            for (ulong i = 0; i < patterns; i++)
+            ulong pextAttackIndex = 0;
+            for (var square = 0; square < 64; square++)
             {
-                var blockers = Bmi2.X64.ParallelBitDeposit(i, bishopAttackMask);
-                PextAttacks[pextAttackIndex++] = BishopMagics[square].GetMoves(blockers);
+                BishopPextOffset[square] = pextAttackIndex;
+                var bishopAttackMask = BishopAttackRays[square];
+                var patterns = 1UL << (byte)ulong.PopCount(bishopAttackMask);
+                for (ulong i = 0; i < patterns; i++)
+                {
+                    var blockers = Bmi2.X64.ParallelBitDeposit(i, bishopAttackMask);
+                    PextAttacks[pextAttackIndex++] = BishopMagics[square].GetMoves(blockers);
+                }
             }
-        }
 
-        for (var square = 0; square < 64; square++)
-        {
-            RookPextOffset[square] = pextAttackIndex;
-            var rookAttackMask = RookAttackRays[square];
-            var patterns = 1UL << (byte)Popcnt.X64.PopCount(rookAttackMask);
-            for (ulong i = 0; i < patterns; i++)
+            for (var square = 0; square < 64; square++)
             {
-                var blockers = Bmi2.X64.ParallelBitDeposit(i, rookAttackMask);
-                PextAttacks[pextAttackIndex++] = RookMagics[square].GetMoves(blockers);
+                RookPextOffset[square] = pextAttackIndex;
+                var rookAttackMask = RookAttackRays[square];
+                var patterns = 1UL << (byte)ulong.PopCount(rookAttackMask);
+                for (ulong i = 0; i < patterns; i++)
+                {
+                    var blockers = Bmi2.X64.ParallelBitDeposit(i, rookAttackMask);
+                    PextAttacks[pextAttackIndex++] = RookMagics[square].GetMoves(blockers);
+                }
             }
         }
 
@@ -600,7 +603,7 @@ public static unsafe class AttackTables
 
     private static ulong[] CreateAllBlockerBitBoards(ulong movementMask)
     {
-        var indicesCount = (byte)Popcnt.X64.PopCount(movementMask);
+        var indicesCount = (byte)ulong.PopCount(movementMask);
         var numPatterns = 1 << indicesCount;
         Span<int> indices = stackalloc int[indicesCount];
 
@@ -776,7 +779,7 @@ public static unsafe class AttackTables
         for (var j = 0; j < blockers.Length; j++)
             legalMoves[j] = CalculateBishopLegalMoveBitBoard(position, blockers[j]);
 
-        var relevantBits = (byte)Popcnt.X64.PopCount(movementMask);
+        var relevantBits = (byte)ulong.PopCount(movementMask);
         Span<ulong> usedAttacks = stackalloc ulong[1 << relevantBits];
         var indexBits = 64 - relevantBits;
         ulong magic = 0;
@@ -825,7 +828,7 @@ public static unsafe class AttackTables
         var position = 1UL << square;
         for (var j = 0; j < blockers.Length; j++) legalMoves[j] = CalculateRookLegalMoveBitBoard(position, blockers[j]);
 
-        var relevantBits = (byte)Popcnt.X64.PopCount(movementMask);
+        var relevantBits = (byte)ulong.PopCount(movementMask);
         Span<ulong> usedAttacks = stackalloc ulong[1 << relevantBits];
         var indexBits = 64 - relevantBits;
         ulong magic = 0;
@@ -862,21 +865,34 @@ public static unsafe class AttackTables
         return new MagicBitBoard(magic, movementMask, indexBits, usedAttacks.ToArray());
     }
 
+#if ARM
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong PextRookAttacks(ulong occupation, int square)
+    {
+        return RookMagics[square].GetMoves(occupation);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong PextBishopAttacks(ulong occupation, int square)
+    {
+        return BishopMagics[square].GetMoves(occupation);
+    }
+
+#else
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong PextRookAttacks(ulong occupation, int square)
     {
         return *(PextAttacks +
                  *(RookPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(RookAttackRays + square)));
     }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong PextBishopAttacks(ulong occupation, int square)
     {
         return *(PextAttacks +
                  *(BishopPextOffset + square) + Bmi2.X64.ParallelBitExtract(occupation, *(BishopAttackRays + square)));
     }
+#endif
 
- 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong DetectPinsStraight(int kingPos, ulong enemySlidingPieces, ulong occupancy)
     {

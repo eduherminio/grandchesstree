@@ -1,7 +1,6 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using GrandChessTree.Shared.Helpers;
 using GrandChessTree.Shared.Precomputed;
 
@@ -74,7 +73,7 @@ public static unsafe class Perft
                 return;
             }
 
-            board.MoveMask = numCheckers == 0 ? 0xFFFFFFFFFFFFFFFF: checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
+            board.MoveMask = numCheckers == 0 ? 0xFFFFFFFFFFFFFFFF: checkers | *(AttackTables.LineBitBoardsInclusive + board.WhiteKingPos * 64 + BitOperations.TrailingZeroCount(checkers));
             var pinMask = board.WhiteKingPinnedRay();
 
             var positions = board.White & board.Pawn & pinMask;
@@ -154,7 +153,7 @@ public static unsafe class Perft
             board.MoveMask = 0xFFFFFFFFFFFFFFFF;
             if (numCheckers == 1)
             {
-                board.MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
+                board.MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + board.BlackKingPos * 64 + BitOperations.TrailingZeroCount(checkers));
             }
             var pinMask = board.BlackKingPinnedRay();
 

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 
@@ -25,7 +26,7 @@ public static class OutputHelpers
     {
         if (((board.White | board.Black) & (1UL << square)) == 0) return 0;
 
-        return (byte)Bmi1.X64.TrailingZeroCount(
+        return (byte)BitOperations.TrailingZeroCount(
             ((((board.Black & board.Pawn) >> square) & 1UL) << 1) |
             ((((board.White & board.Pawn) >> square) & 1UL) << 2) |
             ((((board.Black & board.Knight) >> square) & 1UL) << 3) |
