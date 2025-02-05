@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
+﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using GrandChessTree.Shared.Helpers;
 using GrandChessTree.Shared.Precomputed;
 
@@ -15,7 +15,7 @@ public partial struct Board
             if (numCheckers == 1)
             {
                 summary.Nodes++;
-                MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
+                MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + BlackKingPos * 64 + BitOperations.TrailingZeroCount(checkers));
                 var isDiscovered = (checkers & (1UL << prevDestination)) == 0;
                 if (!BlackCanEvadeSingleCheck())
                 {
@@ -105,7 +105,7 @@ public partial struct Board
         MoveMask = 0xFFFFFFFFFFFFFFFF;
         if (numCheckers == 1)
         {
-            MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + BlackKingPos * 64 + Bmi1.X64.TrailingZeroCount(checkers));
+            MoveMask = checkers | *(AttackTables.LineBitBoardsInclusive + BlackKingPos * 64 + BitOperations.TrailingZeroCount(checkers));
         }
         var pinMask = BlackKingPinnedRay();
 

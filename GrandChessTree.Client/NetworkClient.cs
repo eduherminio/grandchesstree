@@ -224,7 +224,7 @@ namespace GrandChessTree.Client
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine($"Error: {ex.Message}");
+                        Console.Error.WriteLine($"Error: {ex}");
                     }
                 }
 

@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
 using GrandChessTree.Shared.Helpers;
 using GrandChessTree.Shared.Precomputed;
 
