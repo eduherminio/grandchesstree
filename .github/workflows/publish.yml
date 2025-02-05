@@ -2,6 +2,11 @@ name: Release Pipeline
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'New engine version. If empty, run number will be used and no commit/tag/release will be created'
+        default: ''
+        required: false
 permissions:
   contents: write
 
@@ -22,6 +27,7 @@ jobs:
 
       # Get the version from the .csproj file
       - name: Get .NET application version
+        if: github.event.inputs.version != ''
         working-directory: GrandChessTree.Client
         id: get_version
         run: |
@@ -32,17 +38,17 @@ jobs:
       - name: Build and Package for Windows
         run: |
           dotnet restore
-          dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true -o ../output/win-x64
+          dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true /p:PublishTrimmed=true /p:EnableCompressionInSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o ../output/win-x64
           
       - name: Build and Package for Linux
         run: |
           dotnet restore
-          dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true -o ../output/linux-x64
+          dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true /p:PublishTrimmed=true /p:EnableCompressionInSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o ../output/linux-x64
 
       - name: Build and Package for OSX
         run: |
           dotnet restore
-          dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true -o ../output/osx-x64
+          dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true /p:PublishTrimmed=true /p:EnableCompressionInSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o ../output/osx-x64
 
       # Rename the output files for consistency
       - name: Rename output files
