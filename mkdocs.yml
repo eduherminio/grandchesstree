@@ -1,0 +1,21 @@
+site_name: The Grand Chess Tree
+site_url: https://grandchesstree.com/
+site_description: A public distributed effort to traverse the depths of the game of chess.
+site_author: Timmoth
+repo_url: https://github.com/Timmoth/grandchesstree
+edit_uri: edit/main/docs
+
+theme:
+  name: readthedocs
+  highlightjs: true
+nav:
+  - Overview : index.md
+  - Quick start : quickstart.md
+  - Results: results.md
+  - Technical overview: technical.md
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
