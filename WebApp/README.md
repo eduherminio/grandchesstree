@@ -1,50 +1,18 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
 ```
+| depth | nodes            | captures        | enpassants   | castles       | promotions  | direct_checks  | single_discovered_checks | direct_discovered_checks | double_discovered_check | total_checks  | direct_mates | single_discovered_mates | direct_discoverd_mates | double_discoverd_mates | total_mates |
+|-------|------------------|-----------------|--------------|---------------|-------------|----------------|--------------------------|--------------------------|-------------------------|---------------|--------------|-------------------------|------------------------|------------------------|-------------|
+| 0     | 1                | 0               | 0            | 0             | 0           | 0              | 0                        | 0                        | 0                       | 0             | 0            | 0                       | 0                      | 0                      | 0           |
+| 1     | 20               | 0               | 0            | 0             | 0           | 0              | 0                        | 0                        | 0                       | 0             | 0            | 0                       | 0                      | 0                      | 0           |
+| 2     | 400              | 0               | 0            | 0             | 0           | 0              | 0                        | 0                        | 0                       | 0             | 0            | 0                       | 0                      | 0                      | 0           |
+| 3     | 8902             | 34              | 0            | 0             | 0           | 12             | 0                        | 0                        | 0                       | 12            | 0            | 0                       | 0                      | 0                      | 0           |
+| 4     | 197281           | 1576            | 0            | 0             | 0           | 461            | 0                        | 0                        | 0                       | 461           | 8            | 0                       | 0                      | 0                      | 8           |
+| 5     | 4865609          | 82719           | 258          | 0             | 0           | 26998          | 6                        | 0                        | 0                       | 27004         | 347          | 0                       | 0                      | 0                      | 347         |
+| 6     | 119060324        | 2812008         | 5248         | 0             | 0           | 797896         | 329                      | 46                       | 0                       | 798271        | 10828        | 0                       | 0                      | 0                      | 10828       |
+| 7     | 3195901860       | 108329926       | 319617       | 883453        | 0           | 32648427       | 18026                    | 1628                     | 0                       | 32668081      | 435767       | 0                       | 0                      | 0                      | 435767      |
+| 8     | 84998978956      | 3523740106      | 7187977      | 23605205      | 0           | 958135303      | 847039                   | 147215                   | 0                       | 959129557     | 9852032      | 4                       | 0                      | 0                      | 9852036     |
+| 9     | 2439530234167    | 125208536153    | 319496827    | 1784356000    | 17334376    | 35653060996    | 37101713                 | 5547221                  | 10                      | 35695709940   | 399421379    | 1869                    | 768715                 | 0                      | 400191963   |
+| 10    | 69352859712417   | 4092784875884   | 7824835694   | 50908510199   | 511374376   | 1077020493859  | 1531274015               | 302900733                | 879                     | 1078854669486 | 8771693969   | 598058                  | 18327128               | 0                      | 8790619155  |
+| 11    | 2097651003696806 | 142537161824567 | 313603617408 | 2641343463566 | 49560932860 | 39068470901662 | 67494850305              | 11721852393              | 57443                   | 0|360675926605  | 60344676     | 1553739626              | 0                      |
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+{"nodes":,"captures":,"enpassants":,"castles":,"promotions":,"direct_checks":,"single_discovered_check":,"direct_discovered_check":,"double_discovered_check":,"direct_checkmate":,"single_discovered_checkmate":,"direct_discoverd_checkmate":,"double_discoverd_checkmate":0}

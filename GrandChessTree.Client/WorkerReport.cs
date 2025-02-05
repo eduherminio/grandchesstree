@@ -1,4 +1,6 @@
-﻿namespace GrandChessTree.Client
+﻿using System.Xml.Linq;
+
+namespace GrandChessTree.Client
 {
     public class WorkerReport
     {
@@ -6,35 +8,61 @@
         public int TotalSubtasks { get; set; }
         public int CompletedSubtasks { get; set; }
         public float Nps { get; set; }
-        public ulong Nodes { get; set; }
         public int TotalCompletedTasks { get; set; }
         public int TotalCompletedSubTasks { get; set; }
+        public int TotalCachedSubTasks { get; set; }
+        public long WorkerCpuTime { get; set; }
+        public ulong WorkerComputedNodes { get; set; }
+        public ulong TotalComputedNodes { get; set; }
+        public ulong TotalNodes { get; set; }
+
+        public void BeginTask(PerftTask task, int workItemOccurrences)
+        {
+            Fen = task.Fen;
+            TotalSubtasks = task.SubTaskCount;
+            CompletedSubtasks = task.CompletedSubTaskResults.Count;
+            TotalCompletedSubTasks += task.CachedSubTaskCount;
+            TotalCachedSubTasks += task.CachedSubTaskCount;
+            TotalNodes += (ulong)workItemOccurrences * (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
+            WorkerComputedNodes = 0;
+        }
 
         public void BeginSubTask(PerftTask task)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
         }
 
-        public void EndSubTask(PerftTask task, float nps)
+        public void EndSubTask(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
-            Nps = nps;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
             TotalCompletedSubTasks++;
+            TotalNodes += nodes * (ulong)workItemOccurrences * (ulong)subTaskOccurrences;
+            TotalComputedNodes += nodes;
+            WorkerComputedNodes += nodes;
+
         }
 
-        public void CompleteTask(PerftTask task)
+        public void SubTaskCompletedFromCache(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
-            Nodes = (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
+            TotalCompletedSubTasks++;
+            TotalCachedSubTasks++;
+            TotalNodes += nodes * (ulong)workItemOccurrences * (ulong)subTaskOccurrences;
+        }
+
+        public void CompleteTask(PerftTask task, long duration)
+        {
+            Fen = task.Fen;
+            TotalSubtasks = task.SubTaskCount;
+            CompletedSubtasks = task.CompletedSubTaskResults.Count;
             TotalCompletedTasks++;
+            WorkerCpuTime += duration;
         }
     }
  }

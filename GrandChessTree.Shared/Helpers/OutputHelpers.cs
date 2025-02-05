@@ -159,5 +159,25 @@ public static class OutputHelpers
 
         return number.ToString();
     }
+    public static float RoundToSignificantFigures(this double number, int significantFigures)
+    {
+        if (number == 0)
+        {
+            return 0;
+        }
 
+        var scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(number))) + 1);
+        return (float)(scale * Math.Round(number / scale, significantFigures));
+    }
+
+    public static float RoundToSignificantFigures(this float number, int significantFigures)
+    {
+        if (number == 0)
+        {
+            return 0;
+        }
+
+        var scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(number))) + 1);
+        return (float)(scale * Math.Round(number / scale, significantFigures));
+    }
 }

@@ -6,6 +6,35 @@ using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client
 {
+    public class SubTaskHashTable
+    {
+        private readonly ConcurrentDictionary<ulong, Summary> _dict;
+        private readonly ConcurrentQueue<ulong> _keysQueue;
+        private readonly int _capacity;
+
+        public SubTaskHashTable(int capacity)
+        {
+            _capacity = capacity;
+            _dict = new ConcurrentDictionary<ulong, Summary>();
+            _keysQueue = new ConcurrentQueue<ulong>();
+        }
+
+        public void Add(ulong key, Summary value)
+        {
+            if (_dict.TryAdd(key, value))
+            {
+                _keysQueue.Enqueue(key);
+
+                if (_dict.Count > _capacity && _keysQueue.TryDequeue(out var oldestKey))
+                {
+                    _dict.TryRemove(oldestKey, out _);
+                }
+            }
+        }
+
+        public bool TryGetValue(ulong key, out Summary value) => _dict.TryGetValue(key, out value);
+    }
+
     public class SearchItemOrchistrator
     {
         private readonly HttpClient _httpClient;
@@ -23,6 +52,8 @@ namespace GrandChessTree.Client
         public int Submitted { get; set; }
         public ulong TotalNodes { get; set; }
         public int PendingSubmission => _completedResults.Count;
+
+        public readonly SubTaskHashTable SubTaskHashTable = new SubTaskHashTable(1_000_000);
 
         public PerftTask? GetSearchItem()
         {
@@ -42,27 +73,35 @@ namespace GrandChessTree.Client
                 return null;
             }
 
-            //var searchTask = new LocalSearchTask();
-            //searchTask.Id = task.Id;
-            //searchTask.SearchItemId = task.SearchItemId;
-            //searchTask.SubTaskDepth = task.Depth;
-            //searchTask.SubTaskCount = 1;
-            //searchTask.Fen = position;
-            //searchTask.RemainingSubTasks.Add(position);
-
             var (initialBoard, initialWhiteToMove) = FenParser.Parse(position);
 
             var subTaskSplitDepth = 2;
-            var fens = LeafNodeGenerator.GenerateLeafNodes(ref initialBoard, subTaskSplitDepth, initialWhiteToMove);
-            var searchTask = new PerftTask() {
+            var subTasks = LeafNodeGenerator.GenerateLeafNodes(ref initialBoard, subTaskSplitDepth, initialWhiteToMove);
+
+            var searchTask = new PerftTask()
+            {
                 PerftTaskId = task.PerftTaskId,
                 PerftItemHash = task.PerftItemHash,
                 SubTaskDepth = task.Depth - 4 - subTaskSplitDepth,
-                SubTaskCount = fens.Count(),
+                SubTaskCount = subTasks.Count,
                 Fen = position,
-                RemainingSubTasks = fens
+                CachedSubTaskCount = 0,
+                RemainingSubTasks = new List<(string, int)>()
             };
-   
+
+            foreach (var (hash, fen, occurences) in subTasks)
+            {
+                if(SubTaskHashTable.TryGetValue(hash, out var summary))
+                {
+                    searchTask.CompleteSubTask(summary, occurences);
+                    searchTask.CachedSubTaskCount++;
+                }
+                else
+                {
+                    searchTask.RemainingSubTasks.Add((fen, occurences));
+                }
+            }
+
             return searchTask;
         }
 
@@ -156,6 +195,11 @@ namespace GrandChessTree.Client
 
             await Task.Delay(100);
             return true;
+        }
+
+        public void CacheCompletedSubtask(ulong hash, Summary summary)
+        {
+            SubTaskHashTable.Add(hash, summary);
         }
     }
  }

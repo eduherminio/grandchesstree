@@ -4,7 +4,7 @@ namespace GrandChessTree.Shared.Helpers;
 
 public static unsafe class LeafNodeGenerator
 {
-    public static List<(string fen, int occurrences)> GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
+    public static List<(ulong hash, string fen, int occurrences)> GenerateLeafNodes(ref Board board, int depth, bool whiteToMove)
     {
         var boards = new List<Board>();
 
@@ -50,24 +50,22 @@ public static unsafe class LeafNodeGenerator
         var leafNodeWhiteToMove = depth % 2 == 0 ? whiteToMove : !whiteToMove;
         var fens = new List<string>();
 
-        var hashes = new Dictionary<string, int>();
+        var hashes = new Dictionary<ulong, (string fen, int occurrences)>();
         foreach (var b in boards)
         {
-            var fen = b.ToFen(leafNodeWhiteToMove, 0, 1);
-
-            if (hashes.TryGetValue(fen, out var count))
+            if (hashes.TryGetValue(b.Hash, out var entry))
             {
-                count += 1;
+                entry.occurrences += 1;
             }
             else
             {
-                count = 1;
+                entry = (b.ToFen(leafNodeWhiteToMove, 0, 1), 1);
             }
-            hashes[fen] = count;
+            hashes[b.Hash] = entry;
         }
 
 
-        return hashes.Select(h => (h.Key, h.Value)).ToList();
+        return hashes.Select(h => (h.Key, h.Value.fen, h.Value.occurrences)).ToList();
     }
 
     private static void GenerateWhiteNodes(ref Board board, List<Board> boards, int depth)

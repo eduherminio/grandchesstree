@@ -28,6 +28,10 @@ namespace GrandChessTree.Client
         public List<(ulong[] results, int occurences)> CompletedSubTaskResults { get; set; } = new List<(ulong[] results, int occurences)>();
 
         public (string fen, int occurrences)? WorkingTask { get; set; }
+
+
+        [JsonPropertyName("cached_sub_tasks")]
+        public required int CachedSubTaskCount { get; set; }
         public bool IsCompleted()
         {
             return RemainingSubTasks.Count == 0 && SubTaskCount == CompletedSubTaskResults.Count;

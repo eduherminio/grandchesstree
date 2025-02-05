@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Xml.Linq;
 using ConsoleTables;
 using GrandChessTree.Shared;
 using GrandChessTree.Shared.Helpers;
@@ -48,6 +49,9 @@ namespace GrandChessTree.Client
 
         private void OutputStatsPeriodically()
         {
+            ulong prevTotalNodes = 0;
+            long prevTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
             while (IsRunning)
             {
                 try
@@ -63,16 +67,34 @@ namespace GrandChessTree.Client
                     var table = new ConsoleTable("worker", "nps", "nodes", "sub_tasks", "tasks", "fen");
 
                     var sumCompletedTasks = 0;
-                    var sumCompletedSubTasks = 0;
+                    ulong sumCompletedSubTasks = 0;
                     float sumNps = 0;
+                    long subtaskCacheHits = 0;
+
+                    ulong sumNodes = 0;
+                    ulong currentTotalNodes = 0;
+                    ulong totalComputedNodes = 0;
                     for (int i = 0; i < _workerReports.Length; i++)
                     {
                         var report = _workerReports[i];
-                        table.AddRow($"{i}", report.Nps.FormatBigNumber(), report.Nodes.FormatBigNumber(), $"{report.CompletedSubtasks}/{report.TotalSubtasks}", report.TotalCompletedTasks, report.Fen);
+                        table.AddRow($"{i}", report.Nps.FormatBigNumber(), report.WorkerComputedNodes.FormatBigNumber(), $"{report.CompletedSubtasks}/{report.TotalSubtasks}", report.TotalCompletedTasks, report.Fen);
                         sumCompletedTasks += report.TotalCompletedTasks;
-                        sumCompletedSubTasks += report.TotalCompletedSubTasks;
-                        sumNps += report.Nps;
+                        sumCompletedSubTasks += (ulong)report.TotalCompletedSubTasks;
+                        subtaskCacheHits += report.TotalCachedSubTasks;
+                        if (!float.IsNaN(report.Nps) && !float.IsInfinity(report.Nps))
+                        {
+                            sumNps += report.Nps;
+                        }
+
+                        currentTotalNodes += report.TotalNodes;
+                        totalComputedNodes += report.TotalComputedNodes;
                     }
+
+                    var currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    var realNps = (currentTotalNodes - prevTotalNodes) / ((currentTime - prevTime) / 1000f);
+
+                    prevTotalNodes = currentTotalNodes;
+                    prevTime = currentTime;
 
                     table.Configure((c) =>
                     {
@@ -87,14 +109,18 @@ namespace GrandChessTree.Client
 
                     table.Write(Format.MarkDown);
 
-                    Console.WriteLine($"completed {sumCompletedSubTasks} subtasks, submitted {_searchItemOrchistrator.Submitted} ({_searchItemOrchistrator.PendingSubmission} pending) tasks at {sumNps.FormatBigNumber()}nps, {_searchItemOrchistrator.TotalNodes} nodes ");
+                    var cachHitPercent = sumCompletedSubTasks==0 ? 0 : ((float)subtaskCacheHits / sumCompletedSubTasks) * 100;
+                    
+                    Console.WriteLine($"completed {sumCompletedSubTasks.FormatBigNumber()} subtasks ({cachHitPercent.RoundToSignificantFigures(2)}% cache hits), submitted {_searchItemOrchistrator.Submitted} tasks ({_searchItemOrchistrator.PendingSubmission} pending)");
+                    Console.WriteLine($"[computed stats] {totalComputedNodes.FormatBigNumber()} nodes at {sumNps.FormatBigNumber()}nps");
+                    Console.WriteLine($"[effective stats] {currentTotalNodes.FormatBigNumber()} nodes at {realNps.FormatBigNumber()}nps ");
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine(ex.ToString());
                 }
 
-                Thread.Sleep(250);
+                Thread.Sleep(500);
 
             }
         }
@@ -142,9 +168,9 @@ namespace GrandChessTree.Client
 
         private unsafe void ThreadWork(int index)
         {
-            var sw = Stopwatch.StartNew();
             Perft.HashTable = Perft.AllocateHashTable();
 
+            var workerReport = _workerReports[index];
             while (IsRunning)
             {
                 var searchItem = _searchItemOrchistrator.GetSearchItem();
@@ -153,6 +179,13 @@ namespace GrandChessTree.Client
                     Thread.Sleep(10);
                     continue;
                 }
+                if(!OccurrencesD4.Dict.TryGetValue(searchItem.PerftItemHash, out var searchItemOccurrences))
+                {
+                    searchItemOccurrences = 1;
+                }
+                workerReport.BeginTask(searchItem, searchItemOccurrences);
+
+                long currentUnixTimeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 while (IsRunning && searchItem.RemainingSubTasks.Any())
                 {
                     try
@@ -164,21 +197,29 @@ namespace GrandChessTree.Client
                             continue;
                         }
 
-                        var (fen, occurrences) = subTask.Value;
+                        var (fen, subTaskOccurrences) = subTask.Value;
 
-                        _workerReports[index].BeginSubTask(searchItem);
+                        workerReport.BeginSubTask(searchItem);
 
                         var (initialBoard, initialWhiteToMove) = FenParser.Parse(fen);
 
                         Summary summary = default;
-                        sw.Restart();
-                        Perft.PerftRoot(ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
-                        var ms = sw.ElapsedMilliseconds;
-                        var seconds = sw.ElapsedTicks / (float)Stopwatch.Frequency;
-                        var nps = seconds > 0 ? (summary.Nodes * (ulong)occurrences / seconds) : 0;
-                       
-                        searchItem.CompleteSubTask(summary, occurrences);
-                        _workerReports[index].EndSubTask(searchItem, nps);
+                        if (_searchItemOrchistrator.SubTaskHashTable.TryGetValue(initialBoard.Hash, out summary))
+                        {
+                            workerReport.SubTaskCompletedFromCache(searchItem, summary.Nodes, searchItemOccurrences, subTaskOccurrences);
+                        }
+                        else
+                        {
+                            long subtaskStart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                            Perft.PerftRoot(ref initialBoard, ref summary, searchItem.SubTaskDepth, initialWhiteToMove);
+                            _searchItemOrchistrator.CacheCompletedSubtask(initialBoard.Hash, summary);
+                            workerReport.EndSubTask(searchItem, summary.Nodes, searchItemOccurrences, subTaskOccurrences);
+                            var subTaskDurationSeconds = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - subtaskStart) / 1000.0f;
+                            workerReport.Nps = summary.Nodes / subTaskDurationSeconds;
+                        }
+
+                        searchItem.CompleteSubTask(summary, subTaskOccurrences);
 
                     }
                     catch (Exception ex)
@@ -193,7 +234,13 @@ namespace GrandChessTree.Client
                     if (submission != null)
                     {
                         _searchItemOrchistrator.Submit(submission);
-                        _workerReports[index].CompleteTask(searchItem);
+                        long duration = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - currentUnixTimeStamp;
+                        if(duration <= 0)
+                        {
+                            duration = 1;
+                        }
+
+                        workerReport.CompleteTask(searchItem, duration);
                     }
                     else
                     {
