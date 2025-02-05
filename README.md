@@ -21,5 +21,7 @@ The grand chess tree is a public distributed effort to traverse the depths of th
 ## Get involved
 The project is still in it's infancy but I'm hoping to attract others to get involved, either through collaboration by working with me on the default move generator or through competition by writing your own move generator that out performs this one! 
 
+If you're interested in the project please [join the discord group](https://discord.gg/cTu3aeCZVe)
+
 ## Find out more
 [Read the docs](https://timmoth.github.io/grandchesstree/)
