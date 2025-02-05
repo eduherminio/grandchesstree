@@ -25,7 +25,7 @@ jobs:
         working-directory: GrandChessTree.Client
         id: get_version
         run: |
-          VERSION=0.0.2
+          VERSION=0.0.3
           echo "Application version: $VERSION"
           echo "::set-output name=version::$VERSION"
 
@@ -39,17 +39,29 @@ jobs:
           dotnet restore
           dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true -o ../output/linux-x64
 
+      - name: Build and Package for Linux ARM
+        run: |
+          dotnet restore
+          dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true -p:DefineConstants="ARM" -o ../output/linux-x64-arm
+
       - name: Build and Package for OSX
         run: |
           dotnet restore
           dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true -o ../output/osx-x64
+
+      - name: Build and Package for OSX ARM
+        run: |
+          dotnet restore
+          dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true -p:DefineConstants="ARM" -o ../output/osx-x64-arm
 
       # Rename the output files for consistency
       - name: Rename output files
         run: |
           mv ../output/win-x64/GrandChessTree.Client.exe ../output/GrandChessTree_win_x64.exe
           mv ../output/linux-x64/GrandChessTree.Client ../output/GrandChessTree_linux_x64
+          mv ../output/linux-x64-arm/GrandChessTree.Client ../output/GrandChessTree_linux_x64_arm
           mv ../output/osx-x64/GrandChessTree.Client ../output/GrandChessTree_osx_x64
+          mv ../output/osx-x64-arm/GrandChessTree.Client ../output/GrandChessTree_osx_x64_arm
 
       # List files in output directory to verify they exist
       - name: Verify output files
@@ -72,4 +84,6 @@ jobs:
           files: |
             ${{ github.workspace }}/output/GrandChessTree_win_x64.exe
             ${{ github.workspace }}/output/GrandChessTree_linux_x64
+            ${{ github.workspace }}/output/GrandChessTree_linux_x64_arm
             ${{ github.workspace }}/output/GrandChessTree_osx_x64
+            ${{ github.workspace }}/output/GrandChessTree_osx_x64_arm
