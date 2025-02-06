@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using GrandChessTree.Api.ApiKeys;
 using GrandChessTree.Api.D10Search;
 using GrandChessTree.Api.Database;
@@ -85,6 +87,27 @@ namespace GrandChessTree.Api.Controllers
             return Ok(response);
         }
 
+        public class ProgressStatsModel
+        {
+            [Column("completed_tasks")]
+            [JsonPropertyName("completed_tasks")]
+            public ulong completed_tasks { get; set; }
+            [Column("total_nodes")]
+            [JsonPropertyName("total_nodes")]
+            public ulong total_nodes { get; set; }
+        }
+
+        public class RealTimeStatsModel
+        {
+            [Column("tpm")]
+            [JsonPropertyName("tpm")]
+            public float tpm { get; set; }
+            [Column("nps")]
+            [JsonPropertyName("nps")]
+            public float nps { get; set; }
+        }
+
+
         [HttpGet("{depth}/stats")]
         [ResponseCache(Duration = 10, VaryByQueryKeys = new[] { "depth" })]
         public async Task<IActionResult> GetStats(int depth, CancellationToken cancellationToken)
@@ -92,50 +115,37 @@ namespace GrandChessTree.Api.Controllers
             var currentTimestamp = _timeProvider.GetUtcNow().ToUnixTimeSeconds();
             var pastMinuteTimestamp = currentTimestamp - 60;
 
-            var count = await _dbContext.PerftTasks
-               .AsNoTracking().CountAsync(t => t.Depth == depth && t.FinishedAt != 0);
+            var realTimeStatsResult = await _dbContext.Database
+             .SqlQueryRaw<RealTimeStatsModel>(@"
+            SELECT
+            COUNT(*) / 60.0 AS tpm,
+            SUM(t.nodes * i.occurrences) / 3600.0 AS nps
+            FROM public.perft_tasks t
+            JOIN public.perft_items i ON t.perft_item_id = i.id
+            WHERE t.depth = {0} and t.finished_at >= EXTRACT(EPOCH FROM NOW()) - 3600", depth)
+             .AsNoTracking()
+             .FirstOrDefaultAsync(cancellationToken);
 
-            var stats = await _dbContext.PerftTasks
-                .AsNoTracking()
-                .Where(i => i.FinishedAt > pastMinuteTimestamp && i.Depth == depth)
-                .GroupBy(i => 1)
-                .Select(g => new
-                {
-                    // Total nodes produced in the last minute
-                    TotalNodes = g.Sum(i => (float)i.Nps * (i.FinishedAt - i.StartedAt)),
+            var progressStatsResult = await _dbContext.Database
+             .SqlQueryRaw<ProgressStatsModel>(@"
+            SELECT
+            COUNT(*) AS completed_tasks,
+            SUM(t.nodes * i.occurrences) AS total_nodes
+            FROM public.perft_tasks t
+            JOIN public.perft_items i ON t.perft_item_id = i.id
+            WHERE t.depth = {0} and t.finished_at > 0", depth)
+             .AsNoTracking()
+             .FirstOrDefaultAsync(cancellationToken);
 
-                    // Total time in seconds across all tasks
-                    TotalTimeSeconds = g.Sum(i => i.FinishedAt - i.StartedAt),
-
-                    // Number of tasks completed in the last minute
-                    TasksPerMinute = g.Count()
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-            float nps = 0;
-            if (stats?.TotalTimeSeconds > 0)
+            var response = new PerftStatsResponse()
             {
-                nps = (float)stats.TotalNodes / 60 ;
-            }
-
-            if (stats == null)
-            {
-                return Ok(new PerftStatsResponse()
-                {
-                    Nps = 0,
-                    Tpm = 0,
-                    CompletedTasks = count,
-                    PercentCompletedTasks = (float)count / 101240 * 100
-                });
-            }
-
-            return Ok(new PerftStatsResponse()
-            {
-                Nps = nps,
-                Tpm = stats.TasksPerMinute,
-                CompletedTasks = count,
-                PercentCompletedTasks = (float)count / 101240 * 100
-            });
+                Nps = realTimeStatsResult?.nps ?? 0,
+                Tpm = realTimeStatsResult?.tpm ?? 0,
+                CompletedTasks = progressStatsResult?.completed_tasks ?? 0ul,
+                TotalNodes = progressStatsResult?.total_nodes ?? 0ul,
+                PercentCompletedTasks = (float)(progressStatsResult?.completed_tasks ?? 0ul) / 101240 * 100
+            };
+            return Ok(response);
         }
 
         [HttpGet("{depth}/leaderboard")]

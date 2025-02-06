@@ -11,7 +11,10 @@ public class PerftStatsResponse
     public float Tpm { get; set; }
 
     [JsonPropertyName("completed_tasks")]
-    public float CompletedTasks { get; set; }
+    public ulong CompletedTasks { get; set; }
+
+    [JsonPropertyName("total_nodes")]
+    public ulong TotalNodes { get; set; }
 
     [JsonPropertyName("percent_completed_tasks")]
     public float PercentCompletedTasks { get; set; }

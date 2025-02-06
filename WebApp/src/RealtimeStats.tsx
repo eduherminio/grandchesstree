@@ -5,6 +5,7 @@ interface PerftStatsResponse {
   nps: number;
   tpm: number;
   completed_tasks: number;
+  total_nodes: number;
   percent_completed_tasks: number;
 }
 interface RealtimeStatsProps {
@@ -98,6 +99,13 @@ const RealtimeStats: React.FC<RealtimeStatsProps> = ({ id }) => {
           <span className="text-md font-semibold">Completed Tasks</span>
           <span className="text-xl font-bold">
             {leaderboardData && leaderboardData?.completed_tasks} / 101240
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center space-x-4">
+          <span className="text-md font-semibold">Total Nodes</span>
+          <span className="text-xl font-bold">
+            {leaderboardData && formatBigNumber(leaderboardData?.total_nodes)}
           </span>
         </div>
         <div className="flex justify-between items-center space-x-4">
