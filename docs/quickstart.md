@@ -1,6 +1,6 @@
 ### Quick start
 - Get in touch, you'll need an apikey in order to connect to the server. The easiest way is to [join the discord group](https://discord.gg/cTu3aeCZVe)
-- Download the [latest client](https://github.com/Timmoth/grandchesstree/releases) (windows, linux, mac are all supported)
+- Download the [latest client](https://github.com/Timmoth/grandchesstree/releases) (windows, linux, mac are all supported (including ARM builds!))
 - Run the client and answer the questions with the following:
 ```
   api_url: https://api.grandchesstree.com/
@@ -13,6 +13,22 @@
 **Note that you should pick a number of workers that corrosponds to less then the number of threads in your system since they will all be running in parrallel. **
 
 **You can close the program at any time, but do note that any progress on incomplete tasks will be lost.**
+
+If you want to run from source (for apple silicon you may need to)
+```
+git clone https://github.com/Timmoth/grandchesstree
+cd GrandChessTree.Client
+# x86
+dotnet run -c Release --no-launch-profile 
+# ARM
+dotnet run -c Release --no-launch-profile --property:DefineConstants="ARM"
+```
+
+[Alternatively you can also run the worker in docker](https://hub.docker.com/r/aptacode/grand-chess-tree-worker)
+
+```
+docker run -e api_key="<your_api_key>" -e api_url="https://api.grandchesstree.com/" -e workers=4 -e depth=12 aptacode/grand-chess-tree-worker
+```
 
 ### Making sense of the output
 - worker: the index of the worker

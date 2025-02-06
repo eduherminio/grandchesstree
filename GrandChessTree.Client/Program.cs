@@ -1,18 +1,50 @@
 ﻿using GrandChessTree.Client;
 
 Console.WriteLine("-----TheGreatChessTree-----");
+var containerized = Environment.GetEnvironmentVariable("containerized");
 
-var config = ConfigManager.LoadOrCreateConfig();
+int depth = 0;
+Config config;
+// Check if it's set and print it out (or use it in your logic)
+if (containerized != null && containerized == "true")
+{
+    Console.WriteLine($"Running in container");
+
+    var workerEnvVar = Environment.GetEnvironmentVariable("workers");
+    if(!int.TryParse(workerEnvVar, out var workerCount))
+    {
+        Console.WriteLine("'worker' environment variable must be an integer > 0");
+        return;
+    }
+
+    var depthEnvVar = Environment.GetEnvironmentVariable("depth");
+    if (!int.TryParse(depthEnvVar, out depth))
+    {
+        Console.WriteLine("'depth' environment variable must be an integer > 0");
+        return;
+    }
+
+    config = new Config()
+    {
+        ApiKey = Environment.GetEnvironmentVariable("api_key") ?? "",
+        ApiUrl = Environment.GetEnvironmentVariable("api_url") ?? "",
+        Workers = workerCount,
+    };
+}
+else
+{
+    config = ConfigManager.LoadOrCreateConfig();
+    Console.WriteLine("Enter the perft depth to start:");
+    if (!int.TryParse(Console.ReadLine(), out depth))
+    {
+        Console.WriteLine("Invalid search depth");
+    }
+}
+
 
 if (!ConfigManager.IsValidConfig(config))
 {
     return;
-}
-
-Console.WriteLine("Enter the perft depth to start:");
-if (!int.TryParse(Console.ReadLine(), out int depth) || depth <= 4)
-{
-    Console.WriteLine("Invalid search depth");
 }
 
 
