@@ -57,7 +57,7 @@ namespace GrandChessTree.Client
                 try
                 {
                     string json = File.ReadAllText(ConfigFilePath);
-                    return JsonSerializer.Deserialize<Config>(json) ?? new Config();
+                    return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.Config) ?? new Config();
                 }
                 catch (Exception ex)
                 {
@@ -90,7 +90,7 @@ namespace GrandChessTree.Client
 
         private static void SaveConfig(Config config)
         {
-            string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(config, SourceGenerationContext.Default.Config);
             File.WriteAllText(ConfigFilePath, json);
             Console.WriteLine("Config saved successfully.");
         }
