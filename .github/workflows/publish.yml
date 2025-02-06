@@ -27,7 +27,7 @@ jobs:
 
       # Get the version from the .csproj file
       - name: Get .NET application version
-        if: github.event.inputs.new_engine_version == ''
+        if: github.event.inputs.version == ''
         working-directory: GrandChessTree.Client
         id: get_version
         run: |
@@ -36,11 +36,11 @@ jobs:
           echo "::set-output name=version::$VERSION"
 
       - name: Get .NET application version
-        if: github.event.inputs.new_engine_version != ''
+        if: github.event.inputs.version != ''
         working-directory: GrandChessTree.Client
         id: get_version-input
         run: |
-          VERSION=${{ github.event.inputs.new_engine_version }}
+          VERSION=${{ github.event.inputs.version }}
           echo "Application version: $VERSION"
           echo "::set-output name=version::$VERSION"
 
