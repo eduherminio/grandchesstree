@@ -38,7 +38,7 @@ jobs:
       - name: Get .NET application version
         if: github.event.inputs.new_engine_version != ''
         working-directory: GrandChessTree.Client
-        id: get_version
+        id: get_version-input
         run: |
           VERSION=${{ github.event.inputs.new_engine_version }}
           echo "Application version: $VERSION"
