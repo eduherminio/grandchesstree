@@ -71,12 +71,14 @@ const RealtimeStats: React.FC<RealtimeStatsProps> = ({ id }) => {
     return <p>Error: {error}</p>;
   }
 
+  const completed = leaderboardData?.completed_tasks == 101240;
+
   return (
     <>
       <div className="space-y-4 p-4 bg-gray-100 rounded-lg text-gray-700">
         <div className="flex justify-between items-center space-x-4">
           <span className="text-md font-semibold">Perft Depth</span>
-          <span className="text-xl font-bold">11</span>
+          <span className="text-xl font-bold">{id}</span>
         </div>
 
         <div className="flex justify-between items-center space-x-4">
@@ -98,9 +100,21 @@ const RealtimeStats: React.FC<RealtimeStatsProps> = ({ id }) => {
             {leaderboardData && leaderboardData?.completed_tasks} / 101240
           </span>
         </div>
+        <div className="flex justify-between items-center space-x-4">
+          <span className="text-md font-semibold">Time Remaining</span>
+          <span className="text-xl font-bold">
+            {completed
+              ? "Completed"
+              : leaderboardData &&
+                formatTime(
+                  ((101240 - leaderboardData?.completed_tasks) /
+                    leaderboardData?.tpm) *
+                    60
+                )}
+          </span>
+        </div>
 
         <div className="flex justify-between items-center space-x-4">
-          <span className="text-md font-semibold">Progress</span>
           <div
             className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
             style={{ width: `${leaderboardData?.percent_completed_tasks}%` }}
@@ -109,17 +123,6 @@ const RealtimeStats: React.FC<RealtimeStatsProps> = ({ id }) => {
               Math.round(leaderboardData?.percent_completed_tasks)}
             %
           </div>
-        </div>
-        <div className="flex justify-between items-center space-x-4">
-          <span className="text-md font-semibold">Time Remaining</span>
-          <span className="text-xl font-bold">
-            {leaderboardData &&
-              formatTime(
-                ((101240 - leaderboardData?.completed_tasks) /
-                  leaderboardData?.tpm) *
-                  60
-              )}
-          </span>
         </div>
       </div>
     </>
