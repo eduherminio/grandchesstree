@@ -47,7 +47,7 @@ jobs:
       - name: Build and Package for Windows
         run: |
           dotnet restore
-          dotnet publish -r win-x64 /p:Release=true ../output/win-x64
+          dotnet publish -r win-x64 /p:Release=true -o ../output/win-x64
 
       - name: Build and Package for Linux
         run: |
