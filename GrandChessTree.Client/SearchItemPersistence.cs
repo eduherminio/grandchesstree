@@ -20,17 +20,14 @@ namespace GrandChessTree.Client
                 return null;
 
             byte[] data = await File.ReadAllBytesAsync(filePath);
-            return JsonSerializer.Deserialize<PerftTask>(Encoding.UTF8.GetString(data));
+            return JsonSerializer.Deserialize(Encoding.UTF8.GetString(data), SourceGenerationContext.Default.PerftTask);
         }
 
         public static async Task Save(PerftTask task)
         {
             string filePath = GetFilePath(task.PerftTaskId);
 
-            string json = JsonSerializer.Serialize(task, new JsonSerializerOptions
-            {
-                WriteIndented = false
-            });
+            string json = JsonSerializer.Serialize(task, SourceGenerationContext.Default.PerftTask);
 
             byte[] data = Encoding.UTF8.GetBytes(json);
             await File.WriteAllBytesAsync(filePath, data);

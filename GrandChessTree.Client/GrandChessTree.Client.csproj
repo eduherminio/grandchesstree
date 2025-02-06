@@ -9,6 +9,16 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Release.ToLower())'=='true'">
+      <Configuration>Release</Configuration>
+      <SelfContained>true</SelfContained>
+      <PublishSingleFile>true</PublishSingleFile>
+      <PublishTrimmed>true</PublishTrimmed>
+      <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+      <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+      <CETCompat>false</CETCompat>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="ConsoleTables" Version="2.6.2" />
       <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />

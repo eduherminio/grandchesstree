@@ -32,22 +32,22 @@ jobs:
       - name: Build and Package for Windows
         run: |
           dotnet restore
-          dotnet publish -c Release -r win-x64 --self-contained /p:PublishSingleFile=true -o ../output/win-x64
-          
+          dotnet publish -r win-x64 /p:Release=true -o ../output/win-x64
+
       - name: Build and Package for Linux
         run: |
           dotnet restore
-          dotnet publish -c Release -r linux-x64 --self-contained /p:PublishSingleFile=true -o ../output/linux-x64
+          dotnet publish -r linux-x64 /p:Release=true -o ../output/linux-x64
 
       - name: Build and Package for Linux ARM
         run: |
           dotnet restore
-          dotnet publish -c Release -r linux-arm64 --self-contained /p:PublishSingleFile=true -p:DefineConstants="ARM" -o ../output/linux-arm64
+          dotnet publish -r linux-arm64 /p:Release=true -p:DefineConstants="ARM" -o ../output/linux-arm64
 
       - name: Build and Package for OSX
         run: |
           dotnet restore
-          dotnet publish -c Release -r osx-x64 --self-contained /p:PublishSingleFile=true -o ../output/osx-x64
+          dotnet publish -r osx-x64 /p:Release=true -o ../output/osx-x64
 
       - name: Build and Package for OSX ARM
         run: |
@@ -87,3 +87,4 @@ jobs:
             ${{ github.workspace }}/output/GrandChessTree_linux_arm64
             ${{ github.workspace }}/output/GrandChessTree_osx_x64
             ${{ github.workspace }}/output/GrandChessTree_osx_arm64
+          draft: true

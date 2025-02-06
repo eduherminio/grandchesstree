@@ -140,7 +140,7 @@ namespace GrandChessTree.Client
 
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<PerftTaskResponse[]>();
+                return await response.Content.ReadFromJsonAsync(jsonTypeInfo: SourceGenerationContext.Default.PerftTaskResponseArray);
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
@@ -176,11 +176,7 @@ namespace GrandChessTree.Client
                 return false;
             }
 
-            var response = await _httpClient.PostAsJsonAsync($"api/v1/perft/{_searchDepth}/results", new PerftTaskResultBatch()
-            {
-                Results = results.ToArray()
-            });
-
+            var response = await _httpClient.PostAsJsonAsync($"api/v1/perft/{_searchDepth}/results", new PerftTaskResultBatch{Results = [.. results] }, SourceGenerationContext.Default.PerftTaskResultBatch);
 
             if (!response.IsSuccessStatusCode)
             {
