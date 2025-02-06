@@ -3,7 +3,7 @@ using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client.Tests
 {
-    public class PerftTests
+    public class PerftTests : PerftTestsBase
     {
         [Theory]
         [InlineData(0, 1, 0, 0, 0, 0, 0, 0, 0, 0)]
