@@ -2,11 +2,6 @@ name: Release Pipeline
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Application version'
-        default: ''
-        required: false
 permissions:
   contents: write
 
@@ -27,20 +22,10 @@ jobs:
 
       # Get the version from the .csproj file
       - name: Get .NET application version
-        if: github.event.inputs.version == ''
         working-directory: GrandChessTree.Client
         id: get_version
         run: |
-          VERSION=0.0.3
-          echo "Application version: $VERSION"
-          echo "::set-output name=version::$VERSION"
-
-      - name: Get .NET application version
-        if: github.event.inputs.version != ''
-        working-directory: GrandChessTree.Client
-        id: get_version-input
-        run: |
-          VERSION=${{ github.event.inputs.version }}
+          VERSION=0.0.4-eduherminio-1
           echo "Application version: $VERSION"
           echo "::set-output name=version::$VERSION"
 
