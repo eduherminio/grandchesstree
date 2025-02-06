@@ -116,26 +116,29 @@ namespace GrandChessTree.Api.Controllers
             var pastMinuteTimestamp = currentTimestamp - 60;
 
             var realTimeStatsResult = await _dbContext.Database
-             .SqlQueryRaw<RealTimeStatsModel>(@"
-            SELECT
-            COUNT(*) / 60.0 AS tpm,
-            SUM(t.nodes * i.occurrences) / 3600.0 AS nps
-            FROM public.perft_tasks t
-            JOIN public.perft_items i ON t.perft_item_id = i.id
-            WHERE t.depth = {0} and t.finished_at >= EXTRACT(EPOCH FROM NOW()) - 3600", depth)
-             .AsNoTracking()
-             .FirstOrDefaultAsync(cancellationToken);
+                .SqlQueryRaw<RealTimeStatsModel>(@"
+        SELECT
+        COALESCE(COUNT(*), 0) / 60.0 AS tpm,
+        COALESCE(SUM(t.nodes * i.occurrences), 0) / 3600.0 AS nps
+        FROM public.perft_tasks t
+        JOIN public.perft_items i ON t.perft_item_id = i.id
+        WHERE t.depth = {0} 
+        AND t.finished_at >= EXTRACT(EPOCH FROM NOW()) - 3600", depth)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
+
 
             var progressStatsResult = await _dbContext.Database
-             .SqlQueryRaw<ProgressStatsModel>(@"
-            SELECT
-            COUNT(*) AS completed_tasks,
-            SUM(t.nodes * i.occurrences) AS total_nodes
-            FROM public.perft_tasks t
-            JOIN public.perft_items i ON t.perft_item_id = i.id
-            WHERE t.depth = {0} and t.finished_at > 0", depth)
-             .AsNoTracking()
-             .FirstOrDefaultAsync(cancellationToken);
+           .SqlQueryRaw<ProgressStatsModel>(@"
+        SELECT
+        COUNT(*) AS completed_tasks,
+        COALESCE(SUM(t.nodes * i.occurrences), 0) AS total_nodes
+        FROM public.perft_tasks t
+        JOIN public.perft_items i ON t.perft_item_id = i.id
+        WHERE t.depth = {0} AND t.finished_at > 0", depth)
+           .AsNoTracking()
+           .FirstOrDefaultAsync(cancellationToken);
+
 
             var response = new PerftStatsResponse()
             {
