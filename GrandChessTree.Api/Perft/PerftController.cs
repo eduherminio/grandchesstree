@@ -151,6 +151,54 @@ namespace GrandChessTree.Api.Controllers
             return Ok(response);
         }
 
+        public class PerformanceChartEntry
+        {
+            [Column("timestamp")]
+            [JsonPropertyName("timestamp")]
+            public long timestamp { get; set; }
+            [Column("tpm")]
+            [JsonPropertyName("tpm")]
+            public float tpm { get; set; }
+            [Column("nps")]
+            [JsonPropertyName("nps")]
+            public float nps { get; set; }
+        }
+
+
+        [HttpGet("{depth}/stats/charts/performance")]
+        [ResponseCache(Duration = 300, VaryByQueryKeys = new[] { "depth" })]
+        public async Task<IActionResult> GetPerformanceChart(int depth, CancellationToken cancellationToken)
+        {
+            var result = await _dbContext.Database
+                .SqlQueryRaw<PerformanceChartEntry>(@"
+                    WITH time_buckets AS (
+                        SELECT generate_series(
+                            EXTRACT(EPOCH FROM NOW()) - 43200,  -- 3 hours ago
+                            EXTRACT(EPOCH FROM NOW()),         -- Now
+                            900                                -- 15-minute intervals (900 seconds)
+                        ) AS bucket_start
+                    )
+                    SELECT 
+                        tb.bucket_start AS timestamp,
+                        COUNT(t.id) / 15.0 AS tpm,  -- Tasks per minute (since interval is 15 min)
+                        COALESCE(SUM(t.nodes * i.occurrences) / (15 * 60), 0) AS nps  -- Nodes per second
+                    FROM time_buckets tb
+                    LEFT JOIN public.perft_tasks t 
+                        ON t.finished_at >= tb.bucket_start 
+                        AND t.finished_at < tb.bucket_start + 900  -- 15-minute window
+                    LEFT JOIN public.perft_items i 
+                        ON t.perft_item_id = i.id
+                    WHERE t.depth = {0}
+                    GROUP BY tb.bucket_start
+                    ORDER BY timestamp
+                    ", depth)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+
+            return Ok(result);
+        }
+
         [HttpGet("{depth}/leaderboard")]
         [ResponseCache(Duration = 120, VaryByQueryKeys = new[] { "depth" })]
         public async Task<IActionResult> GetLeaderboard(int depth, CancellationToken cancellationToken)

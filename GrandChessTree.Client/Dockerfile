@@ -1,28 +1,43 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
-USER $APP_UID
+# Use a base .NET runtime image
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/runtime:9.0 AS base
 WORKDIR /app
 
+# Define an ARG to capture the target platform
+ARG TARGETARCH
 
-# This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# Use the .NET SDK for building the application
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
+ARG TARGETARCH
+
 WORKDIR /src
+
+# Copy project files
 COPY ["GrandChessTree.Client/GrandChessTree.Client.csproj", "GrandChessTree.Client/"]
 COPY ["GrandChessTree.Shared/GrandChessTree.Shared.csproj", "GrandChessTree.Shared/"]
 RUN dotnet restore "./GrandChessTree.Client/GrandChessTree.Client.csproj"
+
+# Copy all source code
 COPY . .
+
 WORKDIR "/src/GrandChessTree.Client"
-RUN dotnet build "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Conditionally define constants based on architecture
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        dotnet build "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/build -p:DefineConstants="ARM"; \
+    else \
+        dotnet build "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/build; \
+    fi
+
+# Publish the app
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        dotnet publish "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/publish -p:DefineConstants="ARM" /p:UseAppHost=false; \
+    else \
+        dotnet publish "./GrandChessTree.Client.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false; \
+    fi
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Final image for running the application
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
