@@ -16,6 +16,8 @@ namespace GrandChessTree.Client
         public ulong TotalComputedNodes { get; set; }
         public ulong TotalNodes { get; set; }
 
+        public bool IsRunning { get; set; }
+
         public void BeginTask(PerftTask task, int workItemOccurrences)
         {
             Fen = task.Fen;
@@ -23,7 +25,7 @@ namespace GrandChessTree.Client
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
             TotalCompletedSubTasks += task.CachedSubTaskCount;
             TotalCachedSubTasks += task.CachedSubTaskCount;
-            TotalNodes += (ulong)workItemOccurrences * (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.results[0] * t.occurences);
+            TotalNodes += (ulong)workItemOccurrences * (ulong)task.CompletedSubTaskResults.Sum(t => (float)t.Results[0] * t.Occurrences);
             WorkerComputedNodes = 0;
         }
 
@@ -34,7 +36,7 @@ namespace GrandChessTree.Client
             CompletedSubtasks = task.CompletedSubTaskResults.Count;
         }
 
-        public void EndSubTask(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
+        public void EndSubTaskWorkCompleted(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;
@@ -46,7 +48,7 @@ namespace GrandChessTree.Client
 
         }
 
-        public void SubTaskCompletedFromCache(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
+        public void EndSubTaskFoundInCache(PerftTask task, ulong nodes, int workItemOccurrences, int subTaskOccurrences)
         {
             Fen = task.Fen;
             TotalSubtasks = task.SubTaskCount;

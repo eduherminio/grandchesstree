@@ -4,6 +4,24 @@ using GrandChessTree.Shared.Api;
 
 namespace GrandChessTree.Client
 {
+
+    public class RemainingSubTask
+    {
+        [JsonPropertyName("occurrences")]
+        public required int Occurrences { get; set; }
+
+        [JsonPropertyName("fen")]
+        public required string Fen { get; set; } = "";
+    }
+
+    public class CompletedSubTask
+    {
+        [JsonPropertyName("occurrences")]
+        public required int Occurrences { get; set; }
+
+        [JsonPropertyName("results")]
+        public required ulong[] Results { get; set; }
+    }
     public class PerftTask
     {
         [JsonPropertyName("perft_task_id")]
@@ -22,12 +40,12 @@ namespace GrandChessTree.Client
         public required int SubTaskCount { get; set; }
 
         [JsonPropertyName("remaining_sub_tasks")]
-        public required List<(string fen, int occurrences)> RemainingSubTasks { get; set; }
+        public required List<RemainingSubTask> RemainingSubTasks { get; set; }
 
         [JsonPropertyName("completed_sub_tasks")]
-        public List<(ulong[] results, int occurences)> CompletedSubTaskResults { get; set; } = new List<(ulong[] results, int occurences)>();
+        public List<CompletedSubTask> CompletedSubTaskResults { get; set; } = new List<CompletedSubTask>();
 
-        public (string fen, int occurrences)? WorkingTask { get; set; }
+        public RemainingSubTask? WorkingTask { get; set; }
 
 
         [JsonPropertyName("cached_sub_tasks")]
@@ -37,7 +55,7 @@ namespace GrandChessTree.Client
             return RemainingSubTasks.Count == 0 && SubTaskCount == CompletedSubTaskResults.Count;
         }
 
-        public (string fen, int occurrences)? GetNextSubTask()
+        public RemainingSubTask? GetNextSubTask()
         {
             if(RemainingSubTasks.Count == 0) return null;
             WorkingTask = RemainingSubTasks[0];
@@ -47,7 +65,9 @@ namespace GrandChessTree.Client
 
         public bool CompleteSubTask(Summary result, int occurrences)
         {
-            CompletedSubTaskResults.Add(([
+            CompletedSubTaskResults.Add(new CompletedSubTask()
+            {
+                Results = [
                 result.Nodes,
                 result.Captures,
                 result.Enpassant,
@@ -61,7 +81,9 @@ namespace GrandChessTree.Client
                 result.SingleDiscoveredCheckmate,
                 result.DirectDiscoverdCheckmate,
                 result.DoubleDiscoverdCheckmate,
-            ], occurrences));
+            ],
+                Occurrences = occurrences
+            });
             WorkingTask = null;
 
             return true;
@@ -93,9 +115,11 @@ namespace GrandChessTree.Client
                 DoubleDiscoverdCheckmate = 0,
             };
 
-            foreach(var (results, occurrences) in CompletedSubTaskResults)
+            foreach(var result in CompletedSubTaskResults)
             {
-                if(results.Length != 13)
+                var results = result.Results;
+                var occurrences = result.Occurrences;
+                if (results.Length != 13)
                 {
                     return null;
                 }

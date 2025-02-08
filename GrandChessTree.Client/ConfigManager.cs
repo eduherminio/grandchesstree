@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace GrandChessTree.Client
 {
@@ -17,8 +16,6 @@ namespace GrandChessTree.Client
 
     public static class ConfigManager
     {
-        private const string ConfigFilePath = "./gct_config.json";
-
         public static bool IsValidConfig(Config config)
         {
             bool isValid = true;
@@ -52,21 +49,15 @@ namespace GrandChessTree.Client
 
         public static Config LoadOrCreateConfig()
         {
-            if (File.Exists(ConfigFilePath))
+            var config = WorkerPersistence.LoadConfig();
+            if (config != null)
             {
-                try
-                {
-                    string json = File.ReadAllText(ConfigFilePath);
-                    return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.Config) ?? new Config();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error reading config file: {ex.Message}");
-                }
+                return config;
             }
-
             return CreateNewConfig();
         }
+
+
 
         private static Config CreateNewConfig()
         {
@@ -84,16 +75,10 @@ namespace GrandChessTree.Client
                 config.Workers = workers;
             }
 
-            SaveConfig(config);
+            WorkerPersistence.SaveConfig(config);
             return config;
         }
 
-        private static void SaveConfig(Config config)
-        {
-            string json = JsonSerializer.Serialize(config, SourceGenerationContext.Default.Config);
-            File.WriteAllText(ConfigFilePath, json);
-            Console.WriteLine("Config saved successfully.");
-        }
     }
 
 }

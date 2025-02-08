@@ -49,16 +49,32 @@ if (!ConfigManager.IsValidConfig(config))
 
 
 var searchOrchastrator = new SearchItemOrchistrator(depth, config);
-var networkClient = new NetworkClient(searchOrchastrator, config);
+var networkClient = new WorkProcessor(searchOrchastrator, config);
 AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 _ = Task.Run(ReadCommands);
 
-networkClient.RunMultiple();
+networkClient.Run();
+
+
+if(searchOrchastrator.PendingSubmission == 0)
+{
+    Console.WriteLine("Nothing left to submit to server.");
+}
+else
+{
+    while (searchOrchastrator.PendingSubmission > 0)
+    {
+        Console.WriteLine($"Syncing with server... {searchOrchastrator.PendingSubmission} pending submissions.");
+        await searchOrchastrator.SubmitToApi();
+    }
+
+    Console.WriteLine("All tasks submitted to server.");
+}
+
 
 void CurrentDomain_ProcessExit(object? sender, EventArgs e)
 {
     Console.WriteLine("process exited");
-    networkClient.IsRunning = false;
 }
 
 void ReadCommands()
@@ -72,10 +88,20 @@ void ReadCommands()
         }
 
         command = command.Trim();
-        if (command.ToLower() == "q")
+        var loweredCommand = command.ToLower();
+        if (loweredCommand.StartsWith("q"))
         {
-            Environment.Exit(0);
-            break;
+            if (loweredCommand.Contains("g"))
+            {
+                networkClient.FinishTasksAndQuit();
+                break;
+            }
+            else
+            {
+                networkClient.SaveAndQuit();
+                break;
+            }
         }
+
     }
 }

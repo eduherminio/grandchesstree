@@ -6,65 +6,50 @@ using GrandChessTree.Shared.Helpers;
 
 namespace GrandChessTree.Client
 {
-    public class SubTaskHashTable
-    {
-        private readonly ConcurrentDictionary<ulong, Summary> _dict;
-        private readonly ConcurrentQueue<ulong> _keysQueue;
-        private readonly int _capacity;
-
-        public SubTaskHashTable(int capacity)
-        {
-            _capacity = capacity;
-            _dict = new ConcurrentDictionary<ulong, Summary>();
-            _keysQueue = new ConcurrentQueue<ulong>();
-        }
-
-        public void Add(ulong key, Summary value)
-        {
-            if (_dict.TryAdd(key, value))
-            {
-                _keysQueue.Enqueue(key);
-
-                if (_dict.Count > _capacity && _keysQueue.TryDequeue(out var oldestKey))
-                {
-                    _dict.TryRemove(oldestKey, out _);
-                }
-            }
-        }
-
-        public bool TryGetValue(ulong key, out Summary value) => _dict.TryGetValue(key, out value);
-    }
-
     public class SearchItemOrchistrator
     {
         private readonly HttpClient _httpClient;
         private static int _searchDepth;
         private readonly Config _config;
+        private readonly PerftTaskQueue _perftTaskQueue = new PerftTaskQueue();
+
+        private readonly Dictionary<long, PerftTask> _restoredTasks = new Dictionary<long, PerftTask>();
+
         public SearchItemOrchistrator(int searchDepth, Config config)
         {
             _config = config;
             _searchDepth = searchDepth;
             _httpClient = new HttpClient() { BaseAddress = new Uri(config.ApiUrl) };
             _httpClient.DefaultRequestHeaders.Add("X-API-Key", config.ApiKey);
+
+            var restoredTasks = WorkerPersistence.LoadPartiallyCompletedTasks();
+            if (restoredTasks != null)
+            {
+                foreach (var task in restoredTasks)
+                {
+                    _restoredTasks.Add(task.PerftTaskId, task);
+                }
+            }
         }
 
-        private ConcurrentQueue<PerftTaskResponse> _taskQueue = new ConcurrentQueue<PerftTaskResponse>();
         public int Submitted { get; set; }
         public ulong TotalNodes { get; set; }
         public int PendingSubmission => _completedResults.Count;
 
         public readonly SubTaskHashTable SubTaskHashTable = new SubTaskHashTable(1_000_000);
 
-        public PerftTask? GetSearchItem()
+        public PerftTask? GetNextTask()
         {
-            if (!_taskQueue.TryDequeue(out var task))
-            {
-                return null;
-            }
+            var task = _perftTaskQueue.Dequeue();
 
             if (task == null)
             {
                 return null;
+            }
+
+            if (_restoredTasks.TryGetValue(task.PerftTaskId, out var restoredTask))
+            {
+                return restoredTask;
             }
 
             if (!PositionsD4.Dict.TryGetValue(task.PerftItemHash, out var position))
@@ -86,7 +71,7 @@ namespace GrandChessTree.Client
                 SubTaskCount = subTasks.Count,
                 Fen = position,
                 CachedSubTaskCount = 0,
-                RemainingSubTasks = new List<(string, int)>()
+                RemainingSubTasks = new List<RemainingSubTask>()
             };
 
             foreach (var (hash, fen, occurences) in subTasks)
@@ -98,7 +83,11 @@ namespace GrandChessTree.Client
                 }
                 else
                 {
-                    searchTask.RemainingSubTasks.Add((fen, occurences));
+                    searchTask.RemainingSubTasks.Add(new RemainingSubTask()
+                    {
+                        Fen = fen,
+                        Occurrences = occurences
+                    });
                 }
             }
 
@@ -114,7 +103,7 @@ namespace GrandChessTree.Client
         // Ensures only one thread loads new tasks
         public async Task<bool> TryLoadNewTasks()
         {
-            if (_taskQueue.Count() >= _config.Workers)
+            if (_perftTaskQueue.Count() >= _config.Workers)
             {
                 return false;
             }
@@ -126,10 +115,8 @@ namespace GrandChessTree.Client
                 return false; // No new tasks available
             }
 
-            foreach (var newTask in tasks)
-            {
-                _taskQueue.Enqueue(newTask);
-            }
+            _perftTaskQueue.Enqueue(tasks);
+          
 
             return true;
         }
@@ -187,6 +174,10 @@ namespace GrandChessTree.Client
                 }
                 await Task.Delay(TimeSpan.FromSeconds(10));
                 return false;
+            }
+            else
+            {
+                _perftTaskQueue.MarkCompleted(results.Select(r => r.PerftTaskId));
             }
 
             await Task.Delay(100);

@@ -44,6 +44,17 @@ public static unsafe class Perft
 
         return (Summary*)block;
     }
+
+    public static void FreeHashTable()
+    {
+        if (HashTable != null)
+        {
+            NativeMemory.AlignedFree(HashTable);
+            HashTable = null;
+        }
+    }
+
+
     public static void ClearTable(Summary* HashTable)
     {
         Unsafe.InitBlock(HashTable, 0, (uint)(sizeof(Summary) * (HashTableMask + 1)));
