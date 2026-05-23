@@ -401,3 +401,26 @@ FodyWeavers.xsd
 
 # Client config file
 gct_config.json
+
+# ---- Grand Chess Tree project-specific ----
+
+# macOS filesystem cruft
+.DS_Store
+**/.DS_Store
+
+# Claude Code per-project working directories
+.claude/
+**/.claude/
+
+# Single-file dotnet publish output under MoveGen/dist (regenerable via dotnet publish)
+MoveGen/dist/
+
+# MoveGen.Wasm intermediate publish output (the deployed copy lives under site/dist/wasm/movegen/)
+MoveGen/MoveGen.Wasm/bin/Release/publish/
+
+# render-board.js intermediate SVG files (the .png output is kept, the temp .svg is not)
+**/*.tmp.svg
+
+# Local perft-check reports (written by PerftSuite; one-off per run)
+site/src/perft-report.json
+site/dist/perft-report.json

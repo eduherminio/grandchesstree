@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>perftcheck &mdash; The Grand Chess Tree</title>
+    <meta
+      name="description"
+      content="A cross-platform CLI that validates a UCI chess engine's perft output against ~105,000 known-correct positions and writes a JSON report."
+    />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://grandchesstree.com/perftcheck.html" />
+    <link rel="author" href="https://timmoth.com/" />
+    <meta name="author" content="Tim Jones" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%99%9E%3C/text%3E%3C/svg%3E"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://grandchesstree.com/perftcheck.html" />
+    <meta property="og:title" content="perftcheck &mdash; The Grand Chess Tree" />
+    <meta property="og:description" content="Cross-platform CLI to validate a chess engine's perft output against ~105,000 known-correct positions." />
+    <meta property="og:image" content="https://grandchesstree.com/assets/img/og-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html { font-feature-settings: "cv11", "ss01"; }
+      .tabular { font-variant-numeric: tabular-nums; }
+      .term {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        line-height: 1.55;
+        background-color: #0b1220;
+        color: #cbd5e1;
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        overflow-x: auto;
+        white-space: pre;
+      }
+      .term .grey   { color: #94a3b8; }
+      .term .prompt { color: #38bdf8; }
+    </style>
+  </head>
+  <body class="bg-white text-slate-700 antialiased selection:bg-slate-200 selection:text-slate-900">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
+      <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Primary">
+        <a href="index.html" class="flex items-center gap-2 text-slate-900">
+          <span aria-hidden="true" class="text-xl">&#9822;</span>
+          <span class="font-semibold tracking-tight">The Grand Chess Tree</span>
+        </a>
+        <ul class="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+          <li><a href="distributed-perft.html" class="hover:text-slate-900">Distributed Perft</a></li>
+          <li><a href="tools.html" class="text-slate-900">Tools</a></li>
+          <li><a href="move-generator/" class="hover:text-slate-900">Move generator</a></li>
+          <li><a href="https://discord.com/invite/cTu3aeCZVe" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">Discord</a></li>
+          <li>
+            <a href="https://github.com/Timmoth/grandchesstree" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+              <img src="assets/img/github-mark.svg" alt="" width="16" height="16" />
+              GitHub
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <section class="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white">
+        <div class="mx-auto max-w-6xl px-6 py-14 md:py-20">
+          <nav aria-label="Breadcrumb" class="mb-6 text-sm text-slate-500">
+            <ol class="flex flex-wrap items-center gap-2">
+              <li><a href="index.html" class="hover:text-slate-900">Home</a></li>
+              <li aria-hidden="true">/</li>
+              <li><a href="tools.html" class="hover:text-slate-900">Tools</a></li>
+              <li aria-hidden="true">/</li>
+              <li class="text-slate-700">perftcheck</li>
+            </ol>
+          </nav>
+
+          <div class="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">perftcheck</h1>
+            <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">CLI</span>
+            <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-700">linux &middot; macOS &middot; windows</span>
+          </div>
+
+          <p class="mt-5 max-w-3xl text-slate-600 md:text-lg">
+            Cross-platform CLI that points at a UCI chess engine and validates
+            its <code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-800">go perft N</code>
+            output against ~105,000 known-correct positions baked into the
+            binary. Writes a JSON report; exits non-zero on any mismatch.
+          </p>
+        </div>
+      </section>
+
+      <section id="install" class="border-b border-slate-200 py-16">
+        <div class="mx-auto max-w-6xl px-6">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900">Install</h2>
+          <p class="mt-3 max-w-3xl text-slate-600">
+            Self-contained single-file binaries published to
+            <a href="https://github.com/Timmoth/grandchesstree/releases/latest" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">GitHub Releases</a>
+            on every tagged build. No .NET runtime required on the target machine.
+          </p>
+
+          <div class="mt-8 overflow-x-auto rounded-xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50 text-slate-600">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-left font-medium">Platform</th>
+                  <th scope="col" class="px-4 py-3 text-left font-medium">Architecture</th>
+                  <th scope="col" class="px-4 py-3 text-left font-medium">Asset</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 bg-white">
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-900">Linux</td>
+                  <td class="px-4 py-3 tabular">x86_64</td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-linux-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-x64</a></td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-900">Linux</td>
+                  <td class="px-4 py-3 tabular">aarch64</td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-linux-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-arm64</a></td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-900">macOS</td>
+                  <td class="px-4 py-3 tabular">Intel</td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-osx-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-x64</a></td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-900">macOS</td>
+                  <td class="px-4 py-3 tabular">Apple Silicon</td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-osx-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-arm64</a></td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-medium text-slate-900">Windows</td>
+                  <td class="px-4 py-3 tabular">x86_64</td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-win-x64.exe" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-win-x64.exe</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-8 grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">macOS / Linux</h3>
+              <pre class="term mt-3"><span class="prompt">$</span> curl -L -o perftcheck \
+    https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-<span class="grey">&lt;rid&gt;</span>
+<span class="prompt">$</span> chmod +x perftcheck
+<span class="prompt">$</span> ./perftcheck --engine ./your-engine</pre>
+              <p class="mt-3 text-xs text-slate-500">
+                On macOS, Gatekeeper may quarantine the binary on first run.
+                Right-click &rarr; Open, or run
+                <code class="font-mono text-[11px] text-slate-700">xattr -d com.apple.quarantine perftcheck</code>.
+              </p>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">Windows (PowerShell)</h3>
+              <pre class="term mt-3"><span class="prompt">PS&gt;</span> Invoke-WebRequest `
+    https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-win-x64.exe `
+    -OutFile perftcheck.exe
+<span class="prompt">PS&gt;</span> .\perftcheck.exe --engine .\your-engine.exe</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="usage" class="py-16">
+        <div class="mx-auto max-w-6xl px-6">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900">Usage</h2>
+          <p class="mt-3 max-w-3xl text-slate-600">
+            One required flag &mdash; <code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-800">--engine</code>,
+            pointing at a UCI executable. Default run walks every bundled
+            position to depth 4 and writes
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-slate-800">perft-report.json</code>.
+            Source &amp; full docs:
+            <a href="https://github.com/Timmoth/grandchesstree/tree/main/PerftSuite" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">PerftSuite/</a>.
+          </p>
+
+          <pre class="term mt-6"><span class="prompt">$</span> ./perftcheck --engine ./stockfish</pre>
+
+          <div class="mt-8 overflow-x-auto rounded-xl border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+              <thead class="bg-slate-50 text-slate-600">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium">Flag</th>
+                  <th class="px-4 py-3 text-left font-medium">Default</th>
+                  <th class="px-4 py-3 text-left font-medium">Description</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 bg-white font-mono text-xs text-slate-800">
+                <tr><td class="px-4 py-3"><code>-e, --engine &lt;PATH&gt;</code></td><td class="px-4 py-3 text-slate-500">required</td><td class="px-4 py-3 font-sans">UCI engine executable</td></tr>
+                <tr><td class="px-4 py-3"><code>--epd &lt;FILE&gt;</code></td><td class="px-4 py-3 text-slate-500">bundled</td><td class="px-4 py-3 font-sans">Use this EPD file instead of the bundled corpora. Repeatable.</td></tr>
+                <tr><td class="px-4 py-3"><code>--depth-cap &lt;N&gt;</code></td><td class="px-4 py-3 text-slate-500">4</td><td class="px-4 py-3 font-sans">Skip cases deeper than this</td></tr>
+                <tr><td class="px-4 py-3"><code>--depth-min &lt;N&gt;</code></td><td class="px-4 py-3 text-slate-500">1</td><td class="px-4 py-3 font-sans">Skip cases shallower than this</td></tr>
+                <tr><td class="px-4 py-3"><code>--timeout &lt;SECS&gt;</code></td><td class="px-4 py-3 text-slate-500">30</td><td class="px-4 py-3 font-sans">Per-case timeout; engine is killed and restarted on exceed</td></tr>
+                <tr><td class="px-4 py-3"><code>--filter &lt;SUBSTR&gt;</code></td><td class="px-4 py-3 text-slate-500">&mdash;</td><td class="px-4 py-3 font-sans">Only run cases whose FEN contains this substring</td></tr>
+                <tr><td class="px-4 py-3"><code>--limit &lt;N&gt;</code></td><td class="px-4 py-3 text-slate-500">&mdash;</td><td class="px-4 py-3 font-sans">Take only the first N matching cases</td></tr>
+                <tr><td class="px-4 py-3"><code>--report &lt;PATH&gt;</code></td><td class="px-4 py-3 text-slate-500">perft-report.json</td><td class="px-4 py-3 font-sans">Path to write the JSON report</td></tr>
+                <tr><td class="px-4 py-3"><code>--fail-fast</code></td><td class="px-4 py-3 text-slate-500">off</td><td class="px-4 py-3 font-sans">Stop on the first non-pass</td></tr>
+                <tr><td class="px-4 py-3"><code>--quiet</code></td><td class="px-4 py-3 text-slate-500">off</td><td class="px-4 py-3 font-sans">Suppress live console output (CI mode)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="mt-6 text-sm text-slate-500">
+            Exit codes:
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-emerald-700">0</code> all passed,
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-rose-700">1</code> at least one failure,
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-amber-700">2</code> bad args.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-slate-200 bg-slate-50">
+      <div class="mx-auto max-w-6xl px-6 py-10">
+        <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div class="flex items-center gap-2 text-slate-700">
+            <span aria-hidden="true" class="text-xl">&#9822;</span>
+            <span class="font-semibold tracking-tight">The Grand Chess Tree</span>
+          </div>
+          <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+            <li><a href="distributed-perft.html" class="hover:text-slate-900">Distributed Perft</a></li>
+            <li><a href="tools.html" class="hover:text-slate-900">Tools</a></li>
+            <li><a href="move-generator/" class="hover:text-slate-900">Move generator</a></li>
+            <li><a href="https://discord.com/invite/cTu3aeCZVe" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">Discord</a></li>
+            <li><a href="https://github.com/Timmoth/grandchesstree" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">GitHub</a></li>
+          </ul>
+        </div>
+        <p class="mt-8 border-t border-slate-200 pt-6 text-xs text-slate-500">
+          Made by <a href="https://timmoth.com/" target="_blank" rel="author me noopener noreferrer" class="font-medium text-slate-700 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">Tim Jones</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "GrandChessTree.Client": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
