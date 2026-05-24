@@ -11,7 +11,10 @@ ENGINE="chessbit"
 REPO="https://github.com/thuijbregts/chessbit"
 ENGINE_DIR="bin/chessbit"
 SRC_DIR="$ENGINE_DIR/chessbit"   # source files live in repo/chessbit/
-BINARY="$ENGINE_DIR/chessbit"
+# Note: we leave the binary inside SRC_DIR rather than lifting one level
+# up — `bin/chessbit/chessbit` is already the source dir, so the binary
+# would collide. The wrapper resolves this exact nested path.
+BINARY="$SRC_DIR/chessbit"
 WRAPPER="wrappers/chessbit/run.sh"
 
 # shellcheck source=_common.sh
@@ -40,21 +43,32 @@ chmod +x "$WRAPPER" 2>/dev/null || true
 
 [ -d "$SRC_DIR" ] || die "expected source dir $SRC_DIR — repo layout may have changed"
 
-log "building (g++ -std=c++20 -march=native -O3 -mbmi2 -mbmi -flto)"
+# chessbit uses MSVC names (__forceinline, __popcnt64) unconditionally.
+# Generate a compat shim and force-include it.
+mkdir -p "$ENGINE_DIR/shim"
+cat > "$ENGINE_DIR/shim/chessbit_compat.h" << 'EOF'
+#pragma once
+#ifndef _MSC_VER
+// chessbit uses MSVC names; map to gcc/clang-friendly equivalents.
+// Plain `inline` (not always_inline) because chessbit marks the
+// recursive `enumMoves` as __forceinline and gcc rejects
+// always_inline on recursive calls; O3+LTO still inlines aggressively.
+#  define __forceinline inline
+#  define __popcnt64(x) __builtin_popcountll((unsigned long long)(x))
+#endif
+EOF
+
+SHIM_PATH="$(cd "$ENGINE_DIR" && pwd)/shim/chessbit_compat.h"
+log "building (g++ -std=c++20 -march=native -O3 -mbmi2 -mbmi -flto + shim)"
 (
   cd "$SRC_DIR"
   rm -f chessbit
   # shellcheck disable=SC2046
   g++ -std=c++20 -march=native -O3 -mbmi2 -mbmi -flto \
       -fomit-frame-pointer -DNDEBUG \
+      -include "$SHIM_PATH" \
       $(ls *.cpp) -o chessbit
 )
-
-# Move the binary up out of the inner chessbit/ subdir so the descriptor's
-# launch path resolves cleanly to bin/chessbit/chessbit.
-if [ -x "$SRC_DIR/chessbit" ]; then
-  mv -f "$SRC_DIR/chessbit" "$BINARY"
-fi
 [ -x "$BINARY" ] || die "expected binary at $BINARY but it's missing"
 
 # Verify via the WRAPPER.

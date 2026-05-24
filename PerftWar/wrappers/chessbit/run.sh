@@ -14,7 +14,10 @@
 set -u
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-CHESSBIT_BIN="$HERE/../../bin/chessbit/chessbit"
+# chessbit's source lives in repo/chessbit/, and the install script
+# leaves the built binary there as chessbit/chessbit. We can't lift it
+# one level up because `bin/chessbit/chessbit` is the source dir name.
+CHESSBIT_BIN="$HERE/../../bin/chessbit/chessbit/chessbit"
 
 FEN="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
