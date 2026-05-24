@@ -1,0 +1,15 @@
+{
+  "name": "surge",
+  "version": "main",
+  "owner": "nkarve",
+  "repo": "https://github.com/nkarve/surge",
+  "modes": {
+    "single-no-cache": {
+      "launch": "wrappers/surge/surge-perft",
+      "setup": [],
+      "case":   "position fen {fen}\nperft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    }
+  }
+}

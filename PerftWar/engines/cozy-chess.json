@@ -1,0 +1,15 @@
+{
+  "name": "cozy-chess",
+  "version": "0.3",
+  "owner": "analog-hors",
+  "repo": "https://github.com/analog-hors/cozy-chess",
+  "modes": {
+    "single-no-cache": {
+      "launch": "wrappers/cozy-chess/target/release/cozy-perft",
+      "setup": [],
+      "case":   "position fen {fen}\nperft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    }
+  }
+}

@@ -60,6 +60,20 @@ banner version extraction). Adding a new engine = a thin script that
 sets `ENGINE/REPO/ENGINE_DIR/BINARY`, picks an `ARCH_FLAG`, then sources
 `_common.sh`.
 
+## Move-generator libraries (wrappers)
+
+Some entries on the board are pure **move-generator libraries** — Rust
+crates or C++ source trees that don't ship a UCI binary. For each, a thin
+shim under `wrappers/<lib>/` compiles against the library and exposes the
+same `position fen / perft N` subset that PerftWar drives every other
+engine through. See [`wrappers/README.md`](wrappers/README.md) for the
+methodology (bulk-counting at depth 1, why a wrapper vs in-process FFI)
+and a per-library status table.
+
+Currently shimmed: cozy-chess, shakmaty, jordanbray/chess, surge. Each
+has a matching `engines/<lib>.json` descriptor and
+`scripts/install-<lib>.sh` install script.
+
 ## Engine descriptor
 
 One JSON file per engine, e.g. `engines/stockfish.json`. Schema:
