@@ -4,7 +4,18 @@
   "repo": "https://github.com/official-stockfish/Stockfish",
   "versions": {
     "18": {
-      "ran_at": "2026-05-24T09:05:34Z",
+      "ran_at": "2026-05-24T11:22:15Z",
+      "host": {
+        "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_version": "3.12.3",
+        "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+        "cpu_physical_cores": 16,
+        "cpu_logical_cores": 32,
+        "ram_total_bytes": 66585452544,
+        "mem_speed_mts": null
+      },
       "disqualified": false,
       "budget_sec": 60.0,
       "modes": {
@@ -17,75 +28,75 @@
                 {
                   "depth": 1,
                   "nodes": 20,
-                  "elapsed_sec": 0.378326,
-                  "nps": 52,
-                  "av_cpu_pct": 58.2,
-                  "av_rss_mb": 239.6,
-                  "peak_rss_mb": 421.2
+                  "elapsed_sec": 0.333924,
+                  "nps": 59,
+                  "av_cpu_pct": 98.8,
+                  "av_rss_mb": 184.2,
+                  "peak_rss_mb": 354.6
                 },
                 {
                   "depth": 2,
                   "nodes": 400,
-                  "elapsed_sec": 0.000127,
-                  "nps": 3140333,
+                  "elapsed_sec": 8.6e-05,
+                  "nps": 4625239,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 421.2,
-                  "peak_rss_mb": 421.3
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 3,
                   "nodes": 8902,
-                  "elapsed_sec": 0.000142,
-                  "nps": 62782541,
+                  "elapsed_sec": 8.4e-05,
+                  "nps": 105979975,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 421.3,
-                  "peak_rss_mb": 421.3
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 4,
                   "nodes": 197281,
-                  "elapsed_sec": 0.000811,
-                  "nps": 243131755,
+                  "elapsed_sec": 0.000856,
+                  "nps": 230417313,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 421.3,
-                  "peak_rss_mb": 421.3
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 5,
                   "nodes": 4865609,
-                  "elapsed_sec": 0.015365,
-                  "nps": 316668337,
-                  "av_cpu_pct": 130.2,
-                  "av_rss_mb": 421.3,
-                  "peak_rss_mb": 421.3
+                  "elapsed_sec": 0.018804,
+                  "nps": 258759398,
+                  "av_cpu_pct": 106.4,
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 6,
                   "nodes": 119060324,
-                  "elapsed_sec": 0.376744,
-                  "nps": 316024438,
-                  "av_cpu_pct": 98.2,
-                  "av_rss_mb": 421.3,
-                  "peak_rss_mb": 421.3
+                  "elapsed_sec": 0.464087,
+                  "nps": 256547524,
+                  "av_cpu_pct": 99.1,
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 7,
                   "nodes": 3195901860,
-                  "elapsed_sec": 9.787048,
-                  "nps": 326544008,
-                  "av_cpu_pct": 99.9,
-                  "av_rss_mb": 421.3,
-                  "peak_rss_mb": 421.3
+                  "elapsed_sec": 12.169053,
+                  "nps": 262625344,
+                  "av_cpu_pct": 100.0,
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 }
               ],
               "note": "timeout at d8",
               "best_depth": 7,
               "best_nodes": 3195901860,
-              "best_elapsed_sec": 9.787048,
-              "best_nps": 326544008,
-              "best_av_cpu_pct": 99.9,
-              "best_av_rss_mb": 421.3,
-              "best_peak_rss_mb": 421.3
+              "best_elapsed_sec": 12.169053,
+              "best_nps": 262625344,
+              "best_av_cpu_pct": 100.0,
+              "best_av_rss_mb": 163.3,
+              "best_peak_rss_mb": 163.3
             },
             {
               "name": "kiwipete",
@@ -94,66 +105,66 @@
                 {
                   "depth": 1,
                   "nodes": 48,
-                  "elapsed_sec": 0.142539,
-                  "nps": 336,
-                  "av_cpu_pct": 105.2,
-                  "av_rss_mb": 264.7,
-                  "peak_rss_mb": 420.0
+                  "elapsed_sec": 0.31327,
+                  "nps": 153,
+                  "av_cpu_pct": 95.8,
+                  "av_rss_mb": 161.5,
+                  "peak_rss_mb": 361.0
                 },
                 {
                   "depth": 2,
                   "nodes": 2039,
-                  "elapsed_sec": 0.000148,
-                  "nps": 13761591,
+                  "elapsed_sec": 0.000113,
+                  "nps": 18106740,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "av_rss_mb": 163.2,
+                  "peak_rss_mb": 163.2
                 },
                 {
                   "depth": 3,
                   "nodes": 97862,
-                  "elapsed_sec": 0.000439,
-                  "nps": 222750804,
+                  "elapsed_sec": 0.000404,
+                  "nps": 242451720,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "av_rss_mb": 163.2,
+                  "peak_rss_mb": 163.2
                 },
                 {
                   "depth": 4,
                   "nodes": 4085603,
-                  "elapsed_sec": 0.011884,
-                  "nps": 343784176,
-                  "av_cpu_pct": 84.1,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "elapsed_sec": 0.014577,
+                  "nps": 280286545,
+                  "av_cpu_pct": 68.6,
+                  "av_rss_mb": 163.2,
+                  "peak_rss_mb": 163.2
                 },
                 {
                   "depth": 5,
                   "nodes": 193690690,
-                  "elapsed_sec": 0.486479,
-                  "nps": 398148100,
-                  "av_cpu_pct": 100.7,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "elapsed_sec": 0.611095,
+                  "nps": 316956745,
+                  "av_cpu_pct": 101.5,
+                  "av_rss_mb": 163.2,
+                  "peak_rss_mb": 163.2
                 },
                 {
                   "depth": 6,
                   "nodes": 8031647685,
-                  "elapsed_sec": 22.608058,
-                  "nps": 355255971,
-                  "av_cpu_pct": 99.9,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "elapsed_sec": 27.777572,
+                  "nps": 289141456,
+                  "av_cpu_pct": 100.0,
+                  "av_rss_mb": 163.2,
+                  "peak_rss_mb": 163.2
                 }
               ],
               "note": "timeout at d7",
               "best_depth": 6,
               "best_nodes": 8031647685,
-              "best_elapsed_sec": 22.608058,
-              "best_nps": 355255971,
-              "best_av_cpu_pct": 99.9,
-              "best_av_rss_mb": 420.0,
-              "best_peak_rss_mb": 420.0
+              "best_elapsed_sec": 27.777572,
+              "best_nps": 289141456,
+              "best_av_cpu_pct": 100.0,
+              "best_av_rss_mb": 163.2,
+              "best_peak_rss_mb": 163.2
             },
             {
               "name": "sje",
@@ -162,69 +173,69 @@
                 {
                   "depth": 1,
                   "nodes": 46,
-                  "elapsed_sec": 0.141859,
-                  "nps": 324,
-                  "av_cpu_pct": 105.7,
-                  "av_rss_mb": 198.6,
-                  "peak_rss_mb": 419.9
+                  "elapsed_sec": 0.326561,
+                  "nps": 140,
+                  "av_cpu_pct": 94.9,
+                  "av_rss_mb": 153.6,
+                  "peak_rss_mb": 356.0
                 },
                 {
                   "depth": 2,
                   "nodes": 2079,
-                  "elapsed_sec": 0.000119,
-                  "nps": 17507368,
+                  "elapsed_sec": 0.000126,
+                  "nps": 16466544,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 419.9,
-                  "peak_rss_mb": 419.9
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 3,
                   "nodes": 89890,
-                  "elapsed_sec": 0.000374,
-                  "nps": 240669330,
+                  "elapsed_sec": 0.000354,
+                  "nps": 253997586,
                   "av_cpu_pct": 0.0,
-                  "av_rss_mb": 419.9,
-                  "peak_rss_mb": 419.9
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 4,
                   "nodes": 3894594,
-                  "elapsed_sec": 0.009328,
-                  "nps": 417518388,
-                  "av_cpu_pct": 107.2,
-                  "av_rss_mb": 419.9,
-                  "peak_rss_mb": 419.9
+                  "elapsed_sec": 0.011824,
+                  "nps": 329373365,
+                  "av_cpu_pct": 84.6,
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 5,
                   "nodes": 164075551,
-                  "elapsed_sec": 0.395176,
-                  "nps": 415196274,
-                  "av_cpu_pct": 98.7,
-                  "av_rss_mb": 419.9,
-                  "peak_rss_mb": 420.0
+                  "elapsed_sec": 0.493543,
+                  "nps": 332444501,
+                  "av_cpu_pct": 101.3,
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 },
                 {
                   "depth": 6,
                   "nodes": 6923051137,
-                  "elapsed_sec": 16.751195,
-                  "nps": 413287009,
+                  "elapsed_sec": 20.684172,
+                  "nps": 334702839,
                   "av_cpu_pct": 100.0,
-                  "av_rss_mb": 420.0,
-                  "peak_rss_mb": 420.0
+                  "av_rss_mb": 163.3,
+                  "peak_rss_mb": 163.3
                 }
               ],
               "note": "timeout at d7",
               "best_depth": 6,
               "best_nodes": 6923051137,
-              "best_elapsed_sec": 16.751195,
-              "best_nps": 413287009,
+              "best_elapsed_sec": 20.684172,
+              "best_nps": 334702839,
               "best_av_cpu_pct": 100.0,
-              "best_av_rss_mb": 420.0,
-              "best_peak_rss_mb": 420.0
+              "best_av_rss_mb": 163.3,
+              "best_peak_rss_mb": 163.3
             }
           ],
-          "mean_nps": 365028996
+          "mean_nps": 295489879
         }
       }
     }

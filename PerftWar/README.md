@@ -35,6 +35,31 @@ The engine maintainer's `command` for each mode encodes those settings
 however the engine wants them (CLI flag, env var, UCI setoption inside a
 wrapper script, etc.). The harness doesn't care.
 
+## Install scripts
+
+Each shipped engine has a one-shot install script that clones the source,
+builds with appropriate per-host arch flags, and verifies the binary
+responds to `go perft 4` from startpos. Re-running is safe — existing
+checkouts are kept, the build re-runs from scratch.
+
+```sh
+# From PerftWar/
+./scripts/install-stockfish.sh
+./scripts/install-berserk.sh
+./scripts/install-ethereal.sh
+```
+
+Each script prints the engine's UCI banner version on success so you can
+update the matching `engines/<engine>.json` `"version"` field. Host-specific
+arch flags currently covered: `darwin-arm64`, `darwin-x86_64`,
+`linux-x86_64`, `linux-aarch64`. Anything else falls back to the
+engine's Makefile auto-detection.
+
+Shared helpers live in `scripts/_common.sh` (host detection, perft probe,
+banner version extraction). Adding a new engine = a thin script that
+sets `ENGINE/REPO/ENGINE_DIR/BINARY`, picks an `ARCH_FLAG`, then sources
+`_common.sh`.
+
 ## Engine descriptor
 
 One JSON file per engine, e.g. `engines/stockfish.json`. Schema:
