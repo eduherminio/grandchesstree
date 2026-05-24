@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Clone, build, and verify Horsie → bin/horsie/horsie-native.
+# Clone, build, and verify Horsie → bin/horsie/horsie.
 # Horsie is a C++ port of Lizard. Its Makefile auto-detects host arch
 # (incl. ARM via -DARM) so a plain `make` works on Apple Silicon and Linux.
 #
@@ -9,13 +9,14 @@
 #   default `make` target should chain through download-net automatically
 #   when no eval is present — but on hosts without curl / network access,
 #   the user may need to drop the .nnue file in manually.
-# - The native build emits `horsie-native` (NOT plain `horsie`) — see the
-#   Makefile's $(EXE)-native$(SUFFIX) recipe.
+# - The default `make` (== `make native`) emits plain `horsie` — not
+#   `horsie-native` as the Makefile's RELEASE recipes use a different
+#   $(SUFFIX). See `EXE := horsie` near the top of the Makefile.
 
 ENGINE="horsie"
 REPO="https://github.com/liamt19/Horsie"
 ENGINE_DIR="bin/horsie"
-BINARY="$ENGINE_DIR/horsie-native"
+BINARY="$ENGINE_DIR/horsie"
 
 # shellcheck source=_common.sh
 source "$(cd "$(dirname "$0")" && pwd)/_common.sh"

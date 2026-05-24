@@ -481,13 +481,17 @@ def run_position_iterative(
     depths_map: dict[int, int],
     budget_sec: float,
     threads: int,
+    min_depth: int = 1,
 ) -> dict:
     """Iterative deepening on one position under a hard wall-clock budget.
 
-    Launches a fresh engine subprocess, sends d1, d2, …, recording the time
-    each completed depth took. When `budget_sec` elapses or the current call
-    times out, the subprocess is killed and the deepest completed depth is
-    used as the position's result."""
+    Launches a fresh engine subprocess, sends d{min_depth}, d{min_depth+1}, …,
+    recording the time each completed depth took. When `budget_sec` elapses
+    or the current call times out, the subprocess is killed and the deepest
+    completed depth is used as the position's result.
+
+    `min_depth` lets descriptors skip shallow depths that crash a particular
+    engine (e.g. Horsie segfaults on `perft 1`)."""
     launch = substitute(mode_def["launch"], "", 0, threads)
     setup_lines = [substitute(s, "", 0, threads) for s in mode_def.get("setup", [])]
     case_template = mode_def["case"]
@@ -520,6 +524,8 @@ def run_position_iterative(
 
     try:
         for depth in sorted(depths_map):
+            if depth < min_depth:
+                continue
             elapsed_total = time.monotonic() - budget_start
             remaining = budget_sec - elapsed_total
             if remaining <= 0:
@@ -591,12 +597,13 @@ def run_mode(
     positions: list[tuple[str, str, dict[int, int]]],
     budget_sec: float,
     threads: int,
+    min_depth: int = 1,
 ) -> dict:
     position_results: list[dict] = []
     best_nps_values: list[float] = []
     for name, fen, depths_map in positions:
         print(f"  -- {name} (budget {budget_sec:.0f}s) --", flush=True)
-        result = run_position_iterative(mode, mode_def, name, fen, depths_map, budget_sec, threads)
+        result = run_position_iterative(mode, mode_def, name, fen, depths_map, budget_sec, threads, min_depth=min_depth)
         position_results.append(result)
         if "best_nps" in result and result["best_nps"] is not None:
             best_nps_values.append(result["best_nps"])
@@ -654,6 +661,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     else:
         positions = list(POSITIONS)
 
+    # Per-engine min_depth: lets descriptors skip shallow depths that crash
+    # the engine (e.g. Horsie segfaults on `perft 1`).
+    min_depth = int(descriptor.get("min_depth", 1))
+
     mode_results: dict[str, dict] = {}
     try:
         for mode in requested_modes:
@@ -666,6 +677,7 @@ def cmd_run(args: argparse.Namespace) -> int:
                 positions=positions,
                 budget_sec=budget,
                 threads=threads,
+                min_depth=min_depth,
             )
     except Disqualified as dq:
         version_block = {
