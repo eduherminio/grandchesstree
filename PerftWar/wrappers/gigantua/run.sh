@@ -34,7 +34,16 @@ while IFS= read -r line; do
       ;;
     "go perft "*|"perft "*)
       depth="${line##* }"
-      "$GIGANTUA_BIN" "$FEN" "$depth" 2>&1
+      # Critical: redirect stdin to /dev/null. Gigantua ends with a
+      # std::cin.get() "press any key" pause and would otherwise (a) hang
+      # forever in our pipeline, and (b) compete with this wrapper for
+      # bytes from perft_war's command pipe.
+      "$GIGANTUA_BIN" "$FEN" "$depth" </dev/null 2>&1
+      # Gigantua's last line ("Press any key to exit...") has no trailing
+      # newline, so our `perft-done` marker would otherwise collide with
+      # it on the same physical line and the runner's `^perft-done$`
+      # end_re would never match. Emit an explicit newline first.
+      echo
       echo "perft-done"
       ;;
     quit)
