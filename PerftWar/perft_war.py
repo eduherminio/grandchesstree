@@ -25,11 +25,20 @@ MODES = ("single-no-cache", "single-with-cache", "multi-no-cache", "multi-with-c
 
 # Optimism factor for the iterative-deepening early-skip predictor.
 # After each depth completes we estimate the next depth's runtime from
-# (expected_nodes / observed_nps). We multiply observed_nps by this factor
-# to be optimistic about the engine speeding up at deeper depths (less
-# subprocess-startup amortisation per node, warmer caches, etc.). Only
-# when even that optimistic time blows the remaining budget do we skip.
-NEXT_DEPTH_OPTIMISM = 1.5
+# (expected_nodes / (observed_nps * NEXT_DEPTH_OPTIMISM)). Keeping this
+# at 1.0 means the predictor uses the raw observed NPS — no assumption
+# that the engine will speed up at deeper depths. The slack instead
+# lives in BUDGET_OVERRUN_FACTOR below: we let a single call overrun
+# the strict budget up to that multiplier before either letting it
+# finish or killing it.
+NEXT_DEPTH_OPTIMISM = 1.0
+
+# Hard cap on per-(mode, position) wall time, as a multiple of the user's
+# `--budget-sec`. A depth that the conservative predictor thinks will fit
+# in this extended window is allowed to run; only when the prediction
+# blows even this extension does the runner skip and move on. The actual
+# call also gets killed if it exceeds this window mid-flight.
+BUDGET_OVERRUN_FACTOR = 1.5
 
 # Predictor confidence threshold: skip-prediction is only reliable once the
 # last completed depth took long enough that fixed overhead (subprocess
@@ -549,17 +558,21 @@ def run_position_iterative(
             if depth < min_depth:
                 continue
             elapsed_total = time.monotonic() - budget_start
-            remaining = budget_sec - elapsed_total
+            # Hard wall-clock cap = budget_sec * BUDGET_OVERRUN_FACTOR.
+            # The "budget" the user set is the *target*; we let calls run up
+            # to BUDGET_OVERRUN_FACTOR× past that before killing them so a
+            # depth that's barely over budget can still complete.
+            hard_cap = budget_sec * BUDGET_OVERRUN_FACTOR
+            remaining = hard_cap - elapsed_total
             if remaining <= 0:
                 note = "budget exhausted"
                 break
 
             expected = depths_map[depth]
 
-            # Predictive early skip: if even an optimistic projection of the
-            # next depth's runtime (using last completed depth's NPS scaled
-            # up by NEXT_DEPTH_OPTIMISM) wouldn't fit in the remaining
-            # budget, stop here rather than burn the rest of the budget on a
+            # Predictive early skip: if even an extension to BUDGET_OVERRUN_FACTOR×
+            # the budget can't fit the next depth (using last completed depth's
+            # NPS at 1.0× — no optimism), stop here rather than burn time on a
             # call we know will time out.
             if completed:
                 last = completed[-1]
@@ -570,20 +583,22 @@ def run_position_iterative(
                 if (last_elapsed >= PREDICTOR_MIN_ELAPSED_SEC
                         and last_nodes > 0):
                     observed_nps = last_nodes / last_elapsed
-                    optimistic_nps = observed_nps * NEXT_DEPTH_OPTIMISM
-                    estimated_sec = expected / optimistic_nps
+                    projected_nps = observed_nps * NEXT_DEPTH_OPTIMISM
+                    estimated_sec = expected / projected_nps
                     if estimated_sec > remaining:
                         print(
                             f"    d{depth:<2} SKIPPED "
                             f"(est. {estimated_sec:>7.1f}s at "
                             f"{NEXT_DEPTH_OPTIMISM:.1f}x last NPS > "
-                            f"{remaining:.1f}s remaining)",
+                            f"{remaining:.1f}s remaining "
+                            f"[cap {hard_cap:.0f}s])",
                             flush=True,
                         )
                         note = (
                             f"skipped d{depth} "
                             f"(estimated {estimated_sec:.1f}s > "
-                            f"{remaining:.1f}s remaining)"
+                            f"{remaining:.1f}s remaining at "
+                            f"{BUDGET_OVERRUN_FACTOR:.1f}x budget cap)"
                         )
                         break
 
@@ -591,6 +606,8 @@ def run_position_iterative(
             stats_marker = sampler.begin_call()
             call_start = time.monotonic()
             _send_lines(proc, cmd)
+            # Per-call timeout = how much of the hard-capped window remains.
+            # If the call exceeds this, the engine subprocess gets killed.
             output, timed_out, eof = _wait_for_end(q, end_re, remaining)
             call_elapsed = time.monotonic() - call_start
             stats = sampler.end_call(stats_marker, call_elapsed)
