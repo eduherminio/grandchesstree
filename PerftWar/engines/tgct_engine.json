@@ -1,6 +1,6 @@
 {
   "name": "tgct_engine",
-  "version": "0.1.5-arm-local",
+  "version": "0.1.5",
   "owner": "Timmoth",
   "repo": "https://github.com/Timmoth/grandchesstree",
   "modes": {

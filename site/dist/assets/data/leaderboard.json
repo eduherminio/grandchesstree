@@ -1,6 +1,34 @@
 {
-  "generated_at": "2026-05-24T11:22:15Z",
+  "generated_at": "2026-05-24T11:58:44Z",
   "hosts": {
+    "berserk": {
+      "version": "13",
+      "host": {
+        "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_version": "3.12.3",
+        "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+        "cpu_physical_cores": 16,
+        "cpu_logical_cores": 32,
+        "ram_total_bytes": 66585452544,
+        "mem_speed_mts": null
+      }
+    },
+    "ethereal": {
+      "version": "14.40 (PEXT)",
+      "host": {
+        "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_version": "3.12.3",
+        "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+        "cpu_physical_cores": 16,
+        "cpu_logical_cores": 32,
+        "ram_total_bytes": 66585452544,
+        "mem_speed_mts": null
+      }
+    },
     "stockfish": {
       "version": "18",
       "host": {
@@ -16,7 +44,7 @@
       }
     },
     "tgct_engine": {
-      "version": "0.1.5-arm-local",
+      "version": "0.1.5",
       "host": {
         "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
         "system": "Linux",
@@ -31,6 +59,374 @@
     }
   },
   "rows": [
+    {
+      "engine": "berserk",
+      "version": "13",
+      "mode": "single-no-cache",
+      "mean_nps": 461515307,
+      "positions": [
+        {
+          "name": "startpos",
+          "best_depth": 7,
+          "best_nodes": 3195901860,
+          "best_elapsed_sec": 7.368956,
+          "best_nps": 433698073,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 54.3,
+          "best_peak_rss_mb": 54.3,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.352399,
+              "nps": 56,
+              "av_cpu_pct": 96.5,
+              "av_rss_mb": 10.1,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 9.2e-05,
+              "nps": 4362002,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 7.4e-05,
+              "nps": 121005341,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.000606,
+              "nps": 325315370,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.011863,
+              "nps": 410152382,
+              "av_cpu_pct": 84.3,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 0.2986,
+              "nps": 398728288,
+              "av_cpu_pct": 100.5,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 7,
+              "elapsed_sec": 7.368956,
+              "nps": 433698073,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            }
+          ]
+        },
+        {
+          "name": "kiwipete",
+          "best_depth": 6,
+          "best_nodes": 8031647685,
+          "best_elapsed_sec": 17.447822,
+          "best_nps": 460323790,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 54.3,
+          "best_peak_rss_mb": 54.3,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.354069,
+              "nps": 135,
+              "av_cpu_pct": 98.9,
+              "av_rss_mb": 10.2,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000149,
+              "nps": 13640712,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.000296,
+              "nps": 330143072,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.009125,
+              "nps": 447747521,
+              "av_cpu_pct": 109.6,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.365568,
+              "nps": 529835626,
+              "av_cpu_pct": 98.5,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 17.447822,
+              "nps": 460323790,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            }
+          ]
+        },
+        {
+          "name": "sje",
+          "best_depth": 6,
+          "best_nodes": 6923051137,
+          "best_elapsed_sec": 14.113581,
+          "best_nps": 490524060,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 54.3,
+          "best_peak_rss_mb": 54.3,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.354039,
+              "nps": 129,
+              "av_cpu_pct": 98.9,
+              "av_rss_mb": 12.2,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000136,
+              "nps": 15232443,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.000259,
+              "nps": 346511753,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.007935,
+              "nps": 490834490,
+              "av_cpu_pct": 126.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.316395,
+              "nps": 518578589,
+              "av_cpu_pct": 98.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 14.113581,
+              "nps": 490524060,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 54.3,
+              "peak_rss_mb": 54.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "ethereal",
+      "version": "14.40 (PEXT)",
+      "mode": "single-no-cache",
+      "mean_nps": 46946368,
+      "positions": [
+        {
+          "name": "startpos",
+          "best_depth": 6,
+          "best_nodes": 119060324,
+          "best_elapsed_sec": 2.593782,
+          "best_nps": 45902214,
+          "best_av_cpu_pct": 99.9,
+          "best_av_rss_mb": 5.9,
+          "best_peak_rss_mb": 5.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.002712,
+              "nps": 7375,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 2.2,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 6.2e-05,
+              "nps": 6450988,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.000237,
+              "nps": 37524290,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.004438,
+              "nps": 44452300,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.10688,
+              "nps": 45524069,
+              "av_cpu_pct": 102.9,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 2.593782,
+              "nps": 45902214,
+              "av_cpu_pct": 99.9,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            }
+          ]
+        },
+        {
+          "name": "kiwipete",
+          "best_depth": 5,
+          "best_nodes": 193690690,
+          "best_elapsed_sec": 4.101519,
+          "best_nps": 47224130,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 5.9,
+          "best_peak_rss_mb": 5.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.002823,
+              "nps": 17003,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 3.2,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000121,
+              "nps": 16790599,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.002163,
+              "nps": 45247094,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.089776,
+              "nps": 45508786,
+              "av_cpu_pct": 100.2,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 4.101519,
+              "nps": 47224130,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            }
+          ]
+        },
+        {
+          "name": "sje",
+          "best_depth": 5,
+          "best_nodes": 164075551,
+          "best_elapsed_sec": 3.438819,
+          "best_nps": 47712762,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 5.9,
+          "best_peak_rss_mb": 5.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.002764,
+              "nps": 16639,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 2.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.00012,
+              "nps": 17367985,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.001961,
+              "nps": 45842855,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.083021,
+              "nps": 46910932,
+              "av_cpu_pct": 96.4,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 3.438819,
+              "nps": 47712762,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 5.9,
+              "peak_rss_mb": 5.9
+            }
+          ]
+        }
+      ]
+    },
     {
       "engine": "stockfish",
       "version": "18",
@@ -229,7 +625,7 @@
     },
     {
       "engine": "tgct_engine",
-      "version": "0.1.5-arm-local",
+      "version": "0.1.5",
       "mode": "single-no-cache",
       "mean_nps": 971199012,
       "positions": [
@@ -425,7 +821,7 @@
     },
     {
       "engine": "tgct_engine",
-      "version": "0.1.5-arm-local",
+      "version": "0.1.5",
       "mode": "single-with-cache",
       "mean_nps": 4055414880,
       "positions": [
@@ -637,7 +1033,7 @@
     },
     {
       "engine": "tgct_engine",
-      "version": "0.1.5-arm-local",
+      "version": "0.1.5",
       "mode": "multi-no-cache",
       "mean_nps": 19020803099,
       "positions": [
@@ -857,7 +1253,7 @@
     },
     {
       "engine": "tgct_engine",
-      "version": "0.1.5-arm-local",
+      "version": "0.1.5",
       "mode": "multi-with-cache",
       "mean_nps": 21056356192,
       "positions": [

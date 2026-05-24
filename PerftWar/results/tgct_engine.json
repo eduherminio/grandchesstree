@@ -3,7 +3,7 @@
   "owner": "Timmoth",
   "repo": "https://github.com/Timmoth/grandchesstree",
   "versions": {
-    "0.1.5-arm-local": {
+    "0.1.5": {
       "ran_at": "2026-05-24T11:19:00Z",
       "host": {
         "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
