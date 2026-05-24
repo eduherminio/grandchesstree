@@ -124,6 +124,11 @@ run `node build.js` first.
   table. Reference perft node counts for the six TGCT-canonical positions
   are baked in so NPS can be computed from the schema's per-depth
   `elapsed_sec` when `nps` is absent.
+  Also wires click-to-sort on the summary table's headers — sort by
+  engine name, or by each of the four NPS columns. Sorts the build-rendered
+  DOM directly using `data-engine` on rows and `data-nps` on cells (no
+  re-fetch). Missing values always sink to the bottom irrespective of
+  direction.
 
 ## Images (under `src/assets/img/`)
 

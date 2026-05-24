@@ -405,6 +405,78 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   }
 
+  // Click-to-sort on the build-rendered summary table. Operates on the DOM
+  // directly — no re-render, no data round-trip. Numeric columns sort by
+  // each cell's `data-nps` attribute (so we never parse formatted strings);
+  // missing cells (no `data-nps`) always sink to the bottom regardless of
+  // direction. Engine column sorts by `data-engine` on the row.
+  function wireSummaryTableSort() {
+    const table = document.getElementById("lb-summary");
+    if (!table || !table.tHead || !table.tBodies[0]) return;
+    const tbody = table.tBodies[0];
+
+    let activeKey = null;
+    let activeAsc = false;
+
+    function readValue(row, key) {
+      if (key === "engine") {
+        return { kind: "str", v: row.getAttribute("data-engine") || "" };
+      }
+      const cell = row.querySelector(`td[data-mode="${key}"]`);
+      if (!cell) return { kind: "num", v: null };
+      const raw = cell.getAttribute("data-nps");
+      if (raw == null || raw === "") return { kind: "num", v: null };
+      const n = Number(raw);
+      return { kind: "num", v: Number.isFinite(n) ? n : null };
+    }
+
+    function sortBy(key) {
+      if (key === activeKey) {
+        activeAsc = !activeAsc;
+      } else {
+        activeKey = key;
+        // Sensible default per column: engine A→Z, NPS columns biggest first.
+        activeAsc = key === "engine";
+      }
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      rows.sort((a, b) => {
+        const va = readValue(a, key);
+        const vb = readValue(b, key);
+        if (va.kind === "str") {
+          const cmp = va.v.localeCompare(vb.v, undefined, { sensitivity: "base" });
+          return activeAsc ? cmp : -cmp;
+        }
+        // Numeric: nulls always last, irrespective of direction.
+        if (va.v == null && vb.v == null) return 0;
+        if (va.v == null) return 1;
+        if (vb.v == null) return -1;
+        return activeAsc ? va.v - vb.v : vb.v - va.v;
+      });
+      const frag = document.createDocumentFragment();
+      rows.forEach(r => frag.appendChild(r));
+      tbody.appendChild(frag);
+      updateIndicators(key, activeAsc);
+    }
+
+    function updateIndicators(key, asc) {
+      table.tHead.querySelectorAll("th[data-sort]").forEach(th => {
+        const icon = th.querySelector(".sort-icon");
+        if (!icon) return;
+        if (th.getAttribute("data-sort") === key) {
+          icon.textContent = asc ? "▲" : "▼";
+          icon.classList.remove("hidden");
+        } else {
+          icon.textContent = "";
+          icon.classList.add("hidden");
+        }
+      });
+    }
+
+    table.tHead.querySelectorAll("th[data-sort]").forEach(th => {
+      th.addEventListener("click", () => sortBy(th.getAttribute("data-sort")));
+    });
+  }
+
   // Round a number up to a friendly axis ceiling. Finer-grained than the
   // classic 1/2/5/10 series so panels (esp. memory) don't waste vertical
   // headroom when the data clusters around a single magnitude.
@@ -447,6 +519,8 @@
   }
 
   [engineSel, modeSel, positionSel].forEach(el => el.addEventListener("change", render));
+
+  wireSummaryTableSort();
 
   fetch(DATA_URL, { cache: "no-cache" })
     .then(r => {

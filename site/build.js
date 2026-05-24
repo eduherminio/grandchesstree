@@ -230,7 +230,7 @@ function leaderboardVars() {
     const cells = LB_MODES.map((m) => {
       const v = e.modes[m.key];
       if (v == null) {
-        return `<td class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>`;
+        return `<td data-mode="${m.key}" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>`;
       }
       const entries = perMode[m.key];
       const leader = entries[0];
@@ -238,10 +238,10 @@ function leaderboardVars() {
       const cls = isLeader
         ? "whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700"
         : "whitespace-nowrap px-4 py-3 text-right tabular";
-      return `<td class="${cls}">${fmtNpsFull(v)} <span class="ml-1 text-xs font-normal text-slate-500">(${fmtNpsShort(v)})</span></td>`;
+      return `<td data-mode="${m.key}" data-nps="${v}" class="${cls}">${fmtNpsFull(v)} <span class="ml-1 text-xs font-normal text-slate-500">(${fmtNpsShort(v)})</span></td>`;
     }).join("");
 
-    return `<tr class="border-t border-slate-200 hover:bg-slate-50/60">
+    return `<tr data-engine="${escapeHtml(e.engine)}" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3">${engineCell}</td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">${escapeHtml(e.version)}</td>
                     ${cells}

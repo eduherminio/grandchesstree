@@ -166,19 +166,20 @@
           <p class="mt-2 max-w-2xl text-sm text-slate-600">
             One row per engine version. Bold cells mark the fastest engine in that
             mode. A dash (&mdash;) means the engine did not run that configuration.
+            Click a column header to sort &mdash; missing values always sort last.
           </p>
 
           <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div class="overflow-x-auto">
-              <table class="min-w-full text-sm">
+              <table id="lb-summary" class="min-w-full text-sm">
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                   <tr>
-                    <th scope="col" class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700">Engine</th>
+                    <th data-sort="engine" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Engine<span class="sort-icon hidden text-slate-700"></span></span></th>
                     <th scope="col" class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700">Version</th>
-                    <th scope="col" class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700">Single, no cache</th>
-                    <th scope="col" class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700">Single, with cache</th>
-                    <th scope="col" class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700">Multi, no cache</th>
-                    <th scope="col" class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700">Multi, with cache</th>
+                    <th data-sort="single-no-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Single, no cache<span class="sort-icon hidden text-slate-700"></span></span></th>
+                    <th data-sort="single-with-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Single, with cache<span class="sort-icon hidden text-slate-700"></span></span></th>
+                    <th data-sort="multi-no-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Multi, no cache<span class="sort-icon hidden text-slate-700"></span></span></th>
+                    <th data-sort="multi-with-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Multi, with cache<span class="sort-icon hidden text-slate-700"></span></span></th>
                   </tr>
                 </thead>
                 <tbody class="text-slate-600">
