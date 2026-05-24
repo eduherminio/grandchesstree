@@ -228,7 +228,11 @@ def collect_host_info() -> dict:
 
 
 def verify_nodes(stdout: str, expected: int) -> bool:
-    return re.search(rf"\b{expected}\b", stdout) is not None
+    # Strip thousands separators (commas, underscores) before matching, so
+    # engines like StockDory that print "Nodes searched: 197,281" still
+    # validate against the bare-int expected value.
+    cleaned = stdout.replace(",", "").replace("_", "")
+    return re.search(rf"\b{expected}\b", cleaned) is not None
 
 
 def stdout_tail(stdout: str, lines: int = 20) -> str:

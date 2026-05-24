@@ -44,13 +44,15 @@ clone_or_keep() {
 # Run a single perft 4 from startpos and confirm 197281 lands in stdout.
 # Echoes the captured stdout (so callers can introspect for the UCI banner).
 # Tries `go perft` first, falls back to bare `perft` (Ethereal-style).
+# Strips thousands separators before matching so engines like StockDory
+# that print "Nodes searched: 197,281" still validate.
 verify_perft() {
   local binary="$1"
   for cmd in "go perft 4" "perft 4"; do
     local out
     out=$(printf 'uci\nucinewgame\nposition startpos\n%s\nquit\n' "$cmd" \
           | timeout 15 "$binary" 2>&1 || true)
-    if printf '%s\n' "$out" | grep -q '\b197281\b'; then
+    if printf '%s\n' "$out" | tr -d ',_' | grep -q '\b197281\b'; then
       log "perft verified via '$cmd'"
       printf '%s\n' "$out"
       return 0
