@@ -32,14 +32,44 @@ leaves.
 
 ## Wrappers
 
-| Wrapper | Language | Library | Binary path | Source |
+### Movegen libraries (Rust)
+
+| Wrapper | Language | Library | Wrapper binary path | Source |
 |---|---|---|---|---|
 | `cozy-chess/` | Rust | cozy-chess | `target/release/cozy-perft` | crates.io: `cozy-chess` |
 | `shakmaty/` | Rust | shakmaty | `target/release/shakmaty-perft` | crates.io: `shakmaty` |
 | `jordanbray-chess/` | Rust | jordanbray's chess | `target/release/jordan-perft` | crates.io: `chess` |
 
 The Rust wrappers pull their library from crates.io as a normal
-Cargo dependency — no clone needed.
+Cargo dependency — no clone needed. The wrapper is a tiny Rust binary
+that links the library and exposes a UCI loop.
+
+### Pure-perft CLI tools (bash shim)
+
+Some entries on the board are specialist perft tools that *already*
+have their own CLI but don't speak UCI — they take a FEN and depth as
+command-line arguments (or via a one-shot stdin script). For these we
+ship a tiny bash wrapper instead of a compiled wrapper binary; it just
+re-spawns the underlying tool on each `go perft <n>`, passes through
+its output verbatim, and prints `perft-done` as the line that PerftWar's
+`end_re` matches.
+
+| Wrapper | Tool | Wrapper script | Cloned source |
+|---|---|---|---|
+| `mperft/` | abulmo/MPerft | `run.sh` | `bin/mperft/` |
+| `juddperft/` | jniemann66/juddperft | `run.sh` | `bin/juddperft/` |
+| `perft_cpu_2026/` | ankan-ban/perft_cpu_2026 | `run.sh` | `bin/perft_cpu_2026/` |
+
+**Mode flags** are passed in via the wrapper's argv from the descriptor's
+`launch` field — e.g. `wrappers/mperft/run.sh --threads 1 --hash 0 --bulk`
+for MPerft's single-no-cache mode. The wrapper forwards them verbatim to
+the underlying tool.
+
+**TT-warmth caveat for juddperft:** juddperft's transposition table is
+designed to warm across calls inside a persistent process. Because this
+wrapper re-spawns juddperft per call, "with-cache" numbers for juddperft
+reflect cold-TT performance, not warm-TT. Worth flagging when reading
+the leaderboard.
 
 ## UCI subset implemented
 

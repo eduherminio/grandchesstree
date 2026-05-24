@@ -23,6 +23,14 @@ from pathlib import Path
 
 MODES = ("single-no-cache", "single-with-cache", "multi-no-cache", "multi-with-cache")
 
+# Optimism factor for the iterative-deepening early-skip predictor.
+# After each depth completes we estimate the next depth's runtime from
+# (expected_nodes / observed_nps). We multiply observed_nps by this factor
+# to be optimistic about the engine speeding up at deeper depths (less
+# subprocess-startup amortisation per node, warmer caches, etc.). Only
+# when even that optimistic time blows the remaining budget do we skip.
+NEXT_DEPTH_OPTIMISM = 1.5
+
 # (name, fen, {depth: expected_nodes})
 # Authoritative node counts from results/perft_p{0,1,2}_results.json.
 # The runner walks depths in order (d1, d2, …) under a per-position time budget
@@ -536,6 +544,36 @@ def run_position_iterative(
                 note = "budget exhausted"
                 break
 
+            expected = depths_map[depth]
+
+            # Predictive early skip: if even an optimistic projection of the
+            # next depth's runtime (using last completed depth's NPS scaled
+            # up by NEXT_DEPTH_OPTIMISM) wouldn't fit in the remaining
+            # budget, stop here rather than burn the rest of the budget on a
+            # call we know will time out.
+            if completed:
+                last = completed[-1]
+                last_elapsed = last["elapsed_sec"]
+                last_nodes = last["nodes"]
+                if last_elapsed > 0 and last_nodes > 0:
+                    observed_nps = last_nodes / last_elapsed
+                    optimistic_nps = observed_nps * NEXT_DEPTH_OPTIMISM
+                    estimated_sec = expected / optimistic_nps
+                    if estimated_sec > remaining:
+                        print(
+                            f"    d{depth:<2} SKIPPED "
+                            f"(est. {estimated_sec:>7.1f}s at "
+                            f"{NEXT_DEPTH_OPTIMISM:.1f}x last NPS > "
+                            f"{remaining:.1f}s remaining)",
+                            flush=True,
+                        )
+                        note = (
+                            f"skipped d{depth} "
+                            f"(estimated {estimated_sec:.1f}s > "
+                            f"{remaining:.1f}s remaining)"
+                        )
+                        break
+
             cmd = substitute(case_template, fen, depth, threads)
             stats_marker = sampler.begin_call()
             call_start = time.monotonic()
@@ -553,7 +591,6 @@ def run_position_iterative(
                 note = f"engine died at d{depth}"
                 break
 
-            expected = depths_map[depth]
             if not verify_nodes(output, expected):
                 print(f"    d{depth:<2} WRONG NODE COUNT", flush=True)
                 wrong_count_case = {

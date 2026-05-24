@@ -1,15 +1,15 @@
 {
   "name": "shakmaty",
-  "version": "0.27",
+  "version": "0.27.3",
   "owner": "niklasf",
   "repo": "https://github.com/niklasf/shakmaty",
   "modes": {
     "single-no-cache": {
       "launch": "wrappers/shakmaty/target/release/shakmaty-perft",
       "setup": [],
-      "case":   "position fen {fen}\nperft {depth}",
+      "case": "position fen {fen}\nperft {depth}",
       "end_re": "^Nodes searched: \\d+$",
-      "quit":   "quit"
+      "quit": "quit"
     }
   }
 }
