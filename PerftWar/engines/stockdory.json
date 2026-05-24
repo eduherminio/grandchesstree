@@ -3,6 +3,7 @@
   "version": "cd237fc32a",
   "owner": "TheBlackPlague",
   "repo": "https://github.com/TheBlackPlague/StockDory",
+  "language": "C++",
   "modes": {
     "single-no-cache": {
       "launch": "bin/stockdory/Build/StockDory",

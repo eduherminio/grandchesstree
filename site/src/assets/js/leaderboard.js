@@ -418,9 +418,14 @@
     let activeKey = null;
     let activeAsc = false;
 
+    // String-typed columns read their value from a data-* attribute on the
+    // <tr>; numeric (mode) columns read data-nps off the matching <td>.
+    const STRING_KEYS = { engine: "data-engine", language: "data-language" };
+
     function readValue(row, key) {
-      if (key === "engine") {
-        return { kind: "str", v: row.getAttribute("data-engine") || "" };
+      const attr = STRING_KEYS[key];
+      if (attr) {
+        return { kind: "str", v: row.getAttribute(attr) || "" };
       }
       const cell = row.querySelector(`td[data-mode="${key}"]`);
       if (!cell) return { kind: "num", v: null };
@@ -435,14 +440,19 @@
         activeAsc = !activeAsc;
       } else {
         activeKey = key;
-        // Sensible default per column: engine A→Z, NPS columns biggest first.
-        activeAsc = key === "engine";
+        // Sensible default: string columns A→Z, NPS columns biggest first.
+        activeAsc = key in STRING_KEYS;
       }
       const rows = Array.from(tbody.querySelectorAll("tr"));
       rows.sort((a, b) => {
         const va = readValue(a, key);
         const vb = readValue(b, key);
         if (va.kind === "str") {
+          // Empty strings (e.g. missing language) sink to the bottom
+          // regardless of direction, mirroring how nulls behave for numbers.
+          if (!va.v && !vb.v) return 0;
+          if (!va.v) return 1;
+          if (!vb.v) return -1;
           const cmp = va.v.localeCompare(vb.v, undefined, { sensitivity: "base" });
           return activeAsc ? cmp : -cmp;
         }

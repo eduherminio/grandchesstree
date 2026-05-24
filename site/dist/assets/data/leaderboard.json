@@ -351,7 +351,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C",
+      "repo": "https://github.com/jhonnold/berserk"
     },
     {
       "engine": "cozy-chess",
@@ -547,7 +549,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "Rust",
+      "repo": "https://github.com/analog-hors/cozy-chess"
     },
     {
       "engine": "ethereal",
@@ -719,7 +723,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C",
+      "repo": "https://github.com/AndyGrant/Ethereal"
     },
     {
       "engine": "halogen",
@@ -915,7 +921,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/KierenP/Halogen"
     },
     {
       "engine": "horsie",
@@ -1087,7 +1095,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/liamt19/Horsie"
     },
     {
       "engine": "jordanbray-chess",
@@ -1283,7 +1293,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "Rust",
+      "repo": "https://github.com/jordanbray/chess"
     },
     {
       "engine": "rubichess",
@@ -1455,7 +1467,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/Matthies/RubiChess"
     },
     {
       "engine": "rubichess",
@@ -1651,7 +1665,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/Matthies/RubiChess"
     },
     {
       "engine": "shakmaty",
@@ -1847,7 +1863,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "Rust",
+      "repo": "https://github.com/niklasf/shakmaty"
     },
     {
       "engine": "stockdory",
@@ -2043,7 +2061,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/TheBlackPlague/StockDory"
     },
     {
       "engine": "stockdory",
@@ -2263,7 +2283,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/TheBlackPlague/StockDory"
     },
     {
       "engine": "stockfish",
@@ -2459,7 +2481,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C++",
+      "repo": "https://github.com/official-stockfish/Stockfish"
     },
     {
       "engine": "tgct_engine",
@@ -2655,7 +2679,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C#",
+      "repo": "https://github.com/Timmoth/grandchesstree"
     },
     {
       "engine": "tgct_engine",
@@ -2867,7 +2893,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C#",
+      "repo": "https://github.com/Timmoth/grandchesstree"
     },
     {
       "engine": "tgct_engine",
@@ -3087,7 +3115,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C#",
+      "repo": "https://github.com/Timmoth/grandchesstree"
     },
     {
       "engine": "tgct_engine",
@@ -3307,7 +3337,9 @@
             }
           ]
         }
-      ]
+      ],
+      "language": "C#",
+      "repo": "https://github.com/Timmoth/grandchesstree"
     }
   ]
 }

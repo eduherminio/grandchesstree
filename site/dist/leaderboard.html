@@ -166,7 +166,6 @@
                 <span class="font-semibold text-slate-900">tgct_engine</span>
                 <span class="text-slate-500">0.1.5</span>
               </p>
-              <p class="mt-2 text-xs text-emerald-700">1.4&times; stockdory</p>
             </article>
             <article class="rounded-xl border border-slate-200 bg-white p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Single, with cache</p>
@@ -183,7 +182,6 @@
                 <span class="font-semibold text-slate-900">tgct_engine</span>
                 <span class="text-slate-500">0.1.5</span>
               </p>
-              <p class="mt-2 text-xs text-emerald-700">2.2&times; stockdory</p>
             </article>
             <article class="rounded-xl border border-slate-200 bg-white p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Multi, with cache</p>
@@ -208,6 +206,7 @@
                 <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-600">
                   <tr>
                     <th data-sort="engine" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Engine<span class="sort-icon hidden text-slate-700"></span></span></th>
+                    <th data-sort="language" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Language<span class="sort-icon hidden text-slate-700"></span></span></th>
                     <th scope="col" class="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-700">Version</th>
                     <th data-sort="single-no-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Single, no cache<span class="sort-icon hidden text-slate-700"></span></span></th>
                     <th data-sort="single-with-cache" scope="col" class="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 hover:text-slate-900"><span class="inline-flex items-center gap-1.5">Single, with cache<span class="sort-icon hidden text-slate-700"></span></span></th>
@@ -216,58 +215,69 @@
                   </tr>
                 </thead>
                 <tbody class="text-slate-600">
-                  <tr data-engine="tgct_engine" class="border-t border-slate-200 hover:bg-slate-50/60">
+                  <tr data-engine="tgct_engine" data-language="C#" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">tgct_engine</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C#</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">0.1.5</td>
                     <td data-mode="single-no-cache" data-nps="971199012" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">971,199,012 <span class="ml-1 text-xs font-normal text-slate-500">(971.2M)</span></td><td data-mode="single-with-cache" data-nps="4055414880" class="whitespace-nowrap px-4 py-3 text-right tabular">4,055,414,880 <span class="ml-1 text-xs font-normal text-slate-500">(4.06B)</span></td><td data-mode="multi-no-cache" data-nps="19020803099" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">19,020,803,099 <span class="ml-1 text-xs font-normal text-slate-500">(19.0B)</span></td><td data-mode="multi-with-cache" data-nps="21056356192" class="whitespace-nowrap px-4 py-3 text-right tabular">21,056,356,192 <span class="ml-1 text-xs font-normal text-slate-500">(21.1B)</span></td>
                   </tr>
-                  <tr data-engine="stockdory" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">stockdory</span></td>
+                  <tr data-engine="stockdory" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/TheBlackPlague/StockDory" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">stockdory</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">cd237fc32a</td>
                     <td data-mode="single-no-cache" data-nps="715360169" class="whitespace-nowrap px-4 py-3 text-right tabular">715,360,169 <span class="ml-1 text-xs font-normal text-slate-500">(715.4M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" data-nps="8801601199" class="whitespace-nowrap px-4 py-3 text-right tabular">8,801,601,199 <span class="ml-1 text-xs font-normal text-slate-500">(8.80B)</span></td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="rubichess" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">rubichess</span></td>
+                  <tr data-engine="rubichess" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Matthies/RubiChess" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">rubichess</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">20260308</td>
                     <td data-mode="single-no-cache" data-nps="52487313" class="whitespace-nowrap px-4 py-3 text-right tabular">52,487,313 <span class="ml-1 text-xs font-normal text-slate-500">(52.5M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" data-nps="657069262" class="whitespace-nowrap px-4 py-3 text-right tabular">657,069,262 <span class="ml-1 text-xs font-normal text-slate-500">(657.1M)</span></td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="cozy-chess" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">cozy-chess</span></td>
+                  <tr data-engine="cozy-chess" data-language="Rust" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/analog-hors/cozy-chess" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">cozy-chess</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">Rust</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">0.3.4</td>
                     <td data-mode="single-no-cache" data-nps="602090829" class="whitespace-nowrap px-4 py-3 text-right tabular">602,090,829 <span class="ml-1 text-xs font-normal text-slate-500">(602.1M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="berserk" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">berserk</span></td>
+                  <tr data-engine="berserk" data-language="C" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/jhonnold/berserk" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">berserk</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">13</td>
                     <td data-mode="single-no-cache" data-nps="461515307" class="whitespace-nowrap px-4 py-3 text-right tabular">461,515,307 <span class="ml-1 text-xs font-normal text-slate-500">(461.5M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="halogen" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">halogen</span></td>
+                  <tr data-engine="halogen" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/KierenP/Halogen" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">halogen</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">13</td>
                     <td data-mode="single-no-cache" data-nps="431256530" class="whitespace-nowrap px-4 py-3 text-right tabular">431,256,530 <span class="ml-1 text-xs font-normal text-slate-500">(431.3M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="shakmaty" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">shakmaty</span></td>
+                  <tr data-engine="shakmaty" data-language="Rust" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/niklasf/shakmaty" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">shakmaty</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">Rust</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">0.27.3</td>
                     <td data-mode="single-no-cache" data-nps="370826239" class="whitespace-nowrap px-4 py-3 text-right tabular">370,826,239 <span class="ml-1 text-xs font-normal text-slate-500">(370.8M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="stockfish" class="border-t border-slate-200 hover:bg-slate-50/60">
+                  <tr data-engine="stockfish" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/official-stockfish/Stockfish" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">stockfish</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">18</td>
                     <td data-mode="single-no-cache" data-nps="295489879" class="whitespace-nowrap px-4 py-3 text-right tabular">295,489,879 <span class="ml-1 text-xs font-normal text-slate-500">(295.5M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="jordanbray-chess" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">jordanbray-chess</span></td>
+                  <tr data-engine="jordanbray-chess" data-language="Rust" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/jordanbray/chess" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">jordanbray-chess</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">Rust</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">3.2.0</td>
                     <td data-mode="single-no-cache" data-nps="284905153" class="whitespace-nowrap px-4 py-3 text-right tabular">284,905,153 <span class="ml-1 text-xs font-normal text-slate-500">(284.9M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="horsie" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">horsie</span></td>
+                  <tr data-engine="horsie" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/liamt19/Horsie" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">horsie</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">1.1.7</td>
                     <td data-mode="single-no-cache" data-nps="254493846" class="whitespace-nowrap px-4 py-3 text-right tabular">254,493,846 <span class="ml-1 text-xs font-normal text-slate-500">(254.5M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
-                  <tr data-engine="ethereal" class="border-t border-slate-200 hover:bg-slate-50/60">
-                    <td class="whitespace-nowrap px-4 py-3"><span class="font-semibold text-slate-900">ethereal</span></td>
+                  <tr data-engine="ethereal" data-language="C" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/AndyGrant/Ethereal" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">ethereal</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">14.40 (PEXT)</td>
                     <td data-mode="single-no-cache" data-nps="46946368" class="whitespace-nowrap px-4 py-3 text-right tabular">46,946,368 <span class="ml-1 text-xs font-normal text-slate-500">(46.9M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>

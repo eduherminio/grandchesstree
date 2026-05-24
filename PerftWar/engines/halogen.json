@@ -3,6 +3,7 @@
   "version": "13",
   "owner": "KierenP",
   "repo": "https://github.com/KierenP/Halogen",
+  "language": "C++",
   "modes": {
     "single-no-cache": {
       "launch": "bin/halogen/build/Halogen",
@@ -10,9 +11,9 @@
         "setoption name Threads value 1",
         "setoption name Hash value 1"
       ],
-      "case":   "position fen {fen}\ngo perft {depth}",
+      "case": "position fen {fen}\ngo perft {depth}",
       "end_re": "^Nodes searched: \\d+",
-      "quit":   "quit"
+      "quit": "quit"
     }
   }
 }

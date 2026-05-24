@@ -1,8 +1,10 @@
 {
   "name": "mperft",
-  "version": "main",
+  "version": "0be02ae",
   "owner": "abulmo",
   "repo": "https://github.com/abulmo/MPerft",
+  "language": "C",
+  "_note": "Wrapper re-spawns mperft per perft call, so a 4 GB hash table is freshly allocated each time (~1.6 s overhead). The with-cache modes still give honest deep-depth nps once work eclipses alloc — the runner's predictor was updated to skip extrapolation when last_elapsed < 1 s so cache modes can reach a meaningful depth.",
   "modes": {
     "single-no-cache": {
       "launch": "wrappers/mperft/run.sh --threads 1 --hash 0 --bulk",

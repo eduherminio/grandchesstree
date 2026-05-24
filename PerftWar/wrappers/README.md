@@ -57,19 +57,11 @@ its output verbatim, and prints `perft-done` as the line that PerftWar's
 | Wrapper | Tool | Wrapper script | Cloned source |
 |---|---|---|---|
 | `mperft/` | abulmo/MPerft | `run.sh` | `bin/mperft/` |
-| `juddperft/` | jniemann66/juddperft | `run.sh` | `bin/juddperft/` |
-| `perft_cpu_2026/` | ankan-ban/perft_cpu_2026 | `run.sh` | `bin/perft_cpu_2026/` |
 
 **Mode flags** are passed in via the wrapper's argv from the descriptor's
 `launch` field — e.g. `wrappers/mperft/run.sh --threads 1 --hash 0 --bulk`
 for MPerft's single-no-cache mode. The wrapper forwards them verbatim to
 the underlying tool.
-
-**TT-warmth caveat for juddperft:** juddperft's transposition table is
-designed to warm across calls inside a persistent process. Because this
-wrapper re-spawns juddperft per call, "with-cache" numbers for juddperft
-reflect cold-TT performance, not warm-TT. Worth flagging when reading
-the leaderboard.
 
 ## UCI subset implemented
 

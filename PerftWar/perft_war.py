@@ -31,6 +31,16 @@ MODES = ("single-no-cache", "single-with-cache", "multi-no-cache", "multi-with-c
 # when even that optimistic time blows the remaining budget do we skip.
 NEXT_DEPTH_OPTIMISM = 1.5
 
+# Predictor confidence threshold: skip-prediction is only reliable once the
+# last completed depth took long enough that fixed overhead (subprocess
+# startup, hash-table allocation, JIT warmup) isn't the dominant cost.
+# Below this, the observed NPS is meaningless for extrapolation — just try
+# the next depth and accept the worst case (a few seconds of wasted budget).
+# This is what unblocks engines whose wrapper re-spawns the underlying
+# binary per call: e.g. mperft with --hash 4096 takes ~1.6s to allocate a
+# 4 GB TT regardless of depth, so d1 reads as 12 nps but d7 is multi-G/s.
+PREDICTOR_MIN_ELAPSED_SEC = 1.0
+
 # (name, fen, {depth: expected_nodes})
 # Authoritative node counts from results/perft_p{0,1,2}_results.json.
 # The runner walks depths in order (d1, d2, …) under a per-position time budget
@@ -555,7 +565,10 @@ def run_position_iterative(
                 last = completed[-1]
                 last_elapsed = last["elapsed_sec"]
                 last_nodes = last["nodes"]
-                if last_elapsed > 0 and last_nodes > 0:
+                # Only trust the predictor once the last measurement is big
+                # enough that fixed overhead doesn't dominate.
+                if (last_elapsed >= PREDICTOR_MIN_ELAPSED_SEC
+                        and last_nodes > 0):
                     observed_nps = last_nodes / last_elapsed
                     optimistic_nps = observed_nps * NEXT_DEPTH_OPTIMISM
                     estimated_sec = expected / optimistic_nps
@@ -664,11 +677,14 @@ def write_engine_result(results_dir: Path, descriptor: dict, version_block: dict
             "name": descriptor["name"],
             "owner": descriptor.get("owner"),
             "repo": descriptor.get("repo"),
+            "language": descriptor.get("language"),
             "versions": {},
         }
 
     existing["owner"] = descriptor.get("owner", existing.get("owner"))
     existing["repo"] = descriptor.get("repo", existing.get("repo"))
+    if descriptor.get("language") is not None:
+        existing["language"] = descriptor["language"]
     existing.setdefault("versions", {})
     existing["versions"][descriptor["version"]] = version_block
 
@@ -799,6 +815,8 @@ def cmd_aggregate(args: argparse.Namespace) -> int:
             rows.append({
                 "engine": data["name"],
                 "version": version,
+                "language": data.get("language"),
+                "repo": data.get("repo"),
                 "mode": mode,
                 "mean_nps": mode_data.get("mean_nps"),
                 "positions": row_positions,

@@ -115,12 +115,6 @@ const LB_MODES = [
   { key: "multi-with-cache",  label: "Multi, with cache" },
 ];
 
-// Engines we know how to link. Unknown engines render as plain text.
-const LB_KNOWN_ENGINES = {
-  "stockfish":   { repo: "https://github.com/official-stockfish/Stockfish" },
-  "tgct_engine": { repo: "https://github.com/Timmoth/grandchesstree" },
-};
-
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -154,7 +148,7 @@ function emptyLeaderboardVars() {
     LB_CARDS: cards,
     LB_TABLE_ROWS:
 `<tr class="border-t border-slate-200">
-                    <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">
+                    <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">
                       No results yet. Drop a leaderboard.json into
                       <span class="font-mono">site/src/assets/data/</span> and rebuild.
                     </td>
@@ -176,9 +170,23 @@ function leaderboardVars() {
     if (row.mean_nps == null) continue;
     const key = `${row.engine}@${row.version}`;
     if (!enginesMap.has(key)) {
-      enginesMap.set(key, { engine: row.engine, version: row.version, modes: {} });
+      enginesMap.set(key, {
+        engine: row.engine,
+        version: row.version,
+        language: row.language || null,
+        repo: row.repo || null,
+        modes: {},
+      });
     }
     enginesMap.get(key).modes[row.mode] = row.mean_nps;
+    // Tolerate older JSONs where some rows lack metadata — fill in from any
+    // row that does carry it.
+    if (row.language && !enginesMap.get(key).language) {
+      enginesMap.get(key).language = row.language;
+    }
+    if (row.repo && !enginesMap.get(key).repo) {
+      enginesMap.get(key).repo = row.repo;
+    }
   }
   const engines = [...enginesMap.values()];
   if (engines.length === 0) return emptyLeaderboardVars();
@@ -208,23 +216,23 @@ function leaderboardVars() {
     const contested = entries.length > 1;
     const borderCls = contested ? "border-emerald-200 bg-emerald-50/40" : "border-slate-200 bg-white";
     const labelCls = contested ? "text-emerald-700" : "text-slate-500";
-    const speedup = contested
-      ? `\n              <p class="mt-2 text-xs text-emerald-700">${(best.nps / entries[1].nps).toFixed(1)}&times; ${escapeHtml(entries[1].engine)}</p>`
-      : "";
     return `<article class="rounded-xl border ${borderCls} p-5">
               <p class="text-xs font-medium uppercase tracking-wider ${labelCls}">${escapeHtml(label)}</p>
               <p class="mt-3 text-2xl font-semibold tabular text-slate-900">${fmtNpsShort(best.nps)} <span class="text-sm font-normal text-slate-500">NPS</span></p>
               <p class="mt-2 text-sm text-slate-600">
                 <span class="font-semibold text-slate-900">${escapeHtml(best.engine)}</span>
                 <span class="text-slate-500">${escapeHtml(best.version)}</span>
-              </p>${speedup}
+              </p>
             </article>`;
   }).join("\n            ");
 
   const tableRows = engines.map((e) => {
-    const known = LB_KNOWN_ENGINES[e.engine];
-    const engineCell = known
-      ? `<a href="${known.repo}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">${escapeHtml(e.engine)}</a>`
+    // Engine name → repo link comes straight from the leaderboard JSON's
+    // per-row `repo` field (which the aggregator now copies from each
+    // engine descriptor). Rows without a repo render as plain text — the
+    // only case that should hit is leaderboard.json predating that schema.
+    const engineCell = e.repo
+      ? `<a href="${escapeHtml(e.repo)}" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">${escapeHtml(e.engine)}</a>`
       : `<span class="font-semibold text-slate-900">${escapeHtml(e.engine)}</span>`;
 
     const cells = LB_MODES.map((m) => {
@@ -241,8 +249,13 @@ function leaderboardVars() {
       return `<td data-mode="${m.key}" data-nps="${v}" class="${cls}">${fmtNpsFull(v)} <span class="ml-1 text-xs font-normal text-slate-500">(${fmtNpsShort(v)})</span></td>`;
     }).join("");
 
-    return `<tr data-engine="${escapeHtml(e.engine)}" class="border-t border-slate-200 hover:bg-slate-50/60">
+    const lang = e.language || "";
+    const langCell = lang
+      ? `<span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">${escapeHtml(lang)}</span>`
+      : `<span class="text-slate-400">&mdash;</span>`;
+    return `<tr data-engine="${escapeHtml(e.engine)}" data-language="${escapeHtml(lang)}" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3">${engineCell}</td>
+                    <td class="whitespace-nowrap px-4 py-3">${langCell}</td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">${escapeHtml(e.version)}</td>
                     ${cells}
                   </tr>`;
