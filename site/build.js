@@ -190,9 +190,18 @@ function leaderboardVars() {
   }
   const engines = [...enginesMap.values()];
   if (engines.length === 0) return emptyLeaderboardVars();
-  engines.sort((a, b) =>
-    Math.max(...Object.values(b.modes)) - Math.max(...Object.values(a.modes))
-  );
+  // Default sort matches the JS sort handler's default — single-no-cache,
+  // largest NPS first. Engines without that mode sink to the bottom; among
+  // those, fall back to their best-mode NPS so they're not arbitrarily
+  // ordered.
+  engines.sort((a, b) => {
+    const av = a.modes["single-no-cache"];
+    const bv = b.modes["single-no-cache"];
+    if (av != null && bv != null) return bv - av;
+    if (av != null) return -1;
+    if (bv != null) return 1;
+    return Math.max(...Object.values(b.modes)) - Math.max(...Object.values(a.modes));
+  });
 
   // Per mode, sorted list of (engine, version, nps) — first is the leader.
   const perMode = {};

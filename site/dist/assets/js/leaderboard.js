@@ -485,6 +485,14 @@
     table.tHead.querySelectorAll("th[data-sort]").forEach(th => {
       th.addEventListener("click", () => sortBy(th.getAttribute("data-sort")));
     });
+
+    // Build-time row order matches a single-no-cache descending sort, so
+    // mirror that into the JS state and show the matching ▼ indicator.
+    // This is a state sync only — no DOM reorder happens here, because
+    // the rows are already in the right order from build.js.
+    activeKey = "single-no-cache";
+    activeAsc = false;
+    updateIndicators(activeKey, activeAsc);
   }
 
   // Round a number up to a friendly axis ceiling. Finer-grained than the

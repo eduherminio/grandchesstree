@@ -538,7 +538,7 @@ function hubHtml(articles) {
 ${renderChrome(HEADER_TPL, { active: "move-generator", base: "../" })}
     <main id="main">
       <section class="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white">
-        <div class="mx-auto max-w-6xl px-6 py-14 md:py-20">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 md:py-20">
           <nav aria-label="Breadcrumb" class="mb-6 text-sm text-slate-500">
             <ol class="flex flex-wrap items-center gap-2">
               <li><a href="../index.html" class="hover:text-slate-900">Home</a></li>
@@ -552,7 +552,7 @@ ${renderChrome(HEADER_TPL, { active: "move-generator", base: "../" })}
       </section>
 
       <section class="py-16 md:py-20">
-        <div class="mx-auto max-w-6xl px-6">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6">
           <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 ${cards}
           </div>
