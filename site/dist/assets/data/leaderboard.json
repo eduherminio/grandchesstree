@@ -1037,35 +1037,5 @@
         }
       ]
     }
-  ],
-  "hosts": {
-    "stockfish": {
-      "version": "18",
-      "host": {
-        "platform": "macOS-15.7.3-arm64-arm-64bit-Mach-O",
-        "system": "Darwin",
-        "machine": "arm64",
-        "python_version": "3.14.4",
-        "cpu_model": "Apple M4 Pro",
-        "cpu_physical_cores": 14,
-        "cpu_logical_cores": 14,
-        "ram_total_bytes": 51539607552,
-        "mem_speed_mts": null
-      }
-    },
-    "tgct_engine": {
-      "version": "0.1.5-arm-local",
-      "host": {
-        "platform": "macOS-15.7.3-arm64-arm-64bit-Mach-O",
-        "system": "Darwin",
-        "machine": "arm64",
-        "python_version": "3.14.4",
-        "cpu_model": "Apple M4 Pro",
-        "cpu_physical_cores": 14,
-        "cpu_logical_cores": 14,
-        "ram_total_bytes": 51539607552,
-        "mem_speed_mts": null
-      }
-    }
-  }
+  ]
 }

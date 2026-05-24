@@ -288,11 +288,23 @@ def _wait_for_end(
             return "\n".join(lines), False, False
 
 
-def _parse_cputime(s: str) -> float | None:
-    """Parse a `ps` time-column value into seconds.
+_IS_LINUX = platform.system() == "Linux"
+try:
+    _CLK_TCK = os.sysconf("SC_CLK_TCK")
+except (ValueError, AttributeError, OSError):
+    _CLK_TCK = 100
+try:
+    _PAGE_KB = os.sysconf("SC_PAGE_SIZE") // 1024
+except (ValueError, AttributeError, OSError):
+    _PAGE_KB = 4
 
-    macOS BSD ps:  '[H:]MM:SS.dd'  (e.g. '0:01.23', '1:23:45.67')
-    Linux GNU ps:  '[DD-]HH:MM:SS' (e.g. '00:01:23', '1-02:30:45')
+
+def _parse_cputime(s: str) -> float | None:
+    """Parse the time column from BSD `ps -o time=` (macOS) into seconds.
+
+    Format: '[H:]MM:SS.dd' (e.g. '0:01.23', '1:23:45.67'). Linux GNU `ps`
+    has only whole-second precision so we read /proc/<pid>/stat there
+    instead; this parser only needs to handle the macOS form.
     """
     try:
         s = s.strip()
@@ -310,9 +322,43 @@ def _parse_cputime(s: str) -> float | None:
         return None
 
 
+def _proc_snapshot_linux(pid: int) -> dict | None:
+    """RSS + cputime via /proc on Linux. Cputime resolves to one clock tick
+    (typically 10ms with HZ=100, 4ms with HZ=250) — fine enough for our
+    sub-second perft calls, where GNU `ps -o time=` would round to 0."""
+    try:
+        with open(f"/proc/{pid}/stat", "r") as f:
+            stat_line = f.read()
+        with open(f"/proc/{pid}/statm", "r") as f:
+            statm_parts = f.read().split()
+    except OSError:
+        return None
+    # The comm field is in parens and may itself contain spaces or parens.
+    # Find the last ')' and parse fields after it.
+    rparen = stat_line.rfind(")")
+    if rparen < 0:
+        return None
+    after = stat_line[rparen + 2:].split()
+    # Indexes after comm in /proc/<pid>/stat:
+    #   0=state, 1=ppid, 2=pgrp, 3=session, 4=tty_nr, 5=tpgid, 6=flags,
+    #   7=minflt, 8=cminflt, 9=majflt, 10=cmajflt, 11=utime, 12=stime
+    try:
+        utime = int(after[11])
+        stime = int(after[12])
+        rss_pages = int(statm_parts[1])
+    except (IndexError, ValueError):
+        return None
+    return {
+        "rss_kb": rss_pages * _PAGE_KB,
+        "cputime_sec": (utime + stime) / _CLK_TCK,
+    }
+
+
 def _ps_snapshot(pid: int) -> dict | None:
-    """One-shot {rss_kb, cputime_sec} read via `ps`. Returns None on Windows
-    (no `ps`) or any error — process monitoring is best-effort."""
+    """One-shot {rss_kb, cputime_sec} read. Linux uses /proc directly for
+    sub-second cputime precision; other systems fall back to `ps`."""
+    if _IS_LINUX:
+        return _proc_snapshot_linux(pid)
     try:
         result = subprocess.run(
             ["ps", "-p", str(pid), "-o", "rss=,time="],
