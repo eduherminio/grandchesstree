@@ -1,0 +1,74 @@
+name: Release PerftCheck
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'perftcheck version'
+        default: '0.1.0'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Get application version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          echo "perftcheck version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
+
+      - name: Build and Package PerftCheck
+        run: |
+          OUTPUT_DIR=${{ github.workspace }}/output
+          mkdir -p $OUTPUT_DIR
+          for PLATFORM in win-x64 linux-x64 linux-arm64 osx-x64 osx-arm64; do
+            PLATFORM_OUTPUT_PATH=$OUTPUT_DIR/perftsuite_${PLATFORM}
+            mkdir -p $PLATFORM_OUTPUT_PATH
+            dotnet publish PerftSuite/PerftSuite.csproj \
+              -c Release \
+              -r $PLATFORM \
+              --self-contained true \
+              -p:PublishSingleFile=true \
+              -p:EnableCompressionInSingleFile=true \
+              -p:DebugType=embedded \
+              -o $PLATFORM_OUTPUT_PATH
+            # Stable, version-less asset names — the website links to
+            # /releases/latest/download/perftcheck-<rid>, so we match that.
+            if [[ "$PLATFORM" == "win-x64" ]]; then
+              mv $PLATFORM_OUTPUT_PATH/perftcheck.exe $OUTPUT_DIR/perftcheck-${PLATFORM}.exe
+            else
+              mv $PLATFORM_OUTPUT_PATH/perftcheck $OUTPUT_DIR/perftcheck-${PLATFORM}
+            fi
+          done
+
+      - name: Verify output files
+        run: ls -R ${{ github.workspace }}/output
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Tag is prefixed with `perftcheck-` so engine + perftcheck releases
+          # sit in different namespaces and don't collide as "latest".
+          tag_name: perftcheck-${{ env.version }}
+          name: PerftCheck ${{ env.version }}
+          files: |
+            ${{ github.workspace }}/output/perftcheck-win-x64.exe
+            ${{ github.workspace }}/output/perftcheck-linux-x64
+            ${{ github.workspace }}/output/perftcheck-linux-arm64
+            ${{ github.workspace }}/output/perftcheck-osx-x64
+            ${{ github.workspace }}/output/perftcheck-osx-arm64
+          draft: true

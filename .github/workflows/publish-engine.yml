@@ -1,0 +1,76 @@
+name: Release Engine
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Engine version'
+        default: '0.0.3'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Get application version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          FORMATTED_VERSION=$(echo $VERSION | tr '.' '_')
+          echo "Engine version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
+          echo "formatted_version=$FORMATTED_VERSION" >> $GITHUB_ENV
+
+      - name: Build and Package Engine
+        run: |
+          FORMATTED_VERSION=${{ env.formatted_version }}
+          OUTPUT_DIR=${{ github.workspace }}/output
+          mkdir -p $OUTPUT_DIR
+          APP=GrandChessTree.Engine
+          APP_PATH=Distributed-Perft/$APP
+          OUTPUT_NAME=tgct_engine
+          for PLATFORM in win-x64 linux-x64 linux-arm64 osx-x64 osx-arm64; do
+            PLATFORM_OUTPUT_PATH=$OUTPUT_DIR/${PLATFORM}
+            mkdir -p $PLATFORM_OUTPUT_PATH
+            if [[ "$PLATFORM" == "linux-arm64" || "$PLATFORM" == "osx-arm64" ]]; then
+              dotnet publish $APP_PATH -r $PLATFORM /p:Release=true -p:DefineConstants="ARM" -o $PLATFORM_OUTPUT_PATH
+            else
+              dotnet publish $APP_PATH -r $PLATFORM /p:Release=true -o $PLATFORM_OUTPUT_PATH
+            fi
+
+            if [[ "$PLATFORM" == "win-x64" ]]; then
+              mv $PLATFORM_OUTPUT_PATH/${APP}.exe $OUTPUT_DIR/${OUTPUT_NAME}_${FORMATTED_VERSION}_${PLATFORM}.exe
+            else
+              mv $PLATFORM_OUTPUT_PATH/${APP} $OUTPUT_DIR/${OUTPUT_NAME}_${FORMATTED_VERSION}_${PLATFORM}
+            fi
+          done
+
+      - name: Verify output files
+        run: ls -R ${{ github.workspace }}/output
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Tag is prefixed with `engine-` so engine + perftcheck releases sit
+          # in different namespaces and don't collide as "latest".
+          tag_name: engine-${{ env.version }}
+          name: Engine ${{ env.version }}
+          files: |
+            ${{ github.workspace }}/output/tgct_engine_${{ env.formatted_version }}_win-x64.exe
+            ${{ github.workspace }}/output/tgct_engine_${{ env.formatted_version }}_linux-x64
+            ${{ github.workspace }}/output/tgct_engine_${{ env.formatted_version }}_linux-arm64
+            ${{ github.workspace }}/output/tgct_engine_${{ env.formatted_version }}_osx-x64
+            ${{ github.workspace }}/output/tgct_engine_${{ env.formatted_version }}_osx-arm64
+          draft: true

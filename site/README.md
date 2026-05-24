@@ -6,8 +6,10 @@ one small build step (`build.js`) that:
 
 1. Inlines a shared header + footer template into every page (so navigation
    lives in one place, not eleven).
-2. Copies static assets into `dist/`.
-3. Calls `src/articles/build-articles.js` to publish the move-generation
+2. Renders the leaderboard page from `src/assets/data/leaderboard.json`
+   (cards, table, badge, and timestamp).
+3. Copies static assets into `dist/`.
+4. Calls `src/articles/build-articles.js` to publish the move-generation
    article series under `dist/move-generator/`.
 
 ## Layout
@@ -112,6 +114,12 @@ run `node build.js` first.
   served from `dist/wasm/movegen/`. Roughly 20× faster than the JS port.
 - **`board-export.js`** — serialises an SVG board to a sharp pixel-art PNG.
   Drives the "Save PNG" button on every board-rendering tool.
+- **`leaderboard.js`** — runtime driver for the "Drill down by run" section
+  on `leaderboard.html`. Fetches `assets/data/leaderboard.json`, populates
+  the engine / mode / position dropdowns, and renders the stats grid,
+  per-depth NPS chart (SVG, log Y), and per-depth table. Reference perft
+  node counts for the six TGCT-canonical positions are baked in so NPS can
+  be computed from the schema's per-depth `elapsed_sec`.
 
 ## Images (under `src/assets/img/`)
 
@@ -123,9 +131,22 @@ run `node build.js` first.
 
 ## Data (under `src/assets/data/`)
 
-`perft_p{0,1,2}_results.json` — historical perft result data for the three
-studied positions (startpos / kiwipete / sje). Replace the JSON file to
-update the data; no page edits needed.
+- `perft_p{0,1,2}_results.json` — historical perft result data for the three
+  studied positions (startpos / kiwipete / sje). Replace the JSON file to
+  update the data; no page edits needed.
+- `leaderboard.json` — the engine leaderboard for `leaderboard.html`. Same
+  schema as the file emitted by `../PerftWar/perft_war.py aggregate`. To
+  refresh the leaderboard:
+
+  ```sh
+  cp ../PerftWar/results/leaderboard.json src/assets/data/leaderboard.json
+  node build.js --skip-articles
+  ```
+
+  The build reads it and renders the best-in-mode cards, the full results
+  table, the engine count badge, and the "last benchmarked" timestamp.
+  Unknown engines render as plain text in the table — add the engine name
+  to `LB_KNOWN_ENGINES` in `build.js` to get a repo link.
 
 ## Article syntax highlighting
 
