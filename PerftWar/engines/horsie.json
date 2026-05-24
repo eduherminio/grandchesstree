@@ -1,0 +1,48 @@
+{
+  "name": "horsie",
+  "version": "1.1",
+  "owner": "liamt19",
+  "repo": "https://github.com/liamt19/Horsie",
+  "modes": {
+    "single-no-cache": {
+      "launch": "bin/horsie/horsie-native",
+      "setup": [
+        "setoption name Threads value 1",
+        "setoption name Hash value 1"
+      ],
+      "case":   "position fen {fen}\ngo perft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    },
+    "single-with-cache": {
+      "launch": "bin/horsie/horsie-native",
+      "setup": [
+        "setoption name Threads value 1",
+        "setoption name Hash value 4096"
+      ],
+      "case":   "position fen {fen}\ngo perft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    },
+    "multi-no-cache": {
+      "launch": "bin/horsie/horsie-native",
+      "setup": [
+        "setoption name Threads value {threads}",
+        "setoption name Hash value 1"
+      ],
+      "case":   "position fen {fen}\ngo perft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    },
+    "multi-with-cache": {
+      "launch": "bin/horsie/horsie-native",
+      "setup": [
+        "setoption name Threads value {threads}",
+        "setoption name Hash value 4096"
+      ],
+      "case":   "position fen {fen}\ngo perft {depth}",
+      "end_re": "^Nodes searched: \\d+$",
+      "quit":   "quit"
+    }
+  }
+}

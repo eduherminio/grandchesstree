@@ -21,12 +21,24 @@ case "$HOST" in
   *)             EXTRA="" ;;
 esac
 
-log "building (host=$HOST $EXTRA)"
+# Ethereal's default `make` target is `pgo`, which calls llvm-profdata to
+# merge profile data into the second build pass. If llvm isn't installed
+# (`apt install llvm` on Debian/Ubuntu), the build fails halfway through
+# with a confusing "command not found" error. Detect that case up front
+# and fall back to the no-PGO `basic` target with a clear warning.
+TARGET=""
+if ! command -v llvm-profdata >/dev/null 2>&1; then
+  log "WARNING: llvm-profdata not found — falling back to non-PGO 'basic' build"
+  log "         install 'llvm' (apt) / 'llvm-tools' for the faster PGO build"
+  TARGET="basic"
+fi
+
+log "building (host=$HOST $EXTRA${TARGET:+ target=$TARGET})"
 (
   cd "$ENGINE_DIR/src"
   make clean >/dev/null 2>&1 || true
   # shellcheck disable=SC2086
-  make $EXTRA -j
+  make $EXTRA $TARGET -j
 )
 
 [ -x "$BINARY" ] || die "expected binary at $BINARY but it's missing"

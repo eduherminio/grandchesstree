@@ -70,7 +70,7 @@ engine through. See [`wrappers/README.md`](wrappers/README.md) for the
 methodology (bulk-counting at depth 1, why a wrapper vs in-process FFI)
 and a per-library status table.
 
-Currently shimmed: cozy-chess, shakmaty, jordanbray/chess, surge. Each
+Currently shimmed: cozy-chess, shakmaty, jordanbray/chess. Each
 has a matching `engines/<lib>.json` descriptor and
 `scripts/install-<lib>.sh` install script.
 

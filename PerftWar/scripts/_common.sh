@@ -10,6 +10,12 @@ set -euo pipefail
 _SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$_SCRIPT_DIR/.."
 
+# rustup installs leave cargo on $HOME/.cargo/bin and patch .bashrc/.profile,
+# but non-interactive SSH sessions skip those — so cargo-based installs would
+# fail with "cargo: not found" out of the box. Source the env explicitly if
+# it's there; harmless if not.
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
 log() { printf '[%s] %s\n' "${ENGINE:-?}" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
 

@@ -37,13 +37,9 @@ leaves.
 | `cozy-chess/` | Rust | cozy-chess | `target/release/cozy-perft` | crates.io: `cozy-chess` |
 | `shakmaty/` | Rust | shakmaty | `target/release/shakmaty-perft` | crates.io: `shakmaty` |
 | `jordanbray-chess/` | Rust | jordanbray's chess | `target/release/jordan-perft` | crates.io: `chess` |
-| `surge/` | C++ | Surge | `surge-perft` | github.com/nkarve/surge (cloned into `bin/surge/`) |
 
-The three Rust wrappers pull their library from crates.io as a normal
-Cargo dependency — no clone needed. Surge isn't on a package registry,
-so `scripts/install-surge.sh` clones the upstream repo and the wrapper's
-Makefile compiles wrapper.cpp alongside surge's .cpp files into one
-binary.
+The Rust wrappers pull their library from crates.io as a normal
+Cargo dependency — no clone needed.
 
 ## UCI subset implemented
 
