@@ -179,12 +179,40 @@ Disqualified version block:
 }
 ```
 
+## Host info
+
+Every run captures a best-effort description of the machine it executed
+on, stored under `versions[v].host`:
+
+```json
+"host": {
+  "platform": "macOS-15.7-arm64-arm-64bit",
+  "system": "Darwin",
+  "machine": "arm64",
+  "python_version": "3.13.1",
+  "cpu_model": "Apple M2",
+  "cpu_physical_cores": 8,
+  "cpu_logical_cores": 8,
+  "ram_total_bytes": 17179869184,
+  "mem_speed_mts": null
+}
+```
+
+- **Linux**: CPU/RAM from `/proc/cpuinfo` and `/proc/meminfo`; memory MT/s
+  from `dmidecode -t memory` (often needs root — quietly null otherwise).
+- **macOS**: CPU/RAM from `sysctl`; memory MT/s from
+  `system_profiler SPMemoryDataType` (typically absent on Apple Silicon
+  due to unified on-package memory).
+- Any field can be `null` independently — the harness treats host data as
+  informational, never a contract.
+
 ## Aggregator
 
 `perft_war.py aggregate` walks `results/*.json`, picks the **most recent
 non-disqualified version per engine**, writes `results/leaderboard.json`
-with a flat list of `{engine, version, mode, mean_nps}` rows ready for the
-website.
+with a flat list of `{engine, version, mode, mean_nps, positions}` rows
+plus a top-level `hosts` map (one entry per engine, copied from its
+selected version's `host` block).
 
 ## CLI
 

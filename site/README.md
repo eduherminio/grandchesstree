@@ -116,10 +116,14 @@ run `node build.js` first.
   Drives the "Save PNG" button on every board-rendering tool.
 - **`leaderboard.js`** — runtime driver for the "Drill down by run" section
   on `leaderboard.html`. Fetches `assets/data/leaderboard.json`, populates
-  the engine / mode / position dropdowns, and renders the stats grid,
-  per-depth NPS chart (SVG, log Y), and per-depth table. Reference perft
-  node counts for the six TGCT-canonical positions are baked in so NPS can
-  be computed from the schema's per-depth `elapsed_sec`.
+  the engine / mode / position dropdowns, and renders: the stats grid; a
+  "Ran on" card built from the top-level `hosts` map (CPU model, cores /
+  threads, RAM, memory MT/s, platform) — hides itself when the JSON
+  predates the host-info upgrade; a single overlay SVG chart with NPS
+  (left, log Y), CPU% and peak RSS on offset right axes; and the per-depth
+  table. Reference perft node counts for the six TGCT-canonical positions
+  are baked in so NPS can be computed from the schema's per-depth
+  `elapsed_sec` when `nps` is absent.
 
 ## Images (under `src/assets/img/`)
 

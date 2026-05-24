@@ -5,7 +5,7 @@
   "repo": "https://github.com/official-stockfish/Stockfish",
   "modes": {
     "single-no-cache": {
-      "launch": "/Users/timmoth/code/grandchesstree/PerftWar/bin/stockfish/stockfish-macos-m1-apple-silicon",
+      "launch": "bin/stockfish/stockfish",
       "setup": [
         "setoption name Threads value 1",
         "setoption name Hash value 1"

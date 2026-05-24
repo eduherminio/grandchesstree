@@ -109,6 +109,65 @@
     if (p == null) return "—";
     return Math.round(p) + "%";
   }
+  function fmtBytes(b) {
+    if (b == null) return "—";
+    const gib = b / (1024 ** 3);
+    if (gib >= 1024) return (gib / 1024).toFixed(2) + " TiB";
+    if (gib >= 1) {
+      // 0.1 GiB resolution feels right for RAM sizes.
+      return (Math.round(gib * 10) / 10) + " GiB";
+    }
+    const mib = b / (1024 ** 2);
+    return Math.round(mib) + " MiB";
+  }
+
+  function renderHost(engineName) {
+    const hostEl = document.getElementById("lb-host");
+    if (!hostEl) return;
+    const entry = data && data.hosts ? data.hosts[engineName] : null;
+    if (!entry || !entry.host) {
+      hostEl.classList.add("hidden");
+      hostEl.innerHTML = "";
+      return;
+    }
+    hostEl.classList.remove("hidden");
+
+    const h = entry.host;
+    const cpuSub = (h.cpu_physical_cores != null || h.cpu_logical_cores != null)
+      ? `${h.cpu_physical_cores != null ? h.cpu_physical_cores + " cores" : ""}${
+          h.cpu_physical_cores != null && h.cpu_logical_cores != null ? " · " : ""
+        }${h.cpu_logical_cores != null ? h.cpu_logical_cores + " threads" : ""}`
+      : "";
+    const memSub = h.mem_speed_mts != null ? `${h.mem_speed_mts} MT/s` : "";
+    const platform = h.platform || h.system || "—";
+    const pyLine = h.python_version ? `Python ${h.python_version}` : "";
+    const versionTag = entry.version ? ` <span class="text-slate-400">(${escapeXml(entry.version)})</span>` : "";
+
+    hostEl.innerHTML = `
+      <div class="rounded-xl border border-slate-200 bg-white p-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-700">Ran on</h3>
+          <p class="text-xs text-slate-500">${escapeXml(engineName)}${versionTag}</p>
+        </div>
+        <div class="mt-4 grid gap-6 sm:grid-cols-3">
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-500">CPU</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900">${escapeXml(h.cpu_model || "—")}</p>
+            ${cpuSub ? `<p class="text-xs text-slate-500 tabular">${escapeXml(cpuSub)}</p>` : ""}
+          </div>
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Memory</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900 tabular">${escapeXml(fmtBytes(h.ram_total_bytes))}</p>
+            ${memSub ? `<p class="text-xs text-slate-500 tabular">${escapeXml(memSub)}</p>` : ""}
+          </div>
+          <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-500">Platform</p>
+            <p class="mt-1 break-words font-mono text-xs text-slate-800">${escapeXml(platform)}</p>
+            ${pyLine ? `<p class="mt-1 text-xs text-slate-500">${escapeXml(pyLine)}</p>` : ""}
+          </div>
+        </div>
+      </div>`;
+  }
 
   function renderStats(pos, depths) {
     const totalElapsed = depths.reduce((s, d) => s + (d.elapsed_sec || 0), 0);
@@ -382,6 +441,7 @@
     emptyEl.classList.add("hidden");
     detailEl.classList.remove("hidden");
     renderStats(sel.pos, depths);
+    renderHost(sel.row.engine);
     renderTable(depths);
     renderChart(depths);
   }

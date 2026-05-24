@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import queue
 import re
 import statistics
@@ -108,6 +109,122 @@ def substitute(template: str, fen: str, depth: int, threads: int) -> str:
 
 def host_threads() -> int:
     return os.cpu_count() or 1
+
+
+def _run_cmd(args: list[str], timeout: float = 10.0) -> str | None:
+    """Best-effort subprocess capture for host probes. Returns stdout on
+    success, None on any failure (missing binary, non-zero exit, timeout).
+    Used for sysctl / system_profiler / dmidecode lookups — every one of
+    them may be absent or restricted, so we always tolerate failure."""
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    except (FileNotFoundError, OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    return r.stdout
+
+
+def _sysctl_int(key: str) -> int | None:
+    out = _run_cmd(["sysctl", "-n", key])
+    if out is None:
+        return None
+    try:
+        return int(out.strip())
+    except ValueError:
+        return None
+
+
+def _linux_mem_speed_mts() -> int | None:
+    """Parse Configured/Speed lines from `dmidecode -t memory`. Needs root
+    on most distros; returns None silently when unavailable."""
+    out = _run_cmd(["dmidecode", "-t", "memory"])
+    if not out:
+        return None
+    # Prefer the actually-configured speed; some BIOSes only emit "Speed:".
+    configured = re.findall(r"Configured (?:Memory|Clock) Speed:\s+(\d+)\s*MT/s", out)
+    speeds = configured or re.findall(r"^\s*Speed:\s+(\d+)\s*MT/s", out, re.M)
+    if not speeds:
+        return None
+    return max(int(x) for x in speeds)
+
+
+def _darwin_mem_speed_mts() -> int | None:
+    """macOS system_profiler reports DDR data rates as `Speed: NNNN MHz`
+    (which equals MT/s for DDR). On Apple Silicon, no speed line is
+    typically emitted — unified memory makes it moot — so returns None."""
+    out = _run_cmd(["system_profiler", "SPMemoryDataType"], timeout=15.0)
+    if not out:
+        return None
+    speeds = re.findall(r"Speed:\s+(\d+)\s*MHz", out)
+    if not speeds:
+        return None
+    return max(int(x) for x in speeds)
+
+
+def collect_host_info() -> dict:
+    """Cross-platform best-effort description of the machine that ran the
+    benchmark. Every field can independently be None — callers should treat
+    the dict as informational, not a contract.
+
+    Stored verbatim under `versions[v].host` in each per-engine result, and
+    surfaced as `hosts[<engine>].host` in the aggregated leaderboard."""
+    sysname = platform.system()
+    info: dict = {
+        "platform": platform.platform(),
+        "system": sysname,
+        "machine": platform.machine(),
+        "python_version": platform.python_version(),
+        "cpu_model": None,
+        "cpu_physical_cores": None,
+        "cpu_logical_cores": os.cpu_count(),
+        "ram_total_bytes": None,
+        "mem_speed_mts": None,
+    }
+
+    if sysname == "Linux":
+        try:
+            with open("/proc/cpuinfo") as f:
+                cpuinfo = f.read()
+            m = re.search(r"^model name\s*:\s*(.+)$", cpuinfo, re.M)
+            if m:
+                info["cpu_model"] = m.group(1).strip()
+            sockets: set[str] = set()
+            cores_per_socket: int | None = None
+            for line in cpuinfo.splitlines():
+                if line.startswith("physical id"):
+                    sockets.add(line.split(":", 1)[1].strip())
+                elif line.startswith("cpu cores") and cores_per_socket is None:
+                    try:
+                        cores_per_socket = int(line.split(":", 1)[1].strip())
+                    except ValueError:
+                        pass
+            if cores_per_socket and sockets:
+                info["cpu_physical_cores"] = cores_per_socket * len(sockets)
+            elif cores_per_socket:
+                info["cpu_physical_cores"] = cores_per_socket
+        except OSError:
+            pass
+        try:
+            with open("/proc/meminfo") as f:
+                m = re.search(r"^MemTotal:\s+(\d+)\s+kB", f.read(), re.M)
+                if m:
+                    info["ram_total_bytes"] = int(m.group(1)) * 1024
+        except OSError:
+            pass
+        info["mem_speed_mts"] = _linux_mem_speed_mts()
+    elif sysname == "Darwin":
+        brand = _run_cmd(["sysctl", "-n", "machdep.cpu.brand_string"])
+        if brand:
+            info["cpu_model"] = brand.strip() or None
+        info["cpu_physical_cores"] = _sysctl_int("hw.physicalcpu")
+        logical = _sysctl_int("hw.logicalcpu")
+        if logical is not None:
+            info["cpu_logical_cores"] = logical
+        info["ram_total_bytes"] = _sysctl_int("hw.memsize")
+        info["mem_speed_mts"] = _darwin_mem_speed_mts()
+
+    return info
 
 
 def verify_nodes(stdout: str, expected: int) -> bool:
@@ -479,6 +596,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     threads = host_threads()
     budget = float(args.budget_sec)
+    host = collect_host_info()
 
     if args.positions:
         wanted = set(args.positions.split(","))
@@ -506,6 +624,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     except Disqualified as dq:
         version_block = {
             "ran_at": utc_now_iso(),
+            "host": host,
             "disqualified": True,
             "reason": "wrong node count",
             "failed_case": {
@@ -525,6 +644,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     version_block = {
         "ran_at": utc_now_iso(),
+        "host": host,
         "disqualified": False,
         "budget_sec": budget,
         "modes": mode_results,
@@ -537,6 +657,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 def cmd_aggregate(args: argparse.Namespace) -> int:
     results_dir = Path(args.results_dir)
     rows: list[dict] = []
+    hosts: dict[str, dict] = {}
     for engine_file in sorted(results_dir.glob("*.json")):
         if engine_file.name == "leaderboard.json":
             continue
@@ -550,6 +671,8 @@ def cmd_aggregate(args: argparse.Namespace) -> int:
             continue
         valid.sort(key=lambda vb: vb[1].get("ran_at", ""), reverse=True)
         version, block = valid[0]
+        if "host" in block:
+            hosts[data["name"]] = {"version": version, "host": block["host"]}
         for mode, mode_data in block["modes"].items():
             row_positions = []
             for pos in mode_data.get("positions", []):
@@ -584,8 +707,12 @@ def cmd_aggregate(args: argparse.Namespace) -> int:
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps({"generated_at": utc_now_iso(), "rows": rows}, indent=2) + "\n")
-    print(f"wrote {out_path} ({len(rows)} rows)")
+    out_path.write_text(json.dumps({
+        "generated_at": utc_now_iso(),
+        "hosts": hosts,
+        "rows": rows,
+    }, indent=2) + "\n")
+    print(f"wrote {out_path} ({len(rows)} rows, {len(hosts)} hosts)")
     return 0
 
 
