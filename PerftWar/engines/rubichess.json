@@ -13,6 +13,16 @@
       "case":   "position fen {fen}\nperft {depth}",
       "end_re": "^Total nodes: \\d+$",
       "quit":   "quit"
+    },
+    "multi-no-cache": {
+      "launch": "bin/rubichess/src/RubiChess",
+      "setup": [
+        "setoption name Threads value {threads}",
+        "setoption name Hash value 1"
+      ],
+      "case":   "position fen {fen}\nperft {depth}",
+      "end_re": "^Total nodes: \\d+$",
+      "quit":   "quit"
     }
   }
 }
