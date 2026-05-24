@@ -154,7 +154,7 @@
             <h1 class="text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">Leaderboard</h1>
             <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-800">
               <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              Preview &mdash; 14 engines
+              Preview &mdash; 15 engines
             </span>
           </div>
 
@@ -184,7 +184,7 @@
           </div>
 
           <p class="mt-6 text-xs text-slate-500">
-            Last benchmarked: <time datetime="2026-05-24T17:19:19Z" class="font-mono">2026-05-24 17:19 UTC</time>
+            Last benchmarked: <time datetime="2026-05-24T18:12:09Z" class="font-mono">2026-05-24 18:12 UTC</time>
           </p>
         </div>
       </section>
@@ -214,26 +214,26 @@
             </article>
             <article class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-emerald-700">Single, with cache</p>
-              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">4.75B <span class="text-sm font-normal text-slate-500">NPS</span></p>
+              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">4.81B <span class="text-sm font-normal text-slate-500">NPS</span></p>
               <p class="mt-2 text-sm text-slate-600">
-                <span class="font-semibold text-slate-900">mperft</span>
-                <span class="text-slate-500">0be02ae</span>
+                <span class="font-semibold text-slate-900">perft_cpu_2026</span>
+                <span class="text-slate-500">main</span>
               </p>
             </article>
             <article class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-emerald-700">Multi, no cache</p>
-              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">26.8B <span class="text-sm font-normal text-slate-500">NPS</span></p>
+              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">33.2B <span class="text-sm font-normal text-slate-500">NPS</span></p>
               <p class="mt-2 text-sm text-slate-600">
-                <span class="font-semibold text-slate-900">mperft</span>
-                <span class="text-slate-500">0be02ae</span>
+                <span class="font-semibold text-slate-900">perft_cpu_2026</span>
+                <span class="text-slate-500">main</span>
               </p>
             </article>
             <article class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-emerald-700">Multi, with cache</p>
-              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">171.9B <span class="text-sm font-normal text-slate-500">NPS</span></p>
+              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">361.2B <span class="text-sm font-normal text-slate-500">NPS</span></p>
               <p class="mt-2 text-sm text-slate-600">
-                <span class="font-semibold text-slate-900">mperft</span>
-                <span class="text-slate-500">0be02ae</span>
+                <span class="font-semibold text-slate-900">perft_cpu_2026</span>
+                <span class="text-slate-500">main</span>
               </p>
             </article>
           </div>
@@ -266,6 +266,12 @@
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">1.6</td>
                     <td data-mode="single-no-cache" data-nps="2304487198" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">2,304,487,198 <span class="ml-1 text-xs font-normal text-slate-500">(2.30B)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
+                  <tr data-engine="perft_cpu_2026" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/ankan-ban/perft_cpu_2026" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perft_cpu_2026</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
+                    <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">main</td>
+                    <td data-mode="single-no-cache" data-nps="1935787602" class="whitespace-nowrap px-4 py-3 text-right tabular">1,935,787,602 <span class="ml-1 text-xs font-normal text-slate-500">(1.94B)</span></td><td data-mode="single-with-cache" data-nps="4806229072" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">4,806,229,072 <span class="ml-1 text-xs font-normal text-slate-500">(4.81B)</span></td><td data-mode="multi-no-cache" data-nps="33219331350" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">33,219,331,350 <span class="ml-1 text-xs font-normal text-slate-500">(33.2B)</span></td><td data-mode="multi-with-cache" data-nps="361240881390" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">361,240,881,390 <span class="ml-1 text-xs font-normal text-slate-500">(361.2B)</span></td>
+                  </tr>
                   <tr data-engine="zerologic" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/0xwurm/ZeroLogic" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">zerologic</a></td>
                     <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
@@ -276,7 +282,7 @@
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/abulmo/MPerft" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">mperft</a></td>
                     <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">0be02ae</td>
-                    <td data-mode="single-no-cache" data-nps="1541075983" class="whitespace-nowrap px-4 py-3 text-right tabular">1,541,075,983 <span class="ml-1 text-xs font-normal text-slate-500">(1.54B)</span></td><td data-mode="single-with-cache" data-nps="4751986393" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">4,751,986,393 <span class="ml-1 text-xs font-normal text-slate-500">(4.75B)</span></td><td data-mode="multi-no-cache" data-nps="26822399079" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">26,822,399,079 <span class="ml-1 text-xs font-normal text-slate-500">(26.8B)</span></td><td data-mode="multi-with-cache" data-nps="171925899207" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">171,925,899,207 <span class="ml-1 text-xs font-normal text-slate-500">(171.9B)</span></td>
+                    <td data-mode="single-no-cache" data-nps="1541075983" class="whitespace-nowrap px-4 py-3 text-right tabular">1,541,075,983 <span class="ml-1 text-xs font-normal text-slate-500">(1.54B)</span></td><td data-mode="single-with-cache" data-nps="4751986393" class="whitespace-nowrap px-4 py-3 text-right tabular">4,751,986,393 <span class="ml-1 text-xs font-normal text-slate-500">(4.75B)</span></td><td data-mode="multi-no-cache" data-nps="26822399079" class="whitespace-nowrap px-4 py-3 text-right tabular">26,822,399,079 <span class="ml-1 text-xs font-normal text-slate-500">(26.8B)</span></td><td data-mode="multi-with-cache" data-nps="171925899207" class="whitespace-nowrap px-4 py-3 text-right tabular">171,925,899,207 <span class="ml-1 text-xs font-normal text-slate-500">(171.9B)</span></td>
                   </tr>
                   <tr data-engine="tgct_engine" data-language="C#" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">tgct_engine</a></td>
