@@ -71,4 +71,8 @@ jobs:
             ${{ github.workspace }}/output/perftcheck-linux-arm64
             ${{ github.workspace }}/output/perftcheck-osx-x64
             ${{ github.workspace }}/output/perftcheck-osx-arm64
-          draft: true
+          # Publish as a real (non-draft) release so the assets are
+          # immediately reachable from the website. `make_latest: false`
+          # keeps engine releases as the canonical "latest" for the repo.
+          draft: false
+          make_latest: false

@@ -109,7 +109,7 @@
             <h1 class="text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">Leaderboard</h1>
             <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-800">
               <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              Preview &mdash; 12 engines
+              Preview &mdash; 13 engines
             </span>
           </div>
 
@@ -139,7 +139,7 @@
           </div>
 
           <p class="mt-6 text-xs text-slate-500">
-            Last benchmarked: <time datetime="2026-05-24T15:14:39Z" class="font-mono">2026-05-24 15:14 UTC</time>
+            Last benchmarked: <time datetime="2026-05-24T16:43:54Z" class="font-mono">2026-05-24 16:43 UTC</time>
           </p>
         </div>
       </section>
@@ -161,10 +161,10 @@
           <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <article class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
               <p class="text-xs font-medium uppercase tracking-wider text-emerald-700">Single, no cache</p>
-              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">1.54B <span class="text-sm font-normal text-slate-500">NPS</span></p>
+              <p class="mt-3 text-2xl font-semibold tabular text-slate-900">2.30B <span class="text-sm font-normal text-slate-500">NPS</span></p>
               <p class="mt-2 text-sm text-slate-600">
-                <span class="font-semibold text-slate-900">mperft</span>
-                <span class="text-slate-500">0be02ae</span>
+                <span class="font-semibold text-slate-900">gigantua</span>
+                <span class="text-slate-500">1.6</span>
               </p>
             </article>
             <article class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
@@ -219,7 +219,7 @@
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/abulmo/MPerft" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">mperft</a></td>
                     <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">0be02ae</td>
-                    <td data-mode="single-no-cache" data-nps="1541075983" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">1,541,075,983 <span class="ml-1 text-xs font-normal text-slate-500">(1.54B)</span></td><td data-mode="single-with-cache" data-nps="4751986393" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">4,751,986,393 <span class="ml-1 text-xs font-normal text-slate-500">(4.75B)</span></td><td data-mode="multi-no-cache" data-nps="26822399079" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">26,822,399,079 <span class="ml-1 text-xs font-normal text-slate-500">(26.8B)</span></td><td data-mode="multi-with-cache" data-nps="171925899207" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">171,925,899,207 <span class="ml-1 text-xs font-normal text-slate-500">(171.9B)</span></td>
+                    <td data-mode="single-no-cache" data-nps="1541075983" class="whitespace-nowrap px-4 py-3 text-right tabular">1,541,075,983 <span class="ml-1 text-xs font-normal text-slate-500">(1.54B)</span></td><td data-mode="single-with-cache" data-nps="4751986393" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">4,751,986,393 <span class="ml-1 text-xs font-normal text-slate-500">(4.75B)</span></td><td data-mode="multi-no-cache" data-nps="26822399079" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">26,822,399,079 <span class="ml-1 text-xs font-normal text-slate-500">(26.8B)</span></td><td data-mode="multi-with-cache" data-nps="171925899207" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">171,925,899,207 <span class="ml-1 text-xs font-normal text-slate-500">(171.9B)</span></td>
                   </tr>
                   <tr data-engine="tgct_engine" data-language="C#" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">tgct_engine</a></td>
@@ -232,6 +232,12 @@
                     <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">cd237fc32a</td>
                     <td data-mode="single-no-cache" data-nps="715360169" class="whitespace-nowrap px-4 py-3 text-right tabular">715,360,169 <span class="ml-1 text-xs font-normal text-slate-500">(715.4M)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" data-nps="8801601199" class="whitespace-nowrap px-4 py-3 text-right tabular">8,801,601,199 <span class="ml-1 text-xs font-normal text-slate-500">(8.80B)</span></td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
+                  </tr>
+                  <tr data-engine="gigantua" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
+                    <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Gigantua/Gigantua" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">gigantua</a></td>
+                    <td class="whitespace-nowrap px-4 py-3"><span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700">C++</span></td>
+                    <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-500">1.6</td>
+                    <td data-mode="single-no-cache" data-nps="2304487198" class="whitespace-nowrap px-4 py-3 text-right tabular font-semibold text-emerald-700">2,304,487,198 <span class="ml-1 text-xs font-normal text-slate-500">(2.30B)</span></td><td data-mode="single-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-no-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td><td data-mode="multi-with-cache" class="whitespace-nowrap px-4 py-3 text-right tabular text-slate-400">&mdash;</td>
                   </tr>
                   <tr data-engine="rubichess" data-language="C++" class="border-t border-slate-200 hover:bg-slate-50/60">
                     <td class="whitespace-nowrap px-4 py-3"><a href="https://github.com/Matthies/RubiChess" target="_blank" rel="noopener noreferrer" class="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">rubichess</a></td>

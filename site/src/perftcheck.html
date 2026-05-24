@@ -100,8 +100,9 @@
           <h2 class="text-2xl font-bold tracking-tight text-slate-900">Install</h2>
           <p class="mt-3 max-w-3xl text-slate-600">
             Self-contained single-file binaries published to
-            <a href="https://github.com/Timmoth/grandchesstree/releases/latest" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">GitHub Releases</a>
+            <a href="https://github.com/Timmoth/grandchesstree/releases?q=tag%3Aperftcheck&amp;expanded=true" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">GitHub Releases</a>
             on every tagged build. No .NET runtime required on the target machine.
+            The downloads below point at <span class="font-mono text-sm text-slate-800">perftcheck-0.1.0</span>.
           </p>
 
           <div class="mt-8 overflow-x-auto rounded-xl border border-slate-200">
@@ -117,27 +118,27 @@
                 <tr>
                   <td class="px-4 py-3 font-medium text-slate-900">Linux</td>
                   <td class="px-4 py-3 tabular">x86_64</td>
-                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-linux-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-x64</a></td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-linux-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-x64</a></td>
                 </tr>
                 <tr>
                   <td class="px-4 py-3 font-medium text-slate-900">Linux</td>
                   <td class="px-4 py-3 tabular">aarch64</td>
-                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-linux-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-arm64</a></td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-linux-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-linux-arm64</a></td>
                 </tr>
                 <tr>
                   <td class="px-4 py-3 font-medium text-slate-900">macOS</td>
                   <td class="px-4 py-3 tabular">Intel</td>
-                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-osx-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-x64</a></td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-osx-x64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-x64</a></td>
                 </tr>
                 <tr>
                   <td class="px-4 py-3 font-medium text-slate-900">macOS</td>
                   <td class="px-4 py-3 tabular">Apple Silicon</td>
-                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-osx-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-arm64</a></td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-osx-arm64" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-osx-arm64</a></td>
                 </tr>
                 <tr>
                   <td class="px-4 py-3 font-medium text-slate-900">Windows</td>
                   <td class="px-4 py-3 tabular">x86_64</td>
-                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-win-x64.exe" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-win-x64.exe</a></td>
+                  <td class="px-4 py-3"><a href="https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-win-x64.exe" class="font-mono text-xs text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">perftcheck-win-x64.exe</a></td>
                 </tr>
               </tbody>
             </table>
@@ -147,7 +148,7 @@
             <div>
               <h3 class="text-sm font-semibold text-slate-900">macOS / Linux</h3>
               <pre class="term mt-3"><span class="prompt">$</span> curl -L -o perftcheck \
-    https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-<span class="grey">&lt;rid&gt;</span>
+    https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-<span class="grey">&lt;rid&gt;</span>
 <span class="prompt">$</span> chmod +x perftcheck
 <span class="prompt">$</span> ./perftcheck --engine ./your-engine</pre>
               <p class="mt-3 text-xs text-slate-500">
@@ -160,11 +161,57 @@
             <div>
               <h3 class="text-sm font-semibold text-slate-900">Windows (PowerShell)</h3>
               <pre class="term mt-3"><span class="prompt">PS&gt;</span> Invoke-WebRequest `
-    https://github.com/Timmoth/grandchesstree/releases/latest/download/perftcheck-win-x64.exe `
+    https://github.com/Timmoth/grandchesstree/releases/download/perftcheck-0.1.0/perftcheck-win-x64.exe `
     -OutFile perftcheck.exe
 <span class="prompt">PS&gt;</span> .\perftcheck.exe --engine .\your-engine.exe</pre>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="build" class="border-b border-slate-200 py-16">
+        <div class="mx-auto max-w-6xl px-6">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900">Build from source</h2>
+          <p class="mt-3 max-w-3xl text-slate-600">
+            Prefer to compile it yourself, or want a binary for a platform we don't ship?
+            You'll need the
+            <a href="https://dotnet.microsoft.com/download/dotnet/10.0" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">.NET 10 SDK</a>.
+            One third-party NuGet dep
+            (<a href="https://github.com/spectreconsole/spectre.console" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">Spectre.Console.Cli</a>)
+            is restored automatically. The corpora (~105k positions, ~70&nbsp;MB of EPDs) are embedded as resources in the assembly &mdash; no extra files to fetch.
+          </p>
+
+          <h3 class="mt-8 text-sm font-semibold text-slate-900">Run straight from the repo</h3>
+          <pre class="term mt-3"><span class="prompt">$</span> git clone https://github.com/Timmoth/grandchesstree.git
+<span class="prompt">$</span> cd grandchesstree/PerftSuite
+<span class="prompt">$</span> dotnet run -c Release -- --engine /path/to/your-engine</pre>
+
+          <h3 class="mt-8 text-sm font-semibold text-slate-900">Publish a single-file binary</h3>
+          <p class="mt-2 max-w-3xl text-sm text-slate-600">
+            Same incantation the
+            <a href="https://github.com/Timmoth/grandchesstree/blob/main/.github/workflows/publish-perftcheck.yml" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">release workflow</a>
+            uses. Substitute the
+            <a href="https://learn.microsoft.com/dotnet/core/rid-catalog" target="_blank" rel="noopener noreferrer" class="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700">runtime identifier</a>
+            for your host:
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">linux-x64</code>,
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">linux-arm64</code>,
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">osx-x64</code>,
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">osx-arm64</code>, or
+            <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">win-x64</code>.
+          </p>
+          <pre class="term mt-3"><span class="prompt">$</span> dotnet publish PerftSuite/PerftSuite.csproj \
+    -c Release \
+    -r <span class="grey">&lt;rid&gt;</span> \
+    --self-contained true \
+    -p:PublishSingleFile=true \
+    -p:EnableCompressionInSingleFile=true \
+    -p:DebugType=embedded</pre>
+          <p class="mt-3 text-xs text-slate-500">
+            Resulting binary:
+            <code class="font-mono text-[11px] text-slate-700">PerftSuite/bin/Release/net10.0/&lt;rid&gt;/publish/perftcheck</code>
+            (or <code class="font-mono text-[11px] text-slate-700">perftcheck.exe</code> on Windows).
+            Strip the <code class="font-mono text-[11px] text-slate-700">--self-contained</code> flag for a framework-dependent build if .NET 10 will be present on the target host.
+          </p>
         </div>
       </section>
 
