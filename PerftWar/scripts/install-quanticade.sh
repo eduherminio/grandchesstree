@@ -28,10 +28,12 @@ command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 \
 clone_or_keep "$ENGINE_DIR" "$REPO"
 
 HOST=$(detect_host)
-log "building (host=$HOST, make native)"
+# Quanticade's Makefile default target is `all`, which builds with
+# `-march=native` baked into CFLAGS. There is no `native` target.
+log "building (host=$HOST, make all)"
 (
   cd "$ENGINE_DIR"
-  make native
+  make
 )
 
 [ -x "$BINARY" ] || die "expected binary at $BINARY but it's missing"

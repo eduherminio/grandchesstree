@@ -4,16 +4,13 @@
   "owner": "Quanticade",
   "repo": "https://github.com/Quanticade/Quanticade",
   "language": "C",
-  "_note": "Quanticade is a UCI engine. Perft uses `go perft N` (under the same `go` parser as search), and perft is plain recursive single-threaded with no TT — so only single-no-cache. Output ends with an `NPS:` line which we use as the end marker.",
+  "_note": "Quanticade is a UCI engine but its perft has an upstream bug — searchinfo->nodes is not reset between perft calls, so consecutive `go perft` in one session report compounding totals. We drive it through a bash wrapper that re-spawns Quanticade per call to get clean per-call counters.",
   "modes": {
     "single-no-cache": {
-      "launch": "bin/quanticade/Quanticade",
-      "setup": [
-        "setoption name Threads value 1",
-        "setoption name Hash value 1"
-      ],
+      "launch": "wrappers/quanticade/run.sh",
+      "setup": [],
       "case":   "position fen {fen}\ngo perft {depth}",
-      "end_re": "^\\s*NPS:",
+      "end_re": "^perft-done$",
       "quit":   "quit"
     }
   }
