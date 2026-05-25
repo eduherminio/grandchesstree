@@ -1,10 +1,10 @@
 {
   "name": "pawnocchio",
-  "version": "1.9",
+  "version": "2.0-dev-a8f09e7",
   "owner": "JonathanHallstrom",
   "repo": "https://github.com/JonathanHallstrom/pawnocchio",
   "language": "Zig",
-  "_note": "Pawnocchio is a UCI engine in Zig. Perft is the bare `perft N` form (not `go perft N`). Output summary is `Nodes searched: <nodes> in <ms>ms (<nps> nps)`. Only single-no-cache is defined.",
+  "_note": "Pawnocchio is a UCI engine in Zig. Perft is `go perft N` (the bare `perft` form is the CLI-only command, not UCI). Output summary is `Nodes searched: <nodes> in <ms>ms (<nps> nps)`. Only single-no-cache is defined.",
   "modes": {
     "single-no-cache": {
       "launch": "bin/pawnocchio/zig-out/bin/pawnocchio",
@@ -12,7 +12,7 @@
         "setoption name Threads value 1",
         "setoption name Hash value 1"
       ],
-      "case":   "position fen {fen}\nperft {depth}",
+      "case":   "position fen {fen}\ngo perft {depth}",
       "end_re": "^Nodes searched: \\d+ in \\d+ms \\(\\d+ nps\\)$",
       "quit":   "quit"
     }

@@ -16,6 +16,13 @@ cd "$_SCRIPT_DIR/.."
 # it's there; harmless if not.
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
+# Same story for $HOME/.local/bin: pip-installed user tools and our own
+# install-zig.sh land here, but non-interactive SSH doesn't run the .profile
+# stanza that puts it on PATH. Prepend if the dir exists.
+if [ -d "$HOME/.local/bin" ] && [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+  PATH="$HOME/.local/bin:$PATH"
+fi
+
 log() { printf '[%s] %s\n' "${ENGINE:-?}" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
 
