@@ -1,6 +1,6 @@
 {
   "name": "raphael",
-  "version": "4.1.0",
+  "version": "4.2.0-dev-87999df",
   "owner": "Orbital-Web",
   "repo": "https://github.com/Orbital-Web/Raphael",
   "language": "C++",

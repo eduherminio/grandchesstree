@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T07:56:33Z",
+  "generated_at": "2026-05-25T15:54:49Z",
   "hosts": {
     "berserk": {
       "version": "13",
@@ -141,6 +141,20 @@
         "mem_speed_mts": null
       }
     },
+    "potential": {
+      "version": "3.40.88",
+      "host": {
+        "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_version": "3.12.3",
+        "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+        "cpu_physical_cores": 16,
+        "cpu_logical_cores": 32,
+        "ram_total_bytes": 66585444352,
+        "mem_speed_mts": null
+      }
+    },
     "prune": {
       "version": "dev",
       "host": {
@@ -157,6 +171,20 @@
     },
     "quanticade": {
       "version": "main",
+      "host": {
+        "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
+        "system": "Linux",
+        "machine": "x86_64",
+        "python_version": "3.12.3",
+        "cpu_model": "AMD Ryzen 9 7950X 16-Core Processor",
+        "cpu_physical_cores": 16,
+        "cpu_logical_cores": 32,
+        "ram_total_bytes": 66585444352,
+        "mem_speed_mts": null
+      }
+    },
+    "raphael": {
+      "version": "4.2.0-dev-87999df",
       "host": {
         "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.39",
         "system": "Linux",
@@ -3570,6 +3598,204 @@
       ]
     },
     {
+      "engine": "potential",
+      "version": "3.40.88",
+      "language": "C",
+      "repo": "https://github.com/ProgramciDusunur/Potential",
+      "mode": "single-no-cache",
+      "mean_nps": 566946992,
+      "positions": [
+        {
+          "name": "startpos",
+          "best_depth": 7,
+          "best_nodes": 3195901860,
+          "best_elapsed_sec": 6.9408,
+          "best_nps": 460451529,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 68.9,
+          "best_peak_rss_mb": 68.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.313317,
+              "nps": 63,
+              "av_cpu_pct": 95.7,
+              "av_rss_mb": 12.6,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000399,
+              "nps": 1003124,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.000159,
+              "nps": 55956805,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.000623,
+              "nps": 316442480,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.011813,
+              "nps": 411886321,
+              "av_cpu_pct": 169.3,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 0.286584,
+              "nps": 415445834,
+              "av_cpu_pct": 97.7,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 7,
+              "elapsed_sec": 6.9408,
+              "nps": 460451529,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            }
+          ]
+        },
+        {
+          "name": "kiwipete",
+          "best_depth": 6,
+          "best_nodes": 8031647685,
+          "best_elapsed_sec": 13.276285,
+          "best_nps": 604961962,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 68.9,
+          "best_peak_rss_mb": 68.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.313674,
+              "nps": 153,
+              "av_cpu_pct": 95.6,
+              "av_rss_mb": 12.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000217,
+              "nps": 9416099,
+              "av_cpu_pct": 4618.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.000496,
+              "nps": 197200636,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.007139,
+              "nps": 572301074,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.273184,
+              "nps": 709012237,
+              "av_cpu_pct": 102.5,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 13.276285,
+              "nps": 604961962,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            }
+          ]
+        },
+        {
+          "name": "sje",
+          "best_depth": 6,
+          "best_nodes": 6923051137,
+          "best_elapsed_sec": 10.895108,
+          "best_nps": 635427486,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 68.9,
+          "best_peak_rss_mb": 68.9,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.315865,
+              "nps": 145,
+              "av_cpu_pct": 98.1,
+              "av_rss_mb": 13.1,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 0.000171,
+              "nps": 12185828,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.00035,
+              "nps": 256951181,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.006299,
+              "nps": 618270193,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.295097,
+              "nps": 556005034,
+              "av_cpu_pct": 101.7,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 10.895108,
+              "nps": 635427486,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 68.9,
+              "peak_rss_mb": 68.9
+            }
+          ]
+        }
+      ]
+    },
+    {
       "engine": "prune",
       "version": "dev",
       "language": "C++",
@@ -3960,6 +4186,204 @@
               "av_cpu_pct": 0.0,
               "av_rss_mb": 3.7,
               "peak_rss_mb": 3.7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "engine": "raphael",
+      "version": "4.2.0-dev-87999df",
+      "language": "C++",
+      "repo": "https://github.com/Orbital-Web/Raphael",
+      "mode": "single-no-cache",
+      "mean_nps": 470541469,
+      "positions": [
+        {
+          "name": "startpos",
+          "best_depth": 7,
+          "best_nodes": 3195901860,
+          "best_elapsed_sec": 8.275566,
+          "best_nps": 386185310,
+          "best_av_cpu_pct": 99.9,
+          "best_av_rss_mb": 76.4,
+          "best_peak_rss_mb": 76.4,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.009032,
+              "nps": 2214,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 38.2,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 6.8e-05,
+              "nps": 5920137,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 5.2e-05,
+              "nps": 171730593,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.000609,
+              "nps": 323880309,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.013393,
+              "nps": 363303094,
+              "av_cpu_pct": 74.7,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 0.319066,
+              "nps": 373153206,
+              "av_cpu_pct": 100.3,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            },
+            {
+              "depth": 7,
+              "elapsed_sec": 8.275566,
+              "nps": 386185310,
+              "av_cpu_pct": 99.9,
+              "av_rss_mb": 76.4,
+              "peak_rss_mb": 76.4
+            }
+          ]
+        },
+        {
+          "name": "kiwipete",
+          "best_depth": 6,
+          "best_nodes": 8031647685,
+          "best_elapsed_sec": 16.234623,
+          "best_nps": 494723398,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 76.5,
+          "best_peak_rss_mb": 76.5,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.008747,
+              "nps": 5487,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 38.2,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 6.8e-05,
+              "nps": 30079960,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.00022,
+              "nps": 444219512,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.008759,
+              "nps": 466467159,
+              "av_cpu_pct": 114.2,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.348661,
+              "nps": 555527932,
+              "av_cpu_pct": 97.5,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 16.234623,
+              "nps": 494723398,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            }
+          ]
+        },
+        {
+          "name": "sje",
+          "best_depth": 6,
+          "best_nodes": 6923051137,
+          "best_elapsed_sec": 13.044745,
+          "best_nps": 530715700,
+          "best_av_cpu_pct": 100.0,
+          "best_av_rss_mb": 76.5,
+          "best_peak_rss_mb": 76.5,
+          "depths": [
+            {
+              "depth": 1,
+              "elapsed_sec": 0.008524,
+              "nps": 5396,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 38.8,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 2,
+              "elapsed_sec": 6.4e-05,
+              "nps": 32571397,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 3,
+              "elapsed_sec": 0.00022,
+              "nps": 408886435,
+              "av_cpu_pct": 0.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 4,
+              "elapsed_sec": 0.007519,
+              "nps": 517973560,
+              "av_cpu_pct": 133.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 5,
+              "elapsed_sec": 0.32472,
+              "nps": 505282402,
+              "av_cpu_pct": 98.5,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
+            },
+            {
+              "depth": 6,
+              "elapsed_sec": 13.044745,
+              "nps": 530715700,
+              "av_cpu_pct": 100.0,
+              "av_rss_mb": 76.5,
+              "peak_rss_mb": 76.5
             }
           ]
         }
