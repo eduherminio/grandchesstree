@@ -38,7 +38,18 @@ log "building (host=$HOST, arch=$ARCH, profile-build, EXE=plentychess)"
 
 [ -x "$BINARY" ] || die "expected binary at $BINARY but it's missing"
 
-out=$(verify_perft "$BINARY") || die "perft test failed"
+# PlentyChess processes stdin-EOF as quit before `go perft` finishes draining
+# its output, so the default verify_perft (which closes stdin immediately)
+# never sees the result. Keep stdin open for ~2s so the perft can complete.
+log "verifying via go perft 4 (keep-stdin-open variant)"
+out=$( (printf 'uci\nucinewgame\nposition startpos\ngo perft 4\n'; sleep 2; printf 'quit\n') \
+       | timeout 15 "$BINARY" 2>&1 || true )
+if ! printf '%s\n' "$out" | tr -d ',_' | grep -q '\b197281\b'; then
+  log "perft verification FAILED — last 15 lines below"
+  printf '%s\n' "$out" | tail -15 >&2
+  die "perft test failed"
+fi
+log "perft verified"
 
 version=$(detect_version "$out")
 if [ -n "$version" ]; then

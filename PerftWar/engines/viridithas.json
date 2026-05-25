@@ -1,6 +1,6 @@
 {
   "name": "viridithas",
-  "version": "?",
+  "version": "20.0.0-dev",
   "owner": "cosmobobak",
   "repo": "https://github.com/cosmobobak/viridithas",
   "language": "Rust",
