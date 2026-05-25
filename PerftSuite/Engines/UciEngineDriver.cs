@@ -19,7 +19,7 @@ public sealed class UciEngineDriver : IAsyncDisposable
     // Stockfish prints "Nodes searched: N"; other engines sometimes use
     // "Total nodes: N" or just "Total: N". We accept all three.
     static readonly Regex NodesRegex = new(
-        @"^\s*(?:nodes\s*searched|total(?:\s*nodes)?)\s*:\s*(\d+)\s*$",
+        @"^\s*(?:nodes(?:\s*searched)?|total(?:\s*nodes)?)\s*:\s*(\d+)\s*$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public string EngineId => _idName;
