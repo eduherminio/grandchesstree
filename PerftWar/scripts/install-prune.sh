@@ -47,9 +47,32 @@ log "building (host=$HOST, cd core && make prune)"
   make prune
 )
 
+# Prune's Makefile lands the binary as `prune<short-commit>` (e.g.
+# prune94539a3), not bare `prune`. Find whichever prune* binary the
+# build produced and symlink it.
+if [ ! -x "$BINARY" ]; then
+  alt=$(find "$ENGINE_DIR/core" -maxdepth 1 -type f -perm -111 -name 'prune*' \
+        -not -name '*.o' 2>/dev/null | head -1 || true)
+  if [ -n "$alt" ] && [ "$alt" != "$BINARY" ]; then
+    log "found binary at $alt — symlinking to $BINARY"
+    ln -sf "$(basename "$alt")" "$BINARY"
+  fi
+fi
 [ -x "$BINARY" ] || die "expected binary at $BINARY but it's missing"
 
-out=$(verify_perft "$BINARY") || die "perft test failed"
+# Prune-specific verify: the engine has a stop_all race where stdin EOF
+# kills the search thread before queued commands are processed. The
+# standard verify_perft pipes-then-closes which triggers this. We keep
+# stdin open with a sleep so the engine has time to drain its queue.
+log "verifying via perft 4 (keep-stdin-open variant)"
+out=$( (printf 'position startpos\ngo perft 4\n'; sleep 2; printf 'quit\n') \
+       | timeout 15 "$BINARY" 2>&1 || true )
+if ! printf '%s\n' "$out" | grep -q '\b197281\b'; then
+  log "perft verification FAILED — last 15 lines below"
+  printf '%s\n' "$out" | tail -15 >&2
+  die "perft test failed"
+fi
+log "perft verified"
 
 version=$(detect_version "$out")
 if [ -n "$version" ]; then
